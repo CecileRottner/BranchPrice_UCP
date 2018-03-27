@@ -120,7 +120,7 @@ public:
     IloInt getT() const ;
     IloInt getS() const ;
     IloInt firstUnit(IloInt s) const ;
-    IloInt nb(IloInt s) const ; // nombre d'unités sur le site s
+    IloInt nbUnits(IloInt s) const ; // nombre d'unités sur le site s
 
     IloBool getInit(IloInt i) const ;
     IloInt getL(IloInt i) const ;

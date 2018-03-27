@@ -525,10 +525,10 @@ IloInt InstanceUCP::firstUnit(IloInt s) const {
     return firstUnitofSite[s] ;
 }
 
-IloInt InstanceUCP::nb(IloInt s) const {
+IloInt InstanceUCP::nbUnits(IloInt s) const {
     int nb= 1;
     int i=firstUnit(s)+1 ;
-    while (firstOfSite[i]==0 && (i < n)) {
+    while ((i < n) && firstOfSite[i]==0) {
         nb++ ;
         i++ ;
     }

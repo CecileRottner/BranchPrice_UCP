@@ -4,6 +4,45 @@
 using namespace std;
 using namespace scip;
 
+Master_Variable::Master_Variable(int site, IloIntArray UpDown) {
+    ptr=NULL ;
+    Site=site ;
+    cost = 0 ;
+    UpDown_plan= UpDown  ;
+}
+
+void Master_Variable::computeCost(const InstanceUCP & inst) {
+    //compute cost of up/down plan lambda: fixed cost (including minimum power output cost) and start up cost
+    //init à prendre en compte plus tard
+    cost=0 ;
+
+
+    int T= inst.getT() ;
+
+    int first = inst.firstUnit(Site) ;
+    int last = inst.firstUnit(Site) + inst.nbUnits(Site) - 1 ;
+
+
+    cout << "site " << Site << ", first unit : " << first << ", nb units: " << inst.nbUnits(Site) << endl ;
+
+    for (int i = first ; i <= last ; i++) {
+        int down_t_1 = 0 ;
+        for (int t = 0 ; t < T ; t++) {
+            if (down_t_1 && UpDown_plan[(i-first)*T+t]) { // il y a un démarrage en t
+                cost+= inst.getc0(i) ;
+            }
+
+            if (UpDown_plan[(i-first)*T+t] == 0) {
+                down_t_1=1;
+            }
+            else { // l'unité i est up en t
+                cost+= inst.getcf(i) + inst.getcp(i)*inst.getPmin(i) ;
+                down_t_1=0;
+            }
+        }
+    }
+}
+
 Master_Model::Master_Model(const InstanceUCP & inst) {
     n = inst.getn() ;
     T = inst.getT() ;
@@ -22,7 +61,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, const InstanceUCP & inst) {
     ////////////////////////////////////////////////////////////////
     // Constraints form: lhs <= ax <= rhs
 
-    ///// Demand constraint ////
+    ///// Demand constraint /////
     char con_name_demand[255];
     for (int t = 0; t < T; t++)
     {
@@ -55,7 +94,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, const InstanceUCP & inst) {
             (void) SCIPsnprintf(con_name_power_limit, 255, "PowerLimit(%d,%d)", i, t); // nom de la contrainte
             SCIPcreateConsLinear( scip, &con, con_name_power_limit, 0, NULL, NULL,
                                   -SCIPinfinity(scip),   // lhs
-                                  0,   // rhs  SCIPinfinity(scip) if >=1
+                                  0.0,   // rhs  SCIPinfinity(scip) if >=1
                                   true,  /* initial */
                                   false, /* separate */
                                   true,  /* enforce */
@@ -78,8 +117,8 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, const InstanceUCP & inst) {
         SCIP_CONS* con = NULL;
         (void) SCIPsnprintf(con_name_convex, 255, "Convexity(%d)", s); // nom de la contrainte
         SCIPcreateConsLinear( scip, &con, con_name_convex, 0, NULL, NULL,
-                              -SCIPinfinity(scip),   // lhs
-                              0,   // rhs  SCIPinfinity(scip) if >=1
+                              1.0,   // lhs
+                              1.0,   // rhs  SCIPinfinity(scip) if >=1
                               true,  /* initial */
                               false, /* separate */
                               true,  /* enforce */
@@ -134,7 +173,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, const InstanceUCP & inst) {
     //////////   MASTER LAMBDA VARIABLES INITIALIZATION   /////////
     ///////////////////////////////////////////////////////////////
 
-    //Add variables corresponding to "all up" production plans (assuming initial state is up for all units)
+    //Add variables corresponding to "all up" up/down plans (assuming initial state is up for all units)
 
     L_var.clear();
 
@@ -142,34 +181,52 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, const InstanceUCP & inst) {
 
     for (int s=0 ; s<S ; s++)
     {
-      SCIPsnprintf(varlambda_name, 255, "all_up_(site_%d)",s);
-      SCIPdebugMsg(scip, "new variable <%s>\n", varlambda_name);
+        SCIPsnprintf(varlambda_name, 255, "all_up_(site_%d)",s);
+        SCIPdebugMsg(scip, "new variable <%s>\n", varlambda_name);
 
-      /* create the new variable: Use upper bound of infinity such that we do not have to care about
+        /* create the new variable: Use upper bound of infinity such that we do not have to care about
        * the reduced costs of the variable in the pricing. The upper bound of 1 is implicitly satisfied
        * due to the set partitioning constraints.
        */
 
+        IloIntArray plan = IloIntArray(env, inst.nbUnits(s)*T) ;
 
-      Master_Variable* lambda = new Master_Variable;
-      lambda->Site = s ;
-      lambda->Production_plan.resize(inst.nb(s)*T, 1);
+        Master_Variable* lambda = new Master_Variable(s, plan);
 
-      SCIPcreateVar(scip, &(lambda->ptr), varlambda_name,
-                    0.0,                     // lower bound
-                    SCIPinfinity(scip),      // upper bound
-                    1.0,                     // objective
-                    SCIP_VARTYPE_INTEGER, // variable type
-                    true, false, NULL, NULL, NULL, NULL, NULL);
+        lambda->computeCost(inst);
+        double cost= lambda->cost;
+
+        L_var.push_back(lambda);
+
+        SCIPcreateVar(scip, &(lambda->ptr), varlambda_name,
+                      0.0,                     // lower bound
+                      SCIPinfinity(scip),      // upper bound
+                      cost,                     // objective
+                      SCIP_VARTYPE_INTEGER, // variable type
+                      true, false, NULL, NULL, NULL, NULL, NULL);
 
 
-      /* add new variable to the list of variables to price into LP (score: leave 1 here) */
-      SCIPaddVar(scip, lambda->ptr);
+        /* add new variable to the list of variables to price into LP (score: leave 1 here) */
+        SCIPaddVar(scip, lambda->ptr);
 
-      /* add coefficient into the set partition constraints */
-     // SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, 1.0);
 
-      L_var.push_back(lambda);
+        /* for each time period, add coefficient pmin(i) into the demand constraint at t, for each unit unit i in site S */
+        for (int t=0 ; t < T ; t++) {
+            for (int i=inst.firstUnit(s) ; i < inst.firstUnit(s) + inst.nbUnits(s) ; i++) {
+                SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst.getPmin(i)) ;
+            }
+        }
+
+
+        /* for each time period and each unit in site S, add coefficient pmin(i) - pmax(i) into the power limit constraint of unit i at t */
+        for (int t=0 ; t < T ; t++) {
+            for (int i=inst.firstUnit(s) ; i < inst.firstUnit(s) + inst.nbUnits(s) ; i++) {
+                SCIPaddCoefLinear(scip, power_limits[i*T+t], lambda->ptr, inst.getPmin(i) - inst.getPmax(i)) ;
+            }
+        }
+
+        /* add coefficient to the convexity constraint for site s */
+        SCIPaddCoefLinear(scip, convexity_cstr[s], lambda->ptr, 1.0) ;
 
 
     }

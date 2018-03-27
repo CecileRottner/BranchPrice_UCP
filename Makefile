@@ -2,14 +2,15 @@
 # using SCIP for branch-and-price
 # and Cplex for pricing
 
+include cplex_scip_dir.mk
 
 #-----------------------------------------------------------------------------
 # paths
 #-----------------------------------------------------------------------------
 
-SCIPDIR       = /home/rottner/Programmes/scipoptsuite-5.0.1/scip
-CPLEXDIR      = /home/rottner/Programmes/Cplex/cplex
-CONCERTDIR    = /home/rottner/Programmes/Cplex/concert
+SCIPDIR       = $(VARSCIPDIR)
+CPLEXDIR      = $(VARCPLEXDIR)
+CONCERTDIR    = $(VARCONCERTDIR)
 
 
 #-----------------------------------------------------------------------------
@@ -52,10 +53,11 @@ CCPLEXFLAGS  = $(COPT)  -I$(CPLEXINCDIR)
 #-----------------------------------------------------------------------------
 
 MAINNAME	=	SCIP_UCP_BP
-MAINOBJ		=	SCIP_main.o \
+MAINOBJ		=	main.o \
 			InstanceUCP.o \
 			Process.o \
 			Master.o \
+			CplexPricingAlgo.o \
 
 
 MAINSRC		=	$(addprefix $(SRCDIR)/,$(MAINOBJ:.o=.cpp))

@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 
+#include <ilcplex/ilocplex.h>
+
 /* scip includes */
 #include "objscip/objscip.h"
 #include "objscip/objscipdefplugins.h"
@@ -12,6 +14,7 @@
 #include "InstanceUCP.h"
 #include "Process.h"
 #include "Master.h"
+#include "CplexPricingAlgo.h"
 
 /* namespace usage */
 using namespace std;
@@ -49,6 +52,8 @@ int main(int argc, char** argv)
         IloEnv env;
         InstanceUCP inst = InstanceUCP(env, file) ;
 
+        cout << "Somme des pmax: " << inst.getSommePmax() << endl ;
+
 
         ////////////////////////////////////
         //////  SCIP INITIALIZATION    /////
@@ -78,6 +83,31 @@ int main(int argc, char** argv)
         Master_Model Master(inst) ;
         Master.InitScipMasterModel(scip, inst) ;
 
+
+        cout<<"Write initial LP"<<endl;
+        SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
+
+
+        ////////////////////////////////
+        //////  PRICING PROBLEM    /////
+        ////////////////////////////////
+
+
+        CplexPricingAlgo Pricing;
+        Pricing.initialize(inst, 0);
+
+        IloNumArray plan = IloNumArray(env, inst.nbUnits(0)*T) ;
+
+        double obj ;
+        Pricing.findUpDownPlan(inst, plan, obj) ;
+
+
+
+         //////////////////////
+        //////  SOLVE    /////
+        //////////////////////
+
+        SCIPsolve(scip);
 
     }
 

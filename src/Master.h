@@ -1,6 +1,7 @@
 #ifndef MASTER
 #define MASTER
 
+#include <ilcplex/ilocplex.h>
 
 #include <vector>
 #include <list>
@@ -27,10 +28,15 @@ public:
     SCIP_VAR* ptr;
 
     /// site corresponding to variable ptr
-    int Site ; // Site= index of the first unit in the site
+    int Site ; //index of the site
 
-    //// production plan corresponding to ptr
-    vector<int> Production_plan ;
+    //// up/down plan corresponding to ptr
+    IloIntArray UpDown_plan ;
+
+    double cost ;
+
+    Master_Variable(int site, IloIntArray UpDown) ;
+    void computeCost(const InstanceUCP & inst) ;
 
 };
 
@@ -39,6 +45,8 @@ public:
     int n ;
     int T ;
     int S ;
+
+    IloEnv env;
 
     // Keep a pointer on every constraint of the Master program
     vector<SCIP_CONS*> demand_cstr;
