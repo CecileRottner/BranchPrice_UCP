@@ -85,7 +85,7 @@ void CplexPricingAlgo::initialize(const InstanceUCP &inst, int site) {
 
 }
 
-void CplexPricingAlgo::addDualObjCoefficients(const InstanceUCP & inst, const DualCosts & Dual) {
+void CplexPricingAlgo::updateObjCoefficients(const InstanceUCP & inst, const DualCosts & Dual) {
     int ns = inst.nbUnits(Site) ;
     int T = inst.getT();
     int first = inst.firstUnit(Site) ;

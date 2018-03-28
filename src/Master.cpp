@@ -5,17 +5,16 @@ using namespace std;
 using namespace scip;
 
 Master_Variable::Master_Variable(int site, IloIntArray UpDown) {
-    ptr=NULL ;
-    Site=site ;
+    ptr = NULL ;
+    Site = site ;
     cost = 0 ;
-    UpDown_plan= UpDown  ;
+    UpDown_plan = UpDown  ;
 }
 
 void Master_Variable::computeCost(const InstanceUCP & inst) {
     //compute cost of up/down plan lambda: fixed cost (including minimum power output cost) and start up cost
     //init à prendre en compte plus tard
     cost=0 ;
-
 
     int T= inst.getT() ;
 

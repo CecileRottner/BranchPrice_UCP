@@ -35,14 +35,13 @@ class CplexPricingAlgo {
 
   vector<double> BaseObjCoefX ;
 
-
   void initialize(const InstanceUCP & inst, int site);
 
-  void addDualObjCoefficients(const InstanceUCP & inst, const DualCosts & Dual);
+  void updateObjCoefficients(const InstanceUCP & inst, const DualCosts & Dual);
+  void addBranchingConstraint(); //local to the branch considered
 
   // Launch Cplex solver and get back an optimal up/down plan
-  bool findUpDownPlan(const InstanceUCP & inst, IloNumArray UpDownPlan, double& objvalue);
-
+  bool findUpDownPlan(const InstanceUCP & inst, IloNumArray UpDownPlan, double & objvalue);
 
 };
 
