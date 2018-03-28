@@ -40,10 +40,7 @@ public :
         intra = intra_ ;
         id = id_ ;
         localisation = loc_ ;
-
-
     }
-
 
     string createName() const ;
 
@@ -55,8 +52,6 @@ public :
         cout << fileS << endl ;
         return fileS ;
     }
-
-
 
 };
 

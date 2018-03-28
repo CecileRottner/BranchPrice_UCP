@@ -8,6 +8,8 @@ class InstanceUCP {
 
 private:
     IloEnv env ;
+
+    ///// Recupéré du fichier instance /////
     int id ;
 
     IloInt n, T, K, S ;
@@ -15,41 +17,33 @@ private:
     IloIntArray L, l, nk, firstOfSite ;
     IloNumArray D, P, Pmax, cf, c0, cp ;
 
-    IloIntArray First ; // i est le premier element de son groupe, First[i]=1
+    IloIntArray First ; // i est le premier element d'un groupe d'unités identiques, First[i]=1
     IloIntArray Last ;
 
-    IloIntArray First_ ; // i est le premier element de son groupe, First[i]=1
-    IloIntArray Last_ ;
-
-    IloIntArray FirstG_ ; // tableau des premiers éléments de chaque groupe
-    IloIntArray LastG_ ;
-    IloBoolArray Init_ ;
-    IloIntArray L_, l_, nk_ ;
-    IloNumArray P_, Pmax_, cf_, c0_ , cp_;
-
-    IloIntArray C_ ;
-
+    ///// Calculé pendant l'initialisation /////
     IloInt SommePmax ;
 
-    IloIntArray firstUnitofSite ;
 
-    //indicateurs symétrie
+    //// sites
+    IloIntArray firstUnitofSite ; // premières unités de chaque site
+
+    //// indicateurs symétrie
     int nbGroupes ; //sans compter les unités seules
     int MaxSize ; //taille du plus gros groupe de symétrie
     double MeanSize ; //taille moyenne d'un groupe
 
     IloIntArray FirstG ; // tableau des premiers éléments de chaque groupe
     IloIntArray LastG ;
-    IloIntArray SizeG ;
+    IloIntArray SizeG ; // tailles de chaque groupe
     IloIntArray Group ; //group[i] = numéro du groupe de symétrie de l'unité i
     int nbG ; //nb de groupes en comptant les unités seules
     int nbG2 ; //nb de groupes de taille >= 2
 
     IloIntArray repartition_tailles ;
 
-    //t triés dans l'ordre de la demande décroissante
+    //// indicateurs pour le branchement
     IloIntArray ordreT ;
-
+    //t triés dans l'ordre de la demande décroissante
 
     //pour le branchement maison
     int tmax1 ;
@@ -87,29 +81,18 @@ public:
         First.end() ; // i est le premier element de son groupe, First[i]=1
         Last.end() ;
 
-        Init_.end() ;
-        L_.end() ;
-        l_.end() ;
-        nk_.end() ;
-
-        P_.end() ;
-        Pmax_.end() ;
-        cf_.end() ;
-        c0_.end() ;
-        cp_.end() ;
-
-        C_.end() ;
-
-
         FirstG.end() ; // tableau des premiers éléments de chaque groupe
         LastG.end() ;
         Group.end() ; //group[i] = numéro du groupe de symétrie de l'unité i
+
+        firstUnitofSite.end() ;
 
         //t triés dans l'ordre de la demande décroissante
         ordreT.end() ;
 
         ordre_ratio.end() ;
         isIncreasing.end() ;
+
     }
 
 public:

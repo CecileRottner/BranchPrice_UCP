@@ -2,13 +2,12 @@
 
 #include <ctime>
 #include <stdlib.h> // use rand
-#include <fstream> // pour lire le fichier de données
+#include <fstream> // lire fichier de données
 
 using namespace std ;
 
 
 InstanceUCP::InstanceUCP(IloEnv envir, const char* file) {
-
     env = envir ;
     Lecture(file) ;
     Initialise() ;
@@ -19,8 +18,15 @@ InstanceUCP::InstanceUCP(IloEnv envir, const char* file) {
 
 void InstanceUCP::Initialise() {
 
+    SommePmax = 0 ;
+    for (int j = 0 ; j <n ; j++) {
+        SommePmax += Pmax[j] ;
+    }
 
-    // calculs sites
+
+    /////////////////////////////
+    ////////    Sites    ////////
+    /////////////////////////////
 
     firstUnitofSite = IloIntArray(env, S) ;
     int site=0 ;
@@ -38,112 +44,42 @@ void InstanceUCP::Initialise() {
     cout << "fisrt unit of each site: " << firstUnitofSite << endl ;
 
 
-    //calculs symétries
+    /////////////////////////////
+    //////    Symétries   ///////
+    /////////////////////////////
+
     nbG=0 ;
 
     for (int i = 0 ; i <n ; i++) {
-        if (First_[i]) {
+        if (First[i]) {
             nbG++;
         }
     }
 
-
-    FirstG_ = IloIntArray(env, nbG) ;
     FirstG = IloIntArray(env, nbG) ;
-    LastG_ = IloIntArray(env, nbG) ;
     LastG = IloIntArray(env, nbG) ;
 
     Group = IloIntArray(env, n) ;
 
     int nb2 =0 ;
     for (int i = 0 ; i <n ; i++) {
-        if (First_[i]) {
-            FirstG_[nb2] = i ;
+        if (First[i]) {
+            FirstG[nb2] = i ;
 
         }
-        if (Last_[i]) {
-            LastG_[nb2] = i ;
+        if (Last[i]) {
+            LastG[nb2] = i ;
             nb2++ ;
         }
     }
 
+    cout << "First: " << First << endl ;
+    cout << "FirstG: " << FirstG << endl ;
 
 
 
-    //Tri des unités et des pas de temps
-    C_ = IloIntArray(env, nbG);
-    IloNumArray ordre = IloNumArray(env, nbG);
-
-    for (IloInt j = 0 ; j <nbG ; j++ ) {
-        int elem = FirstG_[j];
-        C_[j] = j ;
-        ordre[j] = 1/Pmax_[elem] ;
-    }
-
-
-    IloNumArray invDemande = IloNumArray(env, T);
-
-    for (IloInt j = 0 ; j < T ; j++ ) {
-        ordreT[j] = j ;
-        invDemande[j] = 1/D[j] ;
-    }
-
-    quickSort(invDemande, ordreT, 0, T) ; // ordreT trie les t par demande décroissante
-    //cout << "ordreT : " << ordreT << endl ;
-
-    // quickSort(ordre,C_, 0, nbG);  //On trie les unités par Pmax décroissantes
-
-
-
-    int first =0 ;
-    int last = 0;
-    for (IloInt kg = 0 ; kg < nbG ; kg++ ) {
-        int g = C_[kg] ;
-        int sizeOfGroup = LastG_[g] - FirstG_[g] + 1;
-        last = first + sizeOfGroup - 1 ;
-        FirstG[kg] = first ;
-        LastG[kg] = last ;
-
-
-        int fElem = FirstG_[g] ; // indice du premier élément de g dans l'ancien système
-
-        for (int k=first ; k <= last ; k++) {
-            P[k] = P_[fElem] ;
-            Pmax[k] = Pmax_[fElem] ;
-            L[k] = L_[fElem] ;
-            l[k] = l_[fElem] ;
-            c0[k] = c0_[fElem] ;
-            cf[k] = cf_[fElem] ;
-            cp[k] = cp_[fElem] ;
-            Init[k] = Init_[fElem] ;
-            nk[k] = nk_[fElem] ;
-
-        }
-
-        first = last+1 ;
-    }
-
-    First = IloIntArray(env, n) ;
-    Last = IloIntArray(env, n) ;
-
-    for (int g= 0 ; g < nbG ; g++) {
-        First[FirstG[g]] = 1;
-        Last[LastG[g]] =  1 ;
-    }
-
-
-
-
-    SommePmax = 0 ;
-    for (int j = 0 ; j <n ; j++) {
-        SommePmax += Pmax[j] ;
-    }
-
-
-    //Calcul des indicateurs de symétries
 
     SizeG = IloIntArray(env, nbG) ;
-
 
     repartition_tailles = IloIntArray(env, n+1) ;
     for (int i=0 ; i <n ; i++) {
@@ -153,14 +89,10 @@ void InstanceUCP::Initialise() {
     MaxSize = 0 ;
     MeanSize = 0 ;
     nbG2 = 0 ;
-
-
     int groupSize = 0 ;
-
     int group_ind=0 ;
 
     for (int i = 0 ; i <n ; i++) {
-
         if (!Last[i]) {
             groupSize ++ ;
             if (First[i]) {
@@ -168,11 +100,9 @@ void InstanceUCP::Initialise() {
             }
         }
         else {
-
             groupSize++ ;
             repartition_tailles[groupSize]++ ;
             SizeG[group_ind] = groupSize ;
-
 
             if (!First[i]) {
                 MeanSize+=groupSize ;
@@ -185,7 +115,6 @@ void InstanceUCP::Initialise() {
         }
     }
 
-    cout << "First : " << First << endl ;
     MeanSize = MeanSize / nbG2;
 
     nb2=0 ;
@@ -199,10 +128,38 @@ void InstanceUCP::Initialise() {
 
 
 
-    //dérivée de la demande
+
+    ///////////////////////////////////////////////////
+    //////    Indicateurs pour le branchement   ///////
+    ///////////////////////////////////////////////////
+
+    //Tri des unités et des pas de temps
+    IloNumArray ordre = IloNumArray(env, nbG);
+
+    for (IloInt j = 0 ; j <nbG ; j++ ) {
+        int elem = FirstG[j];
+        ordre[j] = 1/Pmax[elem] ;
+    }
+
+
+    IloNumArray invDemande = IloNumArray(env, T);
+
+    for (IloInt j = 0 ; j < T ; j++ ) {
+        ordreT[j] = j ;
+        invDemande[j] = 1/D[j] ;
+    }
+
+   // quickSort(invDemande, ordreT, 0, T) ; // ordreT trie les t par demande décroissante
+    //cout << "ordreT : " << ordreT << endl ;
+
+
+
+    ///// dérivée de la demande (pour le branchement) /////
     isIncreasing = IloIntArray(env, T) ;
 
-    for (int t=0 ; t < T ; t++) {
+    ordre_ratio = IloIntArray(env, n) ;
+
+    /*for (int t=0 ; t < T ; t++) {
         int mean_next_k = 0;
         int k=5 ;
         for (int s=fmin(T-1,t+1) ; s <= fmin(T-1,t+k) ; s++) {
@@ -218,13 +175,8 @@ void InstanceUCP::Initialise() {
     }
 
 
-    ////// Indicateurs pour le branchement maison
 
-    ordre_ratio = IloIntArray(env, n) ;
-
-    //demande
-
-    /*Dmin = SommePmax ;
+    Dmin = SommePmax ;
     int Dmax1 = 0 ;
     int Dmax2 = 0 ;
 
@@ -314,19 +266,6 @@ void InstanceUCP::Lecture(const char* file) {
 
 
     //Initialisation des vecteurs de taille n et T
-    Init_ = IloBoolArray(env, n);
-    L_ = IloIntArray(env, n);
-    l_ = IloIntArray(env, n);
-    P_ = IloNumArray(env, n);
-    Pmax_ = IloNumArray(env, n);
-    cf_ = IloNumArray(env, n);
-    c0_ = IloNumArray(env, n);
-    cp_ = IloNumArray(env, n);
-    nk_ = IloIntArray(env, n);
-
-
-    First_ = IloIntArray(env,n) ;
-    Last_ = IloIntArray(env,n) ;
 
     ordreT = IloIntArray(env, T) ;
 
@@ -342,6 +281,8 @@ void InstanceUCP::Lecture(const char* file) {
     firstOfSite = IloIntArray(env, n);
     D = IloNumArray(env, T);
 
+    First = IloIntArray(env,n) ;
+    Last = IloIntArray(env,n) ;
 
 
     //Lecture des données
@@ -351,7 +292,7 @@ void InstanceUCP::Lecture(const char* file) {
     }
     nom = "";
     for(IloInt j=0; j<n; j++){
-        fichier >> Init_[j];
+        fichier >> Init[j];
     }
 
     //L
@@ -360,7 +301,7 @@ void InstanceUCP::Lecture(const char* file) {
     }
     nom = "";
     for(IloInt j=0; j<n; j++){
-        fichier >> L_[j];
+        fichier >> L[j];
     }
 
     //l
@@ -369,7 +310,7 @@ void InstanceUCP::Lecture(const char* file) {
     }
     nom = "";
     for(IloInt j=0; j<n; j++){
-        fichier >> l_[j];
+        fichier >> l[j];
     }
 
     //P
@@ -378,7 +319,7 @@ void InstanceUCP::Lecture(const char* file) {
     }
     nom = "";
     for(IloInt j=0; j<n; j++){
-        fichier >> P_[j];
+        fichier >> P[j];
     }
 
     //Pmax
@@ -387,7 +328,7 @@ void InstanceUCP::Lecture(const char* file) {
     }
     nom = "";
     for(IloInt j=0; j<n; j++){
-        fichier >> Pmax_[j];
+        fichier >> Pmax[j];
     }
 
     //cf
@@ -396,7 +337,7 @@ void InstanceUCP::Lecture(const char* file) {
     }
     nom = "";
     for(IloInt j=0; j<n; j++){
-        fichier >> cf_[j];
+        fichier >> cf[j];
     }
 
     //c0
@@ -405,7 +346,7 @@ void InstanceUCP::Lecture(const char* file) {
     }
     nom = "";
     for(IloInt j=0; j<n; j++){
-        fichier >> c0_[j];
+        fichier >> c0[j];
     }
 
     //cp
@@ -414,7 +355,7 @@ void InstanceUCP::Lecture(const char* file) {
     }
     nom = "";
     for(IloInt j=0; j<n; j++){
-        fichier >> cp_[j];
+        fichier >> cp[j];
     }
 
     //D
@@ -440,7 +381,7 @@ void InstanceUCP::Lecture(const char* file) {
     }
     nom = "";
     for(IloInt j=0; j<n; j++){
-        fichier >> nk_[j];
+        fichier >> nk[j];
     }
 
     //First
@@ -449,7 +390,7 @@ void InstanceUCP::Lecture(const char* file) {
     }
     nom = "";
     for(IloInt j=0; j<n; j++){
-        fichier >> First_[j];
+        fichier >> First[j];
     }
 
     //Last
@@ -458,7 +399,7 @@ void InstanceUCP::Lecture(const char* file) {
     }
     nom = "";
     for(IloInt j=0; j<n; j++){
-        fichier >> Last_[j];
+        fichier >> Last[j];
     }
 
 
