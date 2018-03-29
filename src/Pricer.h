@@ -16,20 +16,25 @@ using namespace scip;
 
 /** pricer class */
 // hérité d'une classe de SCIP
-class ObjPricerColoring : public ObjPricer{
+class ObjPricerUCP : public ObjPricer{
 public:
 
-    CplexPricingAlgo AlgoCplex;
+
+    InstanceUCP* inst ;
+    Master_Model* Master ;
+    vector<CplexPricingAlgo*> AlgoCplex;
 
 
    /** Constructs the pricer object with the data needed */
-   ObjPricerColoring(
+   ObjPricerUCP(
       SCIP*                               scip,        /**< SCIP pointer */
-      const char*                         p_name       /**< name of pricer */
+      const char*                         p_name,       /**< name of pricer */
+      Master_Model*                       M,
+      InstanceUCP*                        inst
       );
 
    /** Destructs the pricer object. */
-   virtual ~ObjPricerColoring();
+   virtual ~ObjPricerUCP();
 
    /** initialization method of variable pricer (called after problem was transformed) */
    virtual SCIP_DECL_PRICERINIT(scip_init);
@@ -37,8 +42,8 @@ public:
    /** reduced cost pricing method of variable pricer for feasible LPs */
    virtual SCIP_DECL_PRICERREDCOST(scip_redcost);
 
-   /** perform pricing */
-   void coloring_pricing(
+   /** performs pricing */
+   void pricingUCP(
       SCIP*              scip               /**< SCIP data structure */
       );
 

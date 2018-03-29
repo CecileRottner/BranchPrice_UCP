@@ -50,9 +50,8 @@ int main(int argc, char** argv)
         const char* file = nom.c_str() ;
 
         IloEnv env;
-        InstanceUCP inst = InstanceUCP(env, file) ;
+        InstanceUCP* inst = new InstanceUCP(env, file) ;
 
-        cout << "Somme des pmax: " << inst.getSommePmax() << endl ;
 
 
         ////////////////////////////////////
@@ -76,6 +75,8 @@ int main(int argc, char** argv)
        /* create empty problem */
         SCIPcreateProb(scip, "UCP", 0, 0, 0, 0, 0, 0, 0);
 
+
+
         //////////////////////////////////////////////
         //////  MASTER PROBLEM INITIALIZATION    /////
         //////////////////////////////////////////////
@@ -88,18 +89,12 @@ int main(int argc, char** argv)
         SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
 
 
+
+
         ////////////////////////////////
         //////  PRICING PROBLEM    /////
         ////////////////////////////////
 
-
-        CplexPricingAlgo Pricing;
-        Pricing.initialize(inst, 0);
-
-        IloNumArray plan = IloNumArray(env, inst.nbUnits(0)*T) ;
-
-        double obj ;
-        Pricing.findUpDownPlan(inst, plan, obj) ;
 
 
 
@@ -110,6 +105,7 @@ int main(int argc, char** argv)
         SCIPsolve(scip);
 
     }
+
 
     return 0;
 }

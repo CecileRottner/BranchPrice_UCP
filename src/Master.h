@@ -36,7 +36,7 @@ public:
     double cost ;
 
     Master_Variable(int site, IloIntArray UpDown) ;
-    void computeCost(const InstanceUCP & inst) ;
+    void computeCost(InstanceUCP* inst) ;
 
 };
 
@@ -57,8 +57,8 @@ public:
     //NB: le fait d'utiliser une liste ne permet pas de supprimer des variables
     list<Master_Variable*> L_var;
 
-    Master_Model(const InstanceUCP & inst) ;
-    void  InitScipMasterModel(SCIP* scip, const InstanceUCP & inst);
+    Master_Model(InstanceUCP* inst) ;
+    void  InitScipMasterModel(SCIP* scip, InstanceUCP* inst);
 
 };
 

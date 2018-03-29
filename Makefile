@@ -58,6 +58,7 @@ MAINOBJ		=	main.o \
 			Process.o \
 			Master.o \
 			CplexPricingAlgo.o \
+			Pricer.o \
 
 
 MAINSRC		=	$(addprefix $(SRCDIR)/,$(MAINOBJ:.o=.cpp))

@@ -2,21 +2,21 @@
 
 using namespace std;
 
-DualCosts::DualCosts(const InstanceUCP &inst) {
-    int n = inst.getn() ;
-    int T= inst.getT() ;
+DualCosts::DualCosts(InstanceUCP* inst) {
+    int n = inst->getn() ;
+    int T= inst->getT() ;
     Mu.resize(T, 0) ;
     Nu.resize(n*T, 0) ;
-    Sigma.resize(inst.getS(), 0) ;
+    Sigma.resize(inst->getS(), 0) ;
 }
 
 
-void CplexPricingAlgo::initialize(const InstanceUCP &inst, int site) {
+CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
     Site=site ;
 
-    int ns = inst.nbUnits(Site) ;
-    int first = inst.firstUnit(Site) ;
-    int T = inst.getT() ;
+    int ns = inst->nbUnits(Site) ;
+    int first = inst->firstUnit(Site) ;
+    int T = inst->getT() ;
     model = IloModel(env) ;
 
     x = IloBoolVarArray(env, ns*T) ;
@@ -26,9 +26,9 @@ void CplexPricingAlgo::initialize(const InstanceUCP &inst, int site) {
 
     // Min up constraints
     for (int i=0; i<ns; i++) {
-        for (int t=inst.getL(first+i) ; t < T ; t++) {
+        for (int t=inst->getL(first+i) ; t < T ; t++) {
             IloExpr sum(env) ;
-            for (int k= t - inst.getL(first+i) + 1; k <= t ; k++) {
+            for (int k= t - inst->getL(first+i) + 1; k <= t ; k++) {
                 sum += u[i*T + k] ;
             }
             model.add(sum <= x[i*T + t]) ;
@@ -39,12 +39,12 @@ void CplexPricingAlgo::initialize(const InstanceUCP &inst, int site) {
 
     // Min down constraints
     for (int i=0; i<ns; i++) {
-        for (int t=inst.getl(first+i) ; t < T ; t++) {
+        for (int t=inst->getl(first+i) ; t < T ; t++) {
             IloExpr sum(env) ;
-            for (int k= t - inst.getl(first+i) + 1; k <= t ; k++) {
+            for (int k= t - inst->getl(first+i) + 1; k <= t ; k++) {
                 sum += u[i*T + k] ;
             }
-            model.add(sum <= 1 - x[i*T + t - inst.getl(first+i)]) ;
+            model.add(sum <= 1 - x[i*T + t - inst->getl(first+i)]) ;
             sum.end() ;
         }
     }
@@ -70,7 +70,7 @@ void CplexPricingAlgo::initialize(const InstanceUCP &inst, int site) {
     //Objectif pour u
     for (int i=0 ; i<ns ; i++) {
         for (int t=0 ; t < T ; t++) {
-            obj.setLinearCoef(u[i*T +t],inst.getc0(first+i));
+            obj.setLinearCoef(u[i*T +t],inst->getc0(first+i));
         }
     }
 
@@ -80,24 +80,24 @@ void CplexPricingAlgo::initialize(const InstanceUCP &inst, int site) {
     //Initialisation des coefficients objectifs (primaux) de x
     BaseObjCoefX.resize(ns, 0) ;
     for (int i=0 ; i <ns ; i++) {
-        BaseObjCoefX[i] = inst.getcf(first+i) + (inst.getPmax(first+i) - inst.getPmin(first+i))*inst.getcp(first+i) ;
+        BaseObjCoefX[i] = inst->getcf(first+i) + (inst->getPmax(first+i) - inst->getPmin(first+i))*inst->getcp(first+i) ;
     }
 
 }
 
-void CplexPricingAlgo::updateObjCoefficients(const InstanceUCP & inst, const DualCosts & Dual) {
-    int ns = inst.nbUnits(Site) ;
-    int T = inst.getT();
-    int first = inst.firstUnit(Site) ;
+void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const DualCosts & Dual) {
+    int ns = inst->nbUnits(Site) ;
+    int T = inst->getT();
+    int first = inst->firstUnit(Site) ;
     for (int i=0 ; i<ns ; i++) {
         for (int t=0 ; t < T ; t++) {
-            obj.setLinearCoef(x[i*T +t],BaseObjCoefX[i] - inst.getPmin(first+i)*Dual.Mu[t] - (inst.getPmax(first+i) - inst.getPmin(first+i))*Dual.Nu[i*T+t] - Dual.Sigma[Site]);
+            obj.setLinearCoef(x[i*T +t],BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[i*T+t] - Dual.Sigma[Site]);
         }
     }
 }
 
 
-bool CplexPricingAlgo::findUpDownPlan(const InstanceUCP & inst, IloNumArray UpDownPlan, double& objvalue) {
+bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan, double& objvalue) {
     //returns True if an improving Up/Down plan has been found
 
     if ( !cplex.solve() ) {
@@ -112,7 +112,7 @@ bool CplexPricingAlgo::findUpDownPlan(const InstanceUCP & inst, IloNumArray UpDo
       return false;
     }
     else {
-      // IloNumArray* UpDown = new IloIntArray(env, inst.nbUnits(Site)*inst.getT()) ;
+      // IloNumArray* UpDown = new IloIntArray(env, inst->nbUnits(Site)*inst->getT()) ;
        cplex.getValues(x, UpDownPlan) ;
     }
 
