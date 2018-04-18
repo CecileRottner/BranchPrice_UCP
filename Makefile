@@ -1,4 +1,4 @@
-#@brief   Makefile for C++ coloring example
+#@brief   Makefile for C++ UCP
 # using SCIP for branch-and-price
 # and Cplex for pricing
 
@@ -59,7 +59,7 @@ MAINOBJ		=	main.o \
 			Master.o \
 			CplexPricingAlgo.o \
 			Pricer.o \
-
+			BranchConsHandler.o \
 
 MAINSRC		=	$(addprefix $(SRCDIR)/,$(MAINOBJ:.o=.cpp))
 MAINDEP		=	$(SRCDIR)/depend.cppmain.$(OPT)

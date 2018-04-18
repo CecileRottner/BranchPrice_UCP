@@ -14,7 +14,7 @@ private:
 
     IloInt n, T, K, S ;
     IloBoolArray Init ;
-    IloIntArray L, l, nk, firstOfSite ;
+    IloIntArray L, l, nk, firstOfSite, SiteOf ;
     IloNumArray D, P, Pmax, cf, c0, cp ;
 
     IloIntArray First ; // i est le premier element d'un groupe d'unités identiques, First[i]=1
@@ -103,6 +103,7 @@ public:
     IloInt getT() const ;
     IloInt getS() const ;
     IloInt firstUnit(IloInt s) const ;
+    IloInt getSiteOf(IloInt i) const;
     IloInt nbUnits(IloInt s) const ; // nombre d'unités sur le site s
 
     IloBool getInit(IloInt i) const ;

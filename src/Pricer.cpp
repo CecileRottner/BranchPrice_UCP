@@ -27,7 +27,7 @@ ObjPricerUCP::ObjPricerUCP(
 
 
     inst=instance ;
-    Master=M;  // save a pointer on data graph
+    Master=M;
 
     AlgoCplex = vector<CplexPricingAlgo*>(inst->getS(), NULL) ;
 
@@ -73,6 +73,8 @@ SCIP_DECL_PRICERINIT(ObjPricerUCP::scip_init)
 
 
     //variables ?
+
+
     //pour l'instant on n'a pas besoin de les manipuler a priori
 
     return SCIP_OKAY;

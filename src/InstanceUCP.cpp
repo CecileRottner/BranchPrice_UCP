@@ -43,6 +43,15 @@ void InstanceUCP::Initialise() {
 
     cout << "fisrt unit of each site: " << firstUnitofSite << endl ;
 
+    SiteOf = IloIntArray(env, n) ;
+    site=-1 ;
+
+    for (int j=0 ; j <n ; j++) {
+        if (firstOfSite[j]) {
+            site++;
+        }
+        SiteOf[j]=site ;
+    }
 
     /////////////////////////////
     //////    Symétries   ///////
@@ -464,6 +473,11 @@ IloInt InstanceUCP::getS() const {
 
 IloInt InstanceUCP::firstUnit(IloInt s) const {
     return firstUnitofSite[s] ;
+}
+
+
+IloInt InstanceUCP::getSiteOf(IloInt i) const {
+    return SiteOf[i] ;
 }
 
 IloInt InstanceUCP::nbUnits(IloInt s) const {
