@@ -1,4 +1,5 @@
 #include "CplexPricingAlgo.h"
+#include <iostream>
 
 using namespace std;
 
@@ -81,6 +82,7 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
     BaseObjCoefX.resize(ns, 0) ;
     for (int i=0 ; i <ns ; i++) {
         BaseObjCoefX[i] = inst->getcf(first+i) + (inst->getPmax(first+i) - inst->getPmin(first+i))*inst->getcp(first+i) ;
+      //  cout << "unit i: " << inst->getcf(first+i) + (inst->getPmax(first+i) - inst->getPmin(first+i))*inst->getcp(first+i) << endl ;
     }
 
 }
@@ -92,6 +94,7 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const DualCosts 
     for (int i=0 ; i<ns ; i++) {
         for (int t=0 ; t < T ; t++) {
             obj.setLinearCoef(x[i*T +t],BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[i*T+t] - Dual.Sigma[Site]);
+            //cout << "obj coef: " << BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[i*T+t] + Dual.Sigma[Site] << endl ;
         }
     }
 }
@@ -99,6 +102,9 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const DualCosts 
 
 bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan, double& objvalue) {
     //returns True if an improving Up/Down plan has been found
+
+    ofstream LogFile("LogFile.txt");
+    cplex.setOut(LogFile);
 
     if ( !cplex.solve() ) {
       env.error() << "Failed to optimize Pricer with Cplex" << endl;
@@ -114,6 +120,7 @@ bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan,
     else {
       // IloNumArray* UpDown = new IloIntArray(env, inst->nbUnits(Site)*inst->getT()) ;
        cplex.getValues(x, UpDownPlan) ;
+       objvalue = cplex.getObjValue() ;
     }
 
 

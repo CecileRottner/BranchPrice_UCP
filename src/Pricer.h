@@ -19,11 +19,9 @@ using namespace scip;
 class ObjPricerUCP : public ObjPricer{
 public:
 
-
     InstanceUCP* inst ;
     Master_Model* Master ;
     vector<CplexPricingAlgo*> AlgoCplex;
-
 
    /** Constructs the pricer object with the data needed */
    ObjPricerUCP(

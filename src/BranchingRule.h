@@ -6,6 +6,7 @@
 
 #include "Master.h"
 #include "InstanceUCP.h"
+#include "Pricer.h"
 
 using namespace std;
 
@@ -14,21 +15,23 @@ using namespace std;
  * Manage the branching decisions
  **/
 class BranchingRule : public scip::ObjBranchrule {
-  public:
+public:
 
-  InstanceUCP* inst ;
-  Master_Model* master ;
+    InstanceUCP* inst ;
+    Master_Model* master ;
+    ObjPricerUCP* pricer ;
 
 
- BranchingRule(SCIP* scip, InstanceUCP* i, Master_Model* m ) : scip::ObjBranchrule(scip, "BranchingOn(x,u)", "", 2000000, -1, 1.0) // properties of the branching rule (see doc)
+    BranchingRule(SCIP* scip, InstanceUCP* i, Master_Model* m, ObjPricerUCP* p ) : scip::ObjBranchrule(scip, "BranchingOn(x,u)", "", 2000000, -1, 1.0) // properties of the branching rule (see doc)
     {
-      master=m;
-      inst=i;
+        master = m;
+        inst = i;
+        pricer = p ;
     }
 
-   virtual ~BranchingRule(){}
-   
-   /*
+    virtual ~BranchingRule(){}
+
+    /*
      * Exec the branching rule
      *  Possible return values for *result (if more than one applies, the first in the list should be used):
      *  - SCIP_CUTOFF     : the current node was detected to be infeasible
@@ -40,11 +43,11 @@ class BranchingRule : public scip::ObjBranchrule {
      *  - SCIP_DIDNOTRUN  : the branching rule was skipped
      */
     SCIP_RETCODE scip_execlp(
-	SCIP*              scip,               /** SCIP data structure */
-	SCIP_BRANCHRULE*   branchrule,         /** the branching rule itself */
-	SCIP_Bool          allowaddcons,       /** should adding constraints be allowed to avoid a branching? */
-	SCIP_RESULT*       result              /** pointer to store the result of the branching call */
-	);
+            SCIP*              scip,               /** SCIP data structure */
+            SCIP_BRANCHRULE*   branchrule,         /** the branching rule itself */
+            SCIP_Bool          allowaddcons,       /** should adding constraints be allowed to avoid a branching? */
+            SCIP_RESULT*       result              /** pointer to store the result of the branching call */
+            );
 
 };
 

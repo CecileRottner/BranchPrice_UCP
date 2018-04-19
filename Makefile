@@ -60,6 +60,7 @@ MAINOBJ		=	main.o \
 			CplexPricingAlgo.o \
 			Pricer.o \
 			BranchConsHandler.o \
+			BranchingRule.o \
 
 MAINSRC		=	$(addprefix $(SRCDIR)/,$(MAINOBJ:.o=.cpp))
 MAINDEP		=	$(SRCDIR)/depend.cppmain.$(OPT)

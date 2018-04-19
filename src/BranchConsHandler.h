@@ -50,7 +50,7 @@ public :
 
     ObjPricerUCP *pricer_ptr;
 
-    BranchConsHandler(SCIP* scip,ObjPricerUCP *ppricer_ptr) :
+    BranchConsHandler(SCIP* scip, ObjPricerUCP* ppricer_ptr) :
         scip::ObjConshdlr(
             scip,
             "BranchConsHandler",                    // const char *  	name,

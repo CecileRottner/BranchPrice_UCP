@@ -14,6 +14,9 @@
 #include "InstanceUCP.h"
 #include "Process.h"
 #include "Master.h"
+#include "Pricer.h"
+#include "BranchConsHandler.h"
+#include "BranchingRule.h"
 #include "CplexPricingAlgo.h"
 
 /* namespace usage */
@@ -85,16 +88,43 @@ int main(int argc, char** argv)
         Master.InitScipMasterModel(scip, inst) ;
 
 
-        cout<<"Write initial LP"<<endl;
-        SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
-
-
-
-
         ////////////////////////////////
         //////  PRICING PROBLEM    /////
         ////////////////////////////////
 
+        static const char* PRICER_NAME = "Pricer_UCP";
+
+        // include UCP pricer
+        ObjPricerUCP* pricer_ptr = new ObjPricerUCP(scip, PRICER_NAME, &Master, inst);
+
+        SCIPincludeObjPricer(scip, pricer_ptr, true);
+
+        // activate pricer
+        SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
+
+
+        cout<<"Write init pl"<<endl;
+        SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
+
+
+
+        //////////////////////////
+        //////  BRANCHING    /////
+        //////////////////////////
+
+        BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
+        BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
+
+        SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
+        SCIPincludeObjBranchrule(scip, branchRule, TRUE);
+
+
+
+        /*************
+         *  Solve    *
+         *************/
+
+        SCIPsolve(scip);
 
 
 

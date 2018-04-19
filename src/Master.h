@@ -31,11 +31,11 @@ public:
     int Site ; //index of the site
 
     //// up/down plan corresponding to ptr
-    IloIntArray UpDown_plan ;
+    IloNumArray UpDown_plan ;
 
     double cost ;
 
-    Master_Variable(int site, IloIntArray UpDown) ;
+    Master_Variable(int site, IloNumArray UpDown) ;
     void computeCost(InstanceUCP* inst) ;
 
 };
@@ -58,7 +58,10 @@ public:
     list<Master_Variable*> L_var;
 
     Master_Model(InstanceUCP* inst) ;
+
+    void addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) ;
     void  InitScipMasterModel(SCIP* scip, InstanceUCP* inst);
+
 
 };
 

@@ -4,7 +4,7 @@
 using namespace std;
 using namespace scip;
 
-Master_Variable::Master_Variable(int site, IloIntArray UpDown) {
+Master_Variable::Master_Variable(int site, IloNumArray UpDown) {
     ptr = NULL ;
     Site = site ;
     cost = 0 ;
@@ -22,7 +22,7 @@ void Master_Variable::computeCost(InstanceUCP* inst) {
     int last = inst->firstUnit(Site) + inst->nbUnits(Site) - 1 ;
 
 
-    cout << "site " << Site << ", first unit : " << first << ", nb units: " << inst->nbUnits(Site) << endl ;
+    // cout << "site " << Site << ", first unit : " << first << ", nb units: " << inst->nbUnits(Site) << endl ;
 
     for (int i = first ; i <= last ; i++) {
         int down_t_1 = 0 ;
@@ -41,6 +41,37 @@ void Master_Variable::computeCost(InstanceUCP* inst) {
         }
     }
 }
+
+
+void Master_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) {
+
+    int s = lambda->Site ;
+
+    /* for each time period, add coefficient pmin(i) into the demand constraint at t, for each unit unit i in site S */
+    for (int t=0 ; t < T ; t++) {
+        for (int i=inst->firstUnit(s) ; i < inst->firstUnit(s) + inst->nbUnits(s) ; i++) {
+            int nb = i - inst->firstUnit(s) ;
+            if (lambda->UpDown_plan[nb*T+t]) {
+                SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(i)) ;
+            }
+        }
+    }
+
+    /* for each time period and each unit in site S, add coefficient pmin(i) - pmax(i) into the power limit constraint of unit i at t */
+    for (int t=0 ; t < T ; t++) {
+        for (int i=inst->firstUnit(s) ; i < inst->firstUnit(s) + inst->nbUnits(s) ; i++) {
+            int nb = i - inst->firstUnit(s) ;
+            if (lambda->UpDown_plan[nb*T+t]) {
+                SCIPaddCoefLinear(scip, power_limits[i*T+t], lambda->ptr, inst->getPmin(i) - inst->getPmax(i)) ;
+            }
+        }
+    }
+
+    /* add coefficient to the convexity constraint for site s */
+    SCIPaddCoefLinear(scip, convexity_cstr[s], lambda->ptr, 1.0) ;
+
+}
+
 
 Master_Model::Master_Model(InstanceUCP* inst) {
     n = inst->getn() ;
@@ -116,7 +147,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
         SCIP_CONS* con = NULL;
         (void) SCIPsnprintf(con_name_convex, 255, "Convexity(%d)", s); // nom de la contrainte
         SCIPcreateConsLinear( scip, &con, con_name_convex, 0, NULL, NULL,
-                              1.0,   // lhs
+                              - SCIPinfinity(scip),   // lhs
                               1.0,   // rhs  SCIPinfinity(scip) if >=1
                               true,  /* initial */
                               false, /* separate */
@@ -188,12 +219,16 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
        * due to the set partitioning constraints.
        */
 
-        IloIntArray plan = IloIntArray(env, inst->nbUnits(s)*T) ;
+        IloNumArray plan = IloNumArray(env, inst->nbUnits(s)*T) ;
+        for (int index=0 ; index < inst->nbUnits(s)*T ; index++) {
+            plan[index]=1 ;
+        }
 
         Master_Variable* lambda = new Master_Variable(s, plan);
 
         lambda->computeCost(inst);
         double cost= lambda->cost;
+        cout << "cost: " << cost << endl ;
 
         L_var.push_back(lambda);
 
@@ -208,27 +243,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
         /* add new variable to the list of variables to price into LP (score: leave 1 here) */
         SCIPaddVar(scip, lambda->ptr);
 
-
-        /* for each time period, add coefficient pmin(i) into the demand constraint at t, for each unit unit i in site S */
-        for (int t=0 ; t < T ; t++) {
-            for (int i=inst->firstUnit(s) ; i < inst->firstUnit(s) + inst->nbUnits(s) ; i++) {
-                SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(i)) ;
-            }
-        }
-
-
-        /* for each time period and each unit in site S, add coefficient pmin(i) - pmax(i) into the power limit constraint of unit i at t */
-        for (int t=0 ; t < T ; t++) {
-            for (int i=inst->firstUnit(s) ; i < inst->firstUnit(s) + inst->nbUnits(s) ; i++) {
-                SCIPaddCoefLinear(scip, power_limits[i*T+t], lambda->ptr, inst->getPmin(i) - inst->getPmax(i)) ;
-            }
-        }
-
-        /* add coefficient to the convexity constraint for site s */
-        SCIPaddCoefLinear(scip, convexity_cstr[s], lambda->ptr, 1.0) ;
-
-
+        addCoefsToConstraints(scip, lambda, inst) ;
     }
-
 
 }
