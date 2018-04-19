@@ -6,7 +6,7 @@
 
 //////////////////////////////////////////////
 //////////////////////////////////////////////
-void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, ObjPricerUCP* pricer, SCIP_CONS** cons) {
+void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, int site, ObjPricerUCP* pricer, SCIP_CONS** cons) {
 
 
 #ifdef OUTPUT_HANDLER
@@ -27,20 +27,19 @@ void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, ObjPr
     consdata->bound = bound;
     consdata->unit = unit ;
     consdata->time = time ;
+    consdata->site = site ;
 
-    int site = pricer->inst->getSiteOf(unit) ;
-
-    //TODO; modifier indice de x
+    int T = pricer->inst->getT() ;
 
     if (VarX) {
-        consdata->BranchConstraint = ((pricer->AlgoCplex[site])->x[0] == bound) ;
+        consdata->BranchConstraint = ((pricer->AlgoCplex[site])->x[unit*T+time] == bound) ;
     }
     else {
-        consdata->BranchConstraint = ((pricer->AlgoCplex[site])->u[0] == bound) ;
+        consdata->BranchConstraint = ((pricer->AlgoCplex[site])->u[unit*T+time] == bound) ;
     }
 
 
-    SCIPcreateCons(scip, cons, "BranchConsCste", conshdlr, consdata,
+    SCIPcreateCons(scip, cons, "BranchConsCstr", conshdlr, consdata,
                    FALSE, //initial
                    FALSE, //separate
                    FALSE, //enforce
@@ -65,7 +64,7 @@ void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, ObjPr
 //////////////////////////////////////////////
 SCIP_RETCODE BranchConsHandler::scip_active(SCIP * scip, SCIP_CONSHDLR * conshdlr, SCIP_CONS * cons) {
 
-    // si un stable est interdit, on le signifie à Cplex avec un incumbent callback lors de la résolution du pricer
+
 
 #ifdef OUTPUT_HANDLER
     cout << " --------------------- Active handler ---------------  \n";
@@ -73,6 +72,8 @@ SCIP_RETCODE BranchConsHandler::scip_active(SCIP * scip, SCIP_CONSHDLR * conshdl
 
     SCIP_ConsData *consdata = SCIPconsGetData(cons);
 
+    //On ajoute la contrainte dans cons au modèle Cplex du sous problème correspondant
+    pricer_ptr->AlgoCplex[consdata->site]->model.add(consdata->BranchConstraint) ;
 
 
 #ifdef OUTPUT_HANDLER
@@ -90,6 +91,11 @@ SCIP_RETCODE BranchConsHandler::scip_deactive(SCIP* scip, SCIP_CONSHDLR* conshdl
     cout << " --------------------- Desactive handler ---------------  \n";
 #endif
 
+
+    SCIP_ConsData *consdata = SCIPconsGetData(cons);
+
+    //On retire la contrainte dans cons au modèle Cplex du sous problème correspondant
+    pricer_ptr->AlgoCplex[consdata->site]->model.remove(consdata->BranchConstraint) ;
 
     return SCIP_OKAY;
 }

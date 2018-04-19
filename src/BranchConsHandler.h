@@ -24,8 +24,9 @@ struct SCIP_ConsData {
 
     int VarX ; // =1 si la variable branchée est un x. Si branchement sur u: VarX=0
     int bound ; // variable fixée à 1 ou à 0
-    int unit;
+    int unit; // which unit of the site
     int time ;
+    int site ;
     IloRange BranchConstraint ;
 
 };
@@ -37,7 +38,7 @@ struct SCIP_ConsData {
  * Create an "artificial" constraint that will be included locally in the node for containg the node data
  * in particular, creates cplex constraint "BranchConstraint" for ConsData structure
  *****/
-void createBranchCstr(SCIP* scip_, int VarX, int bound, int unit, int time, ObjPricerUCP* pricer, SCIP_CONS** cons);
+void createBranchCstr(SCIP* scip_, int VarX, int bound, int unit, int time, int site, ObjPricerUCP* pricer, SCIP_CONS** cons);
 
 
 ///////////////////////////:::
