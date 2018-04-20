@@ -114,21 +114,25 @@ SCIP_RETCODE BranchConsHandler::scip_trans(
     std::cout << " --------------------- Trans handler ---------------  \n";
 #endif
 
-//    SCIP_CONSDATA* sourcedata;
-//    SCIP_CONSDATA* targetdata;
+    SCIP_CONSDATA* sourcedata;
+    SCIP_CONSDATA* targetdata;
 
-//    sourcedata = SCIPconsGetData(sourcecons);
-//    targetdata = NULL;
+    sourcedata = SCIPconsGetData(sourcecons);
+    targetdata = NULL;
 
-//    targetdata= new SCIP_CONSDATA;
-//    targetdata->var = sourcedata->var;
-//    targetdata->father_data = sourcedata->father_data;
+    targetdata= new SCIP_CONSDATA;
+    targetdata->VarX = sourcedata->VarX;
+    targetdata->bound = sourcedata->bound;
+    targetdata->unit = sourcedata->unit;
+    targetdata->time = sourcedata->time;
+    targetdata->site = sourcedata->site;
+    targetdata->BranchConstraint = sourcedata->BranchConstraint;
 
-//    SCIPcreateCons(scip, targetcons, SCIPconsGetName(sourcecons), conshdlr, targetdata,
-//                   SCIPconsIsInitial(sourcecons), SCIPconsIsSeparated(sourcecons), SCIPconsIsEnforced(sourcecons),
-//                   SCIPconsIsChecked(sourcecons), SCIPconsIsPropagated(sourcecons),
-//                   SCIPconsIsLocal(sourcecons), SCIPconsIsModifiable(sourcecons),
-//                   SCIPconsIsDynamic(sourcecons), SCIPconsIsRemovable(sourcecons), SCIPconsIsStickingAtNode(sourcecons));
+    SCIPcreateCons(scip, targetcons, SCIPconsGetName(sourcecons), conshdlr, targetdata,
+                   SCIPconsIsInitial(sourcecons), SCIPconsIsSeparated(sourcecons), SCIPconsIsEnforced(sourcecons),
+                   SCIPconsIsChecked(sourcecons), SCIPconsIsPropagated(sourcecons),
+                   SCIPconsIsLocal(sourcecons), SCIPconsIsModifiable(sourcecons),
+                   SCIPconsIsDynamic(sourcecons), SCIPconsIsRemovable(sourcecons), SCIPconsIsStickingAtNode(sourcecons));
 
 
 

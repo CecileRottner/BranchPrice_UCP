@@ -122,28 +122,32 @@ void ObjPricerUCP::pricingUCP(
 
     DualCosts dual_cost = DualCosts(inst) ;
 
+
+
     ///// RECUPERATION DES COUTS DUAUX
     //couts duaux des power limits
     for (int i = 0; i < n; i++) {
         for (int t = 0 ; t < T ; t++) {
             dual_cost.Nu[i*T+t] = SCIPgetDualsolLinear(scip, Master->power_limits[i*T+t]);
-          // cout << "nu: " << dual_cost.Nu[i*T+t] <<endl;
+           cout << "nu: " << dual_cost.Nu[i*T+t] <<endl;
         }
     }
 
     //couts duaux demande
     for (int t = 0 ; t < T ; t++) {
         dual_cost.Mu[t] = SCIPgetDualsolLinear(scip, Master->demand_cstr[t]);
-        // cout << "mu: " << dual_cost.Mu[t] <<endl;
+         cout << "mu: " << dual_cost.Mu[t] <<endl;
     }
 
     //couts duaux contrainte convexité
     for (int s = 0 ; s < S ; s++) {
         dual_cost.Sigma[s] = SCIPgetDualsolLinear(scip, Master->convexity_cstr[s]);
-
-       // cout << "sigma: " << dual_cost.Sigma[s] <<endl;
+        cout << "sigma: " << dual_cost.Sigma[s] <<endl;
     }
 
+    cout << "solution associée" << endl ;
+
+    SCIPprintBestSol(scip, NULL, FALSE);
 
 
     for (int s = 0 ; s < S ; s++) {
@@ -158,7 +162,7 @@ void ObjPricerUCP::pricingUCP(
         //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
         double objvalue = 0 ;
         IloNumArray upDownPlan = IloNumArray((AlgoCplex[s])->env, inst->nbUnits(s)*T) ;
-        (AlgoCplex[s])->findUpDownPlan(inst, upDownPlan, objvalue) ;
+        (AlgoCplex[s])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue) ;
 
         cout << "obj value : "<< objvalue << endl ;
 

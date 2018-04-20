@@ -41,7 +41,7 @@ class CplexPricingAlgo {
   void addBranchingConstraint(); //local to the branch considered
 
   // Launch Cplex solver and get back an optimal up/down plan
-  bool findUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan, double & objvalue);
+  bool findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual, IloNumArray UpDownPlan, double & objvalue);
 
 };
 

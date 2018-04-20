@@ -93,14 +93,14 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const DualCosts 
     int first = inst->firstUnit(Site) ;
     for (int i=0 ; i<ns ; i++) {
         for (int t=0 ; t < T ; t++) {
-            obj.setLinearCoef(x[i*T +t],BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[i*T+t] - Dual.Sigma[Site]);
-            //cout << "obj coef: " << BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[i*T+t] + Dual.Sigma[Site] << endl ;
+            obj.setLinearCoef(x[i*T +t],BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) + inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] );
+            //cout << "obj coef: " << BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] - Dual.Sigma[Site] << endl ;
         }
     }
 }
 
 
-bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan, double& objvalue) {
+bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual, IloNumArray UpDownPlan, double& objvalue) {
     //returns True if an improving Up/Down plan has been found
 
     ofstream LogFile("LogFile.txt");
@@ -118,9 +118,8 @@ bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan,
       return false;
     }
     else {
-      // IloNumArray* UpDown = new IloIntArray(env, inst->nbUnits(Site)*inst->getT()) ;
        cplex.getValues(x, UpDownPlan) ;
-       objvalue = cplex.getObjValue() ;
+       objvalue = cplex.getObjValue() - Dual.Sigma[Site] ;
     }
 
 

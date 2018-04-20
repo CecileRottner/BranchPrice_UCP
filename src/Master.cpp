@@ -46,23 +46,22 @@ void Master_Variable::computeCost(InstanceUCP* inst) {
 void Master_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) {
 
     int s = lambda->Site ;
+    int first = inst->firstUnit(s) ;
 
-    /* for each time period, add coefficient pmin(i) into the demand constraint at t, for each unit unit i in site S */
+    /* for each time period, add coefficient pmin into the demand constraint at t, for each unit unit i up in site S */
     for (int t=0 ; t < T ; t++) {
-        for (int i=inst->firstUnit(s) ; i < inst->firstUnit(s) + inst->nbUnits(s) ; i++) {
-            int nb = i - inst->firstUnit(s) ;
-            if (lambda->UpDown_plan[nb*T+t]) {
-                SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(i)) ;
+        for (int i=0 ; i < inst->nbUnits(s) ; i++) {
+            if (lambda->UpDown_plan[i*T+t]) {
+                SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(first+i)) ;
             }
         }
     }
 
     /* for each time period and each unit in site S, add coefficient pmin(i) - pmax(i) into the power limit constraint of unit i at t */
     for (int t=0 ; t < T ; t++) {
-        for (int i=inst->firstUnit(s) ; i < inst->firstUnit(s) + inst->nbUnits(s) ; i++) {
-            int nb = i - inst->firstUnit(s) ;
-            if (lambda->UpDown_plan[nb*T+t]) {
-                SCIPaddCoefLinear(scip, power_limits[i*T+t], lambda->ptr, inst->getPmin(i) - inst->getPmax(i)) ;
+        for (int i=0 ; i < inst->nbUnits(s) ; i++) {
+            if (lambda->UpDown_plan[i*T+t]) {
+                SCIPaddCoefLinear(scip, power_limits[(first+i)*T+t], lambda->ptr, inst->getPmax(first+i) - inst->getPmin(first+i)) ;
             }
         }
     }
@@ -99,7 +98,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
         (void) SCIPsnprintf(con_name_demand, 255, "Demand(%d)", t); // nom de la contrainte
         SCIPcreateConsLinear( scip, &con, con_name_demand, 0, NULL, NULL,
                               inst->getD(t),   // lhs
-                              SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
+                              inst->getD(t),   // rhs  SCIPinfinity(scip) if >=1
                               true,  /* initial */
                               false, /* separate */
                               true,  /* enforce */
@@ -123,7 +122,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
             SCIP_CONS* con = NULL;
             (void) SCIPsnprintf(con_name_power_limit, 255, "PowerLimit(%d,%d)", i, t); // nom de la contrainte
             SCIPcreateConsLinear( scip, &con, con_name_power_limit, 0, NULL, NULL,
-                                  -SCIPinfinity(scip),   // lhs
+                                  0.0,   // lhs
                                   0.0,   // rhs  SCIPinfinity(scip) if >=1
                                   true,  /* initial */
                                   false, /* separate */
@@ -147,7 +146,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
         SCIP_CONS* con = NULL;
         (void) SCIPsnprintf(con_name_convex, 255, "Convexity(%d)", s); // nom de la contrainte
         SCIPcreateConsLinear( scip, &con, con_name_convex, 0, NULL, NULL,
-                              - SCIPinfinity(scip),   // lhs
+                              1.0,   // lhs
                               1.0,   // rhs  SCIPinfinity(scip) if >=1
                               true,  /* initial */
                               false, /* separate */
@@ -162,6 +161,65 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
         SCIPaddCons(scip, con);
         convexity_cstr[s] = con;
     }
+
+    ///////////////////////////////////////
+    ////////   SLACK VARIABLES   //////////
+    ///////////////////////////////////////
+
+    char slack_power_name[255];
+
+    for (int i = 0 ; i <n ; i++)
+    {
+        for (int t = 0; t < T; t++)
+        {
+            SCIP_VAR* var = NULL;
+
+            SCIPsnprintf(slack_power_name, 255, "slack_power(%d,%d)",i,t);
+            SCIPdebugMsg(scip, "Variable <%s>\n", slack_power_name);
+
+
+            SCIPcreateVar(scip, &var, slack_power_name,
+                          0.0,                     // lower bound
+                          inst->getPmax(i) - inst->getPmin(i),      // upper bound
+                          0.0,                     // objective
+                          SCIP_VARTYPE_CONTINUOUS, // variable type
+                          true, false, NULL, NULL, NULL, NULL, NULL);
+
+
+            /* add new variable to scip */
+            SCIPaddVar(scip, var);
+
+            /* add coefficient to the power limit constraint */
+            SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);
+        }
+    }
+
+    char slack_demand_name[255];
+
+    for (int t = 0; t < T; t++)
+    {
+        SCIP_VAR* var = NULL;
+
+        SCIPsnprintf(slack_demand_name, 255, "slack_demand(%d)",t);
+        SCIPdebugMsg(scip, "Variable <%s>\n", slack_demand_name);
+
+
+        SCIPcreateVar(scip, &var, slack_demand_name,
+                      0.0,                     // lower bound
+                      1000,      // upper bound
+                      0.0,                     // objective
+                      SCIP_VARTYPE_CONTINUOUS, // variable type
+                      true, false, NULL, NULL, NULL, NULL, NULL);
+
+
+        /* add new variable to scip */
+        SCIPaddVar(scip, var);
+
+        /* add coefficient to the demand constraint */
+        SCIPaddCoefLinear(scip, demand_cstr[t], var, -1.0);
+    }
+
+
 
 
     /////////////////////////////////////////////////////////////
@@ -195,7 +253,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
             SCIPaddCoefLinear(scip, demand_cstr[t], var, 1.0);
 
             /* add coefficient to the power limit constraint */
-            SCIPaddCoefLinear(scip, power_limits[i*T + t], var, 1.0);
+            SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);
         }
     }
 

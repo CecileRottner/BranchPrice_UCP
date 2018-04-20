@@ -18,6 +18,7 @@
 #include "BranchConsHandler.h"
 #include "BranchingRule.h"
 #include "CplexPricingAlgo.h"
+#include "Checker.h"
 
 /* namespace usage */
 using namespace std;
@@ -38,8 +39,8 @@ int main(int argc, char** argv)
         //////////////////////////////
 
         //Paramètres de l'instance
-        int T = 24;
-        int n = 10 ;
+        int T = 5;
+        int n = 3 ;
         int sym = 3 ;
         int demande = 3;
         int cat01 = 0;
@@ -54,7 +55,6 @@ int main(int argc, char** argv)
 
         IloEnv env;
         InstanceUCP* inst = new InstanceUCP(env, file) ;
-
 
 
         ////////////////////////////////////
@@ -119,20 +119,20 @@ int main(int argc, char** argv)
         SCIPincludeObjBranchrule(scip, branchRule, TRUE);
 
 
-
-        /*************
-         *  Solve    *
-         *************/
-
-        SCIPsolve(scip);
-
-
-
          //////////////////////
         //////  SOLVE    /////
         //////////////////////
 
         SCIPsolve(scip);
+
+
+        //////////////////////
+        //////  CHECK    /////
+        //////////////////////
+
+        CplexChecker checker = CplexChecker(inst) ;
+        int value = checker.check() ;
+        cout << "VALEUR OPTIMALE A TROUVER: " << value << endl ;
 
     }
 

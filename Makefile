@@ -61,6 +61,7 @@ MAINOBJ		=	main.o \
 			Pricer.o \
 			BranchConsHandler.o \
 			BranchingRule.o \
+			Checker.o \
 
 MAINSRC		=	$(addprefix $(SRCDIR)/,$(MAINOBJ:.o=.cpp))
 MAINDEP		=	$(SRCDIR)/depend.cppmain.$(OPT)
