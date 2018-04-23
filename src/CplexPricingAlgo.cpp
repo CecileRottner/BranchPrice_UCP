@@ -119,6 +119,8 @@ bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual,
     }
     else {
        cplex.getValues(x, UpDownPlan) ;
+       cout << "for site " << Site << "; " << endl ;
+       cout << "obj value without sigma: " << cplex.getObjValue() << endl;
        objvalue = cplex.getObjValue() - Dual.Sigma[Site] ;
     }
 

@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 
         /* set verbosity parameter */
         SCIPsetIntParam(scip, "display/verblevel", 5);
-        /* SCIPsetBoolParam(scip, "display/lpinfo", TRUE); */
+        //SCIPsetBoolParam(scip, "display/lpinfo", TRUE);
 
        /* create empty problem */
         SCIPcreateProb(scip, "UCP", 0, 0, 0, 0, 0, 0, 0);

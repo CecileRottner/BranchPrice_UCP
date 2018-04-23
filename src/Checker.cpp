@@ -89,6 +89,12 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
         Prod.end() ;
     }
 
+    int conti = 0;
+    if (conti) {
+        model.add(IloConversion(env, x, IloNumVar::Float) ) ;
+        model.add(IloConversion(env, u, IloNumVar::Float) ) ;
+    }
+
     cplex = IloCplex(model);
 }
 

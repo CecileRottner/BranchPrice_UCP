@@ -294,7 +294,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
                       0.0,                     // lower bound
                       SCIPinfinity(scip),      // upper bound
                       cost,                     // objective
-                      SCIP_VARTYPE_INTEGER, // variable type
+                      SCIP_VARTYPE_INTEGER,    // variable type
                       true, false, NULL, NULL, NULL, NULL, NULL);
 
 
