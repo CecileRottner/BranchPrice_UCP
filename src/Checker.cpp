@@ -27,6 +27,21 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
 
     model.add(IloMinimize(env, cost));
 
+    // Conditions initiales
+    for (int i=0; i<n; i++) {
+        model.add(u[i*T] >= x[i*T] - 1 ) ;
+    }
+
+    for (int i=0; i<n; i++) {
+        IloExpr sum(env) ;
+        for (int k= 0; k < inst->getl(i) ; k++) {
+            sum += u[i*T + k] ;
+        }
+        model.add(sum <= 0 ) ;
+        sum.end() ;
+    }
+
+
     // Min up constraints
     for (int i=0; i<n; i++) {
         for (int t=inst->getL(i) ; t < T ; t++) {

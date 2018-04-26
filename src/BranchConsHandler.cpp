@@ -2,6 +2,7 @@
 
 #include "Pricer.h"
 
+#define eps 1e-6
 #define OUTPUT_HANDLER
 
 //////////////////////////////////////////////
@@ -157,6 +158,40 @@ SCIP_RETCODE BranchConsHandler::scip_check(
     std::cout << " --------------------- Check handler ---------------  \n";
 #endif
 
+    // Search for fractional x variables
+
+     int T = pricer_ptr->inst->getT() ;
+     int n = pricer_ptr->inst->getn() ;
+
+    vector<double> x_frac = vector<double>(n*T, 0) ;
+
+    list<Master_Variable*>::const_iterator itv;
+    SCIP_Real frac_value;
+
+    for (itv = Master->L_var.begin(); itv!=Master->L_var.end(); itv++) {
+
+        frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
+
+        int site = (*itv)->Site ;
+        int first = pricer_ptr->inst->firstUnit(site) ;
+        for (int i=0 ; i < pricer_ptr->inst->nbUnits(site) ; i++) {
+            for (int t=0 ; t < T ; t++) {
+                if ((*itv)->UpDown_plan[i*T+t] > eps) {
+                    x_frac[(first+i)*T+t] += frac_value ;
+                }
+            }
+        }
+    }
+
+    for (int i=0 ; i < n ; i++) {
+        for (int t=0 ; t < T ; t++) {
+            if ( (x_frac[i*T+t] < 1-eps) && (x_frac[i*T+t] > eps) ) {
+                cout << "frac" << endl;
+                *result=SCIP_INFEASIBLE;
+                return SCIP_OKAY;
+            }
+        }
+    }
 
     *result = SCIP_FEASIBLE;
     return SCIP_OKAY;

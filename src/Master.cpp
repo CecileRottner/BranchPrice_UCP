@@ -304,4 +304,35 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
         addCoefsToConstraints(scip, lambda, inst) ;
     }
 
+    // test
+
+//    int s=1 ;
+//    SCIPsnprintf(varlambda_name, 255, "optimal_(site_%d)",s);
+//    SCIPdebugMsg(scip, "new variable <%s>\n", varlambda_name);
+
+//    IloNumArray plan = IloNumArray(env, 4) ;
+//    plan[0] = 0;
+//    plan[1] = 1 ;
+//    plan[T] = 1 ;
+//    plan[T+1] = 0 ;
+
+//    Master_Variable* lambda = new Master_Variable(s, plan);
+
+//    lambda->computeCost(inst);
+//    double cost= lambda->cost;
+//    cout << "cost of this lambda: " << cost << endl ;
+
+//    L_var.push_back(lambda);
+
+//    SCIPcreateVar(scip, &(lambda->ptr), varlambda_name,
+//                  0.0,                     // lower bound
+//                  SCIPinfinity(scip),      // upper bound
+//                  cost,                     // objective
+//                  SCIP_VARTYPE_INTEGER,    // variable type
+//                  true, false, NULL, NULL, NULL, NULL, NULL);
+
+//    SCIPaddVar(scip, lambda->ptr);
+
+//    addCoefsToConstraints(scip, lambda, inst) ;
+
 }

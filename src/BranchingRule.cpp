@@ -59,7 +59,7 @@ SCIP_RETCODE BranchingRule::scip_execlp(SCIP* scip, SCIP_BRANCHRULE* branchrule,
             for (int t=0 ; t < T ; t++) {
                 if ((*itv)->UpDown_plan[i*T+t] > eps) {
                     group_frac[group*T + t] += frac_value ;
-                    x_frac[i*T+t] += frac_value ;
+                    x_frac[(first+i)*T+t] += frac_value ;
                 }
             }
         }

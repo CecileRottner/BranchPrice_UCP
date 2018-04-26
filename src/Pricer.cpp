@@ -111,9 +111,12 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip               /**< SCIP d
 
     /// PMR courant et sa solution
     SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
-    cout << "solution du PMR:" << endl ;
 
+    cout << "solution du PMR:" << endl ;
     SCIPprintSol(scip, NULL, NULL, FALSE);
+
+    cout << "solution réalisable:" << endl ;
+    SCIPprintBestSol(scip, NULL, FALSE);
 
 
     //// Cout duaux

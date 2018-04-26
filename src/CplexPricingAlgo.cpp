@@ -25,6 +25,20 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
 
     obj = IloAdd(model, IloMinimize(env, 0.0));
 
+//    // Conditions initiales
+//    for (int i=0; i<ns; i++) {
+//        model.add(u[i*T] >= x[i*T] - 1 ) ;
+//    }
+
+//    for (int i=0; i<ns; i++) {
+//        IloExpr sum(env) ;
+//        for (int k= 0; k < inst->getl(first+i) ; k++) {
+//            sum += u[i*T + k] ;
+//        }
+//        model.add(sum <= 0 ) ;
+//        sum.end() ;
+//    }
+
     // Min up constraints
     for (int i=0; i<ns; i++) {
         for (int t=inst->getL(first+i) ; t < T ; t++) {
