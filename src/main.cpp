@@ -2,7 +2,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <string>
+#include <string>  
+#include "scip/dialog_default.h"
 
 #include <ilcplex/ilocplex.h>
 
@@ -69,8 +70,48 @@ int main(int argc, char** argv)
         SCIPinfoMessage(scip, NULL, "\n");
 
         /* include default plugins */
-        SCIPincludeDefaultPlugins(scip);
+        //SCIPincludeDefaultPlugins(scip);
+             SCIPincludeConshdlrLinear(scip);
+              SCIPincludeNodeselBfs(scip);
+	      SCIPincludeConshdlrIntegral(scip);
+	      SCIPincludeDispDefault(scip);
+	      SCIPincludeDialogDefault(scip);
+ SCIPincludeHeurActconsdiving(scip);
+   SCIPincludeHeurClique(scip);
+   SCIPincludeHeurCoefdiving(scip);
+   SCIPincludeHeurCrossover(scip);
+   SCIPincludeHeurDins(scip);
+   SCIPincludeHeurFeaspump(scip);
+   SCIPincludeHeurFixandinfer(scip);
+   SCIPincludeHeurFracdiving(scip);
+   SCIPincludeHeurGuideddiving(scip);
+   SCIPincludeHeurIntdiving(scip);
+   SCIPincludeHeurIntshifting(scip);
+   SCIPincludeHeurLinesearchdiving(scip);
+   SCIPincludeHeurLocalbranching(scip);
+   SCIPincludeHeurMutation(scip);
+   SCIPincludeHeurObjpscostdiving(scip);
+   SCIPincludeHeurOctane(scip);
+   SCIPincludeHeurOneopt(scip);
+   SCIPincludeHeurPscostdiving(scip);
+   SCIPincludeHeurRens(scip);
+   SCIPincludeHeurRins(scip);
+   SCIPincludeHeurShiftandpropagate(scip);
+   SCIPincludeHeurShifting(scip);
+   SCIPincludeHeurSimplerounding(scip);
+   SCIPincludeHeurSubNlp(scip);
+   SCIPincludeHeurTrivial(scip);
+   SCIPincludeHeurTrySol(scip);
+   SCIPincludeHeurTwoopt(scip);
+   SCIPincludeHeurUndercover(scip);
+   SCIPincludeHeurVbounds(scip);
+   SCIPincludeHeurVeclendiving(scip);
+   SCIPincludeHeurZirounding(scip);
+   SCIPincludeHeurRootsoldiving(scip);
+   SCIPincludeHeurRounding(scip);
 
+   SCIPsetLongintParam(scip, "limits/nodes", 3);
+	      
         /* set verbosity parameter */
         SCIPsetIntParam(scip, "display/verblevel", 5);
         //SCIPsetBoolParam(scip, "display/lpinfo", TRUE);

@@ -158,6 +158,9 @@ SCIP_RETCODE BranchConsHandler::scip_check(
     std::cout << " --------------------- Check handler ---------------  \n";
 #endif
 
+    cout << "solution du PMR:" << endl ;
+    SCIPprintSol(scip, NULL, NULL, FALSE);
+
     // Search for fractional x variables
 
      int T = pricer_ptr->inst->getT() ;
@@ -186,7 +189,7 @@ SCIP_RETCODE BranchConsHandler::scip_check(
     for (int i=0 ; i < n ; i++) {
         for (int t=0 ; t < T ; t++) {
             if ( (x_frac[i*T+t] < 1-eps) && (x_frac[i*T+t] > eps) ) {
-                cout << "frac" << endl;
+                cout << "solution fractionnaire" << endl;
                 *result=SCIP_INFEASIBLE;
                 return SCIP_OKAY;
             }
