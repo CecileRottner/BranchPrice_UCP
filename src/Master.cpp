@@ -307,14 +307,14 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
     // test
 
 //    int s=1 ;
-//    SCIPsnprintf(varlambda_name, 255, "optimal_(site_%d)",s);
+//    SCIPsnprintf(varlambda_name, 255, "test_(site_%d)",s);
 //    SCIPdebugMsg(scip, "new variable <%s>\n", varlambda_name);
 
 //    IloNumArray plan = IloNumArray(env, 4) ;
 //    plan[0] = 0;
 //    plan[1] = 1 ;
 //    plan[T] = 1 ;
-//    plan[T+1] = 0 ;
+//    plan[T+1] = 1 ;
 
 //    Master_Variable* lambda = new Master_Variable(s, plan);
 

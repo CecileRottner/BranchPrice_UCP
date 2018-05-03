@@ -110,13 +110,13 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip               /**< SCIP d
 #endif
 
     /// PMR courant et sa solution
-    SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
+   // SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
 
     cout << "solution du PMR:" << endl ;
     SCIPprintSol(scip, NULL, NULL, FALSE);
 
     cout << "solution réalisable:" << endl ;
-    SCIPprintBestSol(scip, NULL, FALSE);
+    //SCIPprintBestSol(scip, NULL, FALSE);
 
 
     //// Cout duaux
@@ -133,20 +133,20 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip               /**< SCIP d
     for (int i = 0; i < n; i++) {
         for (int t = 0 ; t < T ; t++) {
             dual_cost.Nu[i*T+t] = SCIPgetDualsolLinear(scip, Master->power_limits[i*T+t]);
-           cout << "nu: " << dual_cost.Nu[i*T+t] <<endl;
+           //cout << "nu: " << dual_cost.Nu[i*T+t] <<endl;
         }
     }
 
     //couts duaux demande
     for (int t = 0 ; t < T ; t++) {
         dual_cost.Mu[t] = SCIPgetDualsolLinear(scip, Master->demand_cstr[t]);
-         cout << "mu: " << dual_cost.Mu[t] <<endl;
+         //cout << "mu: " << dual_cost.Mu[t] <<endl;
     }
 
     //couts duaux contrainte convexité
     for (int s = 0 ; s < S ; s++) {
         dual_cost.Sigma[s] = SCIPgetDualsolLinear(scip, Master->convexity_cstr[s]);
-        cout << "sigma: " << dual_cost.Sigma[s] <<endl;
+       //cout << "sigma: " << dual_cost.Sigma[s] <<endl;
     }
 
 
@@ -164,9 +164,12 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip               /**< SCIP d
         //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
         double objvalue = 0 ;
         IloNumArray upDownPlan = IloNumArray((AlgoCplex[s])->env, inst->nbUnits(s)*T) ;
-        (AlgoCplex[s])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue) ;
+        int solutionFound = (AlgoCplex[s])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue) ;
 
-
+        cout << "solution found: " << solutionFound << endl;
+        if (!solutionFound) {
+            //PRUNE THE NODE
+        }
         cout << "Minimum reduced cost plan: "<< objvalue << endl ;
 
         for (int t=0 ; t < T ; t++)  {
@@ -211,6 +214,14 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip               /**< SCIP d
 
             //// Add new variable to the list
             Master->L_var.push_back(var);
+
+            cout << "Variable " << var_name << " added, with plan:" << endl ;
+            for (int t=0 ; t < T ; t++) {
+                for (int i=0 ; i < inst->nbUnits(s) ; i++) {
+                    cout << upDownPlan[i*T+t] << " " ;
+                }
+                cout << endl ;
+            }
         }
     }
 

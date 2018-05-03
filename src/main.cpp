@@ -71,52 +71,52 @@ int main(int argc, char** argv)
 
         /* include default plugins */
         //SCIPincludeDefaultPlugins(scip);
-             SCIPincludeConshdlrLinear(scip);
-              SCIPincludeNodeselBfs(scip);
-	      SCIPincludeConshdlrIntegral(scip);
-	      SCIPincludeDispDefault(scip);
-	      SCIPincludeDialogDefault(scip);
- SCIPincludeHeurActconsdiving(scip);
-   SCIPincludeHeurClique(scip);
-   SCIPincludeHeurCoefdiving(scip);
-   SCIPincludeHeurCrossover(scip);
-   SCIPincludeHeurDins(scip);
-   SCIPincludeHeurFeaspump(scip);
-   SCIPincludeHeurFixandinfer(scip);
-   SCIPincludeHeurFracdiving(scip);
-   SCIPincludeHeurGuideddiving(scip);
-   SCIPincludeHeurIntdiving(scip);
-   SCIPincludeHeurIntshifting(scip);
-   SCIPincludeHeurLinesearchdiving(scip);
-   SCIPincludeHeurLocalbranching(scip);
-   SCIPincludeHeurMutation(scip);
-   SCIPincludeHeurObjpscostdiving(scip);
-   SCIPincludeHeurOctane(scip);
-   SCIPincludeHeurOneopt(scip);
-   SCIPincludeHeurPscostdiving(scip);
-   SCIPincludeHeurRens(scip);
-   SCIPincludeHeurRins(scip);
-   SCIPincludeHeurShiftandpropagate(scip);
-   SCIPincludeHeurShifting(scip);
-   SCIPincludeHeurSimplerounding(scip);
-   SCIPincludeHeurSubNlp(scip);
-   SCIPincludeHeurTrivial(scip);
-   SCIPincludeHeurTrySol(scip);
-   SCIPincludeHeurTwoopt(scip);
-   SCIPincludeHeurUndercover(scip);
-   SCIPincludeHeurVbounds(scip);
-   SCIPincludeHeurVeclendiving(scip);
-   SCIPincludeHeurZirounding(scip);
-   SCIPincludeHeurRootsoldiving(scip);
-   SCIPincludeHeurRounding(scip);
+        SCIPincludeConshdlrLinear(scip);
+        SCIPincludeNodeselBfs(scip);
+        SCIPincludeConshdlrIntegral(scip);
+        SCIPincludeDispDefault(scip);
+        SCIPincludeDialogDefault(scip);
+        SCIPincludeHeurActconsdiving(scip);
+        SCIPincludeHeurClique(scip);
+        SCIPincludeHeurCoefdiving(scip);
+        SCIPincludeHeurCrossover(scip);
+        SCIPincludeHeurDins(scip);
+        SCIPincludeHeurFeaspump(scip);
+        SCIPincludeHeurFixandinfer(scip);
+        SCIPincludeHeurFracdiving(scip);
+        SCIPincludeHeurGuideddiving(scip);
+        SCIPincludeHeurIntdiving(scip);
+        SCIPincludeHeurIntshifting(scip);
+        SCIPincludeHeurLinesearchdiving(scip);
+        SCIPincludeHeurLocalbranching(scip);
+        SCIPincludeHeurMutation(scip);
+        SCIPincludeHeurObjpscostdiving(scip);
+        SCIPincludeHeurOctane(scip);
+        SCIPincludeHeurOneopt(scip);
+        SCIPincludeHeurPscostdiving(scip);
+        SCIPincludeHeurRens(scip);
+        SCIPincludeHeurRins(scip);
+        SCIPincludeHeurShiftandpropagate(scip);
+        SCIPincludeHeurShifting(scip);
+        SCIPincludeHeurSimplerounding(scip);
+        SCIPincludeHeurSubNlp(scip);
+        SCIPincludeHeurTrivial(scip);
+        SCIPincludeHeurTrySol(scip);
+        SCIPincludeHeurTwoopt(scip);
+        SCIPincludeHeurUndercover(scip);
+        SCIPincludeHeurVbounds(scip);
+        SCIPincludeHeurVeclendiving(scip);
+        SCIPincludeHeurZirounding(scip);
+        SCIPincludeHeurRootsoldiving(scip);
+        SCIPincludeHeurRounding(scip);
 
-   SCIPsetLongintParam(scip, "limits/nodes", 3);
-	      
+        //SCIPsetLongintParam(scip, "limits/nodes", 5);
+
         /* set verbosity parameter */
         SCIPsetIntParam(scip, "display/verblevel", 5);
         //SCIPsetBoolParam(scip, "display/lpinfo", TRUE);
 
-       /* create empty problem */
+        /* create empty problem */
         SCIPcreateProb(scip, "UCP", 0, 0, 0, 0, 0, 0, 0);
 
 
@@ -160,7 +160,7 @@ int main(int argc, char** argv)
         SCIPincludeObjBranchrule(scip, branchRule, TRUE);
 
 
-         //////////////////////
+        //////////////////////
         //////  SOLVE    /////
         //////////////////////
 

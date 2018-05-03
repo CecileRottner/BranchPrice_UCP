@@ -42,10 +42,10 @@ CCLNDIRS  = -L$(CPLEXLIBDIR) -L$(CONCERTLIBDIR)
 CONCERTINCDIR = $(CONCERTDIR)/include
 CPLEXINCDIR   = $(CPLEXDIR)/include
 
-CPLEXLNFLAGS = -lconcert -lilocplex -lcplex -lm -lpthread  -Wno-redundant-decls -Wno-cast-qual -Wno-ignored-attributes
+CPLEXLNFLAGS = -lconcert -lilocplex -lcplex -lm -lpthread  -Wno-redundant-decls -Wno-cast-qual -Wno-ignored-attributes -Wno-shadow
 
-CCCPLEXFLAGS = $(CCOPT) -I$(CPLEXINCDIR) -I$(CONCERTINCDIR) -Wno-redundant-decls -Wno-cast-qual -Wno-ignored-attributes
-CCPLEXFLAGS  = $(COPT)  -I$(CPLEXINCDIR) -Wno-redundant-decls -Wno-cast-qual -Wno-ignored-attributes
+CCCPLEXFLAGS = $(CCOPT) -I$(CPLEXINCDIR) -I$(CONCERTINCDIR) -Wno-redundant-decls -Wno-cast-qual -Wno-ignored-attributes -Wno-shadow
+CCPLEXFLAGS  = $(COPT)  -I$(CPLEXINCDIR) -Wno-redundant-decls -Wno-cast-qual -Wno-ignored-attributes -Wno-shadow
 
 
 #-----------------------------------------------------------------------------

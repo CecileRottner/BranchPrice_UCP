@@ -28,18 +28,18 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
     model.add(IloMinimize(env, cost));
 
     // Conditions initiales
-    for (int i=0; i<n; i++) {
-        model.add(u[i*T] >= x[i*T] - 1 ) ;
-    }
+//    for (int i=0; i<n; i++) {
+//        model.add(u[i*T] >= x[i*T] - 1 ) ;
+//    }
 
-    for (int i=0; i<n; i++) {
-        IloExpr sum(env) ;
-        for (int k= 0; k < inst->getl(i) ; k++) {
-            sum += u[i*T + k] ;
-        }
-        model.add(sum <= 0 ) ;
-        sum.end() ;
-    }
+//    for (int i=0; i<n; i++) {
+//        IloExpr sum(env) ;
+//        for (int k= 0; k < inst->getl(i) ; k++) {
+//            sum += u[i*T + k] ;
+//        }
+//        model.add(sum <= 0 ) ;
+//        sum.end() ;
+//    }
 
 
     // Min up constraints
@@ -119,8 +119,11 @@ int CplexChecker::check() {
     cplex.solve() ;
     double objvalue = cplex.getObjValue() ;
     IloNumArray solution = IloNumArray(env, n*T) ;
+    IloNumArray solution_u = IloNumArray(env, n*T) ;
     cplex.getValues(solution, x) ;
+    cplex.getValues(solution_u, u) ;
 
+    cout << "X: " << endl ;
     for (int t=0 ; t < T ; t++) {
         for (int i=0 ; i < n ; i++) {
             cout << fabs(solution[i*T+t]) << " " ;
@@ -128,6 +131,16 @@ int CplexChecker::check() {
         cout << endl ;
     }
     cout << endl ;
+
+    cout << "U: " << endl ;
+    for (int t=0 ; t < T ; t++) {
+        for (int i=0 ; i < n ; i++) {
+            cout << fabs(solution_u[i*T+t]) << " " ;
+        }
+        cout << endl ;
+    }
+    cout << endl ;
+
     return objvalue ;
 }
 

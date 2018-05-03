@@ -21,14 +21,13 @@ using namespace std;
 
 // Data associated to an constraint (each artificial constraint represents one branching constraint)
 struct SCIP_ConsData {
-
     int VarX ; // =1 si la variable branchée est un x. Si branchement sur u: VarX=0
     int bound ; // variable fixée à 1 ou à 0
     int unit; // which unit of the site
     int time ;
     int site ;
     IloRange BranchConstraint ;
-
+    list<Master_Variable*> L_var_bound;
 };
 
 
