@@ -37,7 +37,7 @@ class CplexPricingAlgo {
 
   CplexPricingAlgo(InstanceUCP* inst, int site);
 
-  void updateObjCoefficients(InstanceUCP* inst, const DualCosts & Dual);
+  void updateObjCoefficients(InstanceUCP* inst, const DualCosts & Dual, bool Farkas);
   void addBranchingConstraint(); //local to the branch considered
 
   // Launch Cplex solver and get back an optimal up/down plan

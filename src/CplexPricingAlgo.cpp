@@ -95,19 +95,26 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
     //Initialisation des coefficients objectifs (primaux) de x
     BaseObjCoefX.resize(ns, 0) ;
     for (int i=0 ; i <ns ; i++) {
-        BaseObjCoefX[i] = inst->getcf(first+i) + (inst->getPmax(first+i) - inst->getPmin(first+i))*inst->getcp(first+i) ;
+        BaseObjCoefX[i] = inst->getcf(first+i) + (inst->getPmin(first+i))*inst->getcp(first+i) ;
       //  cout << "unit i: " << inst->getcf(first+i) + (inst->getPmax(first+i) - inst->getPmin(first+i))*inst->getcp(first+i) << endl ;
     }
 
 }
 
-void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const DualCosts & Dual) {
+void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const DualCosts & Dual, bool Farkas) {
     int ns = inst->nbUnits(Site) ;
     int T = inst->getT();
     int first = inst->firstUnit(Site) ;
     for (int i=0 ; i<ns ; i++) {
         for (int t=0 ; t < T ; t++) {
-            obj.setLinearCoef(x[i*T +t],BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) + inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] );
+            if (!Farkas) {
+                obj.setLinearCoef(x[i*T +t],BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] );
+                obj.setLinearCoef(u[i*T +t],inst->getc0(first+i)) ;
+            }
+            else{
+                obj.setLinearCoef(x[i*T +t],- inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] );
+                obj.setLinearCoef(u[i*T +t],0.0) ;
+            }
             //cout << "obj coef: " << BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] - Dual.Sigma[Site] << endl ;
         }
     }
@@ -132,9 +139,11 @@ bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual,
       return false;
     }
     else {
+
        cplex.getValues(x, UpDownPlan) ;
-       cout << "for site " << Site << "; " << endl ;
-       cout << "obj value without sigma: " << cplex.getObjValue() << endl;
+
+       /*cout << "for site " << Site << "; " << endl ;
+       cout << "obj value without sigma: " << cplex.getObjValue() << endl;*/
        objvalue = cplex.getObjValue() - Dual.Sigma[Site] ;
     }
 

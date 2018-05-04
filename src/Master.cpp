@@ -97,13 +97,13 @@ void Master_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Var
     L_var.push_back(var);
 
 
-    cout << "Variable " << var_name << " added, with plan:" << endl ;
-    for (int t=0 ; t < T ; t++) {
-        for (int i=0 ; i < inst->nbUnits(var->Site) ; i++) {
-            cout << var->UpDown_plan[i*T+t] << " " ;
-        }
-        cout << endl ;
-    }
+//    cout << "Variable " << var_name << " added, with plan:" << endl ;
+//    for (int t=0 ; t < T ; t++) {
+//        for (int i=0 ; i < inst->nbUnits(var->Site) ; i++) {
+//            cout << var->UpDown_plan[i*T+t] << " " ;
+//        }
+//        cout << endl ;
+//    }
 }
 
 Master_Model::Master_Model(InstanceUCP* inst) {
@@ -316,36 +316,5 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
         addCoefsToConstraints(scip, lambda, inst) ;
     }
 
-    // test
-
-    char varlambda_name[255];
-    int s=1 ;
-    SCIPsnprintf(varlambda_name, 255, "test_(site_%d)",s);
-    SCIPdebugMsg(scip, "new variable <%s>\n", varlambda_name);
-
-    IloNumArray plan = IloNumArray(env, 4) ;
-    plan[0] = 0;
-    plan[1] = 1 ;
-    plan[T] = 1 ;
-    plan[T+1] = 1 ;
-
-    Master_Variable* lambda = new Master_Variable(s, plan);
-
-    lambda->computeCost(inst);
-    double cost= lambda->cost;
-    cout << "cost of this lambda: " << cost << endl ;
-
-    L_var.push_back(lambda);
-
-    SCIPcreateVar(scip, &(lambda->ptr), varlambda_name,
-                  0.0,                     // lower bound
-                  SCIPinfinity(scip),      // upper bound
-                  cost,                     // objective
-                  SCIP_VARTYPE_INTEGER,    // variable type
-                  true, false, NULL, NULL, NULL, NULL, NULL);
-
-    SCIPaddVar(scip, lambda->ptr);
-
-    addCoefsToConstraints(scip, lambda, inst) ;
 
 }

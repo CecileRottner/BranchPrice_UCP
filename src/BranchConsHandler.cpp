@@ -88,7 +88,7 @@ SCIP_RETCODE BranchConsHandler::scip_active(SCIP * scip, SCIP_CONSHDLR * conshdl
             if ((*itv)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
 
                 SCIP_Real old_bound =  SCIPgetVarUbAtIndex(scip, (*itv)->ptr, NULL, 0) ;
-                cout << "variable " << SCIPvarGetName((*itv)->ptr) << ", old bound: " << old_bound << endl ;
+               // cout << "variable " << SCIPvarGetName((*itv)->ptr) << ", old bound: " << old_bound << endl ;
                 if (!SCIPisZero(scip,old_bound)) {
                     SCIPchgVarUbNode(scip, NULL, (*itv)->ptr, 0) ;
                     consdata->L_var_bound.push_back((*itv)) ;
@@ -128,8 +128,7 @@ SCIP_RETCODE BranchConsHandler::scip_deactive(SCIP* scip, SCIP_CONSHDLR* conshdl
     for (itv = consdata->L_var_bound.begin(); itv!=consdata->L_var_bound.end(); itv++) {
         if ((*itv)->Site == consdata->site) {
             if ((*itv)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
-
-                cout << "variable " << SCIPvarGetName((*itv)->ptr) << ": bound a l'infini" << endl ;
+                //cout << "variable " << SCIPvarGetName((*itv)->ptr) << ": bound a l'infini" << endl ;
                 SCIPchgVarUbNode(scip, NULL, (*itv)->ptr, SCIPinfinity(scip)) ;
             }
         }
@@ -196,8 +195,8 @@ SCIP_RETCODE BranchConsHandler::scip_check(
     std::cout << " --------------------- Check handler ---------------  \n";
 #endif
 
-    cout << "solution du PMR:" << endl ;
-    SCIPprintSol(scip, NULL, NULL, FALSE);
+    //cout << "solution du PMR:" << endl ;
+    //SCIPprintSol(scip, NULL, NULL, FALSE);
 
     // Search for fractional x variables
 

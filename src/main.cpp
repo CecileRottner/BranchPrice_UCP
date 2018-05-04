@@ -40,8 +40,8 @@ int main(int argc, char** argv)
         //////////////////////////////
 
         //Paramètres de l'instance
-        int T = 5;
-        int n = 3 ;
+        int T = 24;
+        int n = 10 ;
         int sym = 3 ;
         int demande = 3;
         int cat01 = 0;
@@ -112,7 +112,10 @@ int main(int argc, char** argv)
         SCIPincludeHeurRootsoldiving(scip);
         SCIPincludeHeurRounding(scip);
 
-        //SCIPsetLongintParam(scip, "limits/nodes", 5);
+        //SCIPsetLongintParam(scip, "limits/nodes", 12);
+
+        SCIPincludeDispDefault(scip) ;
+        SCIPincludeDialogDefault(scip) ;
 
         /* set verbosity parameter */
         SCIPsetIntParam(scip, "display/verblevel", 5);

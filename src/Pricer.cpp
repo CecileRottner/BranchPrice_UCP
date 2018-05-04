@@ -92,122 +92,155 @@ SCIP_DECL_PRICERINIT(ObjPricerUCP::scip_init)
  *  - SCIP_SUCCESS    : at least one improving variable was found, or it is ensured that no such variable exists
  *  - SCIP_DIDNOTRUN  : the pricing process was aborted by the pricer, there is no guarantee that the current LP solution is optimal
  */
-SCIP_DECL_PRICERREDCOST(ObjPricerUCP::scip_redcost)
-{
-    SCIPdebugMsg(scip, "call scip_redcost ...\n");
-    /* set result pointer, see above */
-    *result = SCIP_SUCCESS;
-    /* call pricing routine */
-    pricingUCP(scip,0);
-    return SCIP_OKAY;
-}
-
-
-//SCIP_RETCODE ObjPricerUCP::scip_farkas ( SCIP* scip){
-//#ifdef DEBUG_Appel
-//    std::cout << "\n******************************" << std::endl;
-//    std::cout << "PLNE SCIP FARKAS APPELÉ\n\n";
-
-//    ObjProbDataUCP* data = dynamic_cast<ObjProbDataUCP*>(SCIPgetObjProbData(scip));
-//    std::cout << "Pointeur branche " << data->cons_data << std::endl;
-
-//    std::cout << " ############# Couples dans la structure  \n";
-//    SCIP_ConsData* tmp = data->cons_data;
-//    while(tmp != NULL) {
-//    print_cons_data(tmp);
-//    tmp = tmp->prec;
-//    }
-
-//    std::cout << std::endl << std::endl;
-
-//#endif
-
-
-
-//    SCIP_CALL (solve_pricer(scip, NULL, NULL, true) );
-
+//SCIP_DECL_PRICERREDCOST(ObjPricerUCP::scip_redcost)
+//{
+//    SCIPdebugMsg(scip, "call scip_redcost ...\n");
+//    /* set result pointer, see above */
+//    *result = SCIP_SUCCESS;
+//    /* call pricing routine */
+//    pricingUCP(scip,0);
 //    return SCIP_OKAY;
 //}
 
-
-void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas             /**< SCIP data structure */)
+SCIP_RETCODE ObjPricerUCP::scip_redcost(SCIP* scip, SCIP_PRICER* pricer, SCIP_Real* lowerbound, SCIP_Bool* stopearly, SCIP_RESULT* result)
 {
-#ifdef OUTPUT_PRICER
-    cout<<"**************PRICER************"<<endl;
-   // SCIPprintBestSol(scip, NULL, FALSE);
-#endif
 
-    /// PMR courant et sa solution
-   // SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
+    SCIPdebugMsg(scip, "call scip_redcost ...\n");
 
-    cout << "solution du PMR:" << endl ;
-    SCIPprintSol(scip, NULL, NULL, FALSE);
+    /* set result pointer, see above */
+    *result = SCIP_SUCCESS;
 
-    cout << "solution réalisable:" << endl ;
-    //SCIPprintBestSol(scip, NULL, FALSE);
+    /* call pricing routine */
+    pricingUCP(scip,0);
 
-    //// Cout duaux
+    return SCIP_OKAY;
+
+}
+
+SCIP_RETCODE ObjPricerUCP::scip_farkas( SCIP* scip, SCIP_PRICER* pricer, SCIP_RESULT* result ){
+
+    SCIPdebugMsg(scip, "call scip_farkas ...\n");
+
+    /* set result pointer, see above */
+    *result = SCIP_SUCCESS;
+
+    /* call pricing routine */
+    pricingUCP(scip,1);
+
+    return SCIP_OKAY;
+
+}
+
+
+
+void ObjPricerUCP::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Farkas) {
+    ///// RECUPERATION DES COUTS DUAUX
+
+    int print = 0 ;
     int n = inst->getn() ;
     int T = inst->getT() ;
     int S = inst->getS() ;
 
-    DualCosts dual_cost = DualCosts(inst) ;
-
-    ///// RECUPERATION DES COUTS DUAUX
-    ///
-    cout << "solution duale :" << endl ;
+    //cout << "solution duale :" << endl ;
     //couts duaux des power limits
     for (int i = 0; i < n; i++) {
         for (int t = 0 ; t < T ; t++) {
-            dual_cost.Nu[i*T+t] = SCIPgetDualsolLinear(scip, Master->power_limits[i*T+t]);
-           //cout << "nu: " << dual_cost.Nu[i*T+t] <<endl;
+            if (!Farkas) {
+                dual_cost.Nu[i*T+t] = SCIPgetDualsolLinear(scip, Master->power_limits[i*T+t]);
+            }
+            else{
+                dual_cost.Nu[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->power_limits[i*T+t]);
+            }
+            if (print)
+                cout << "nu(" << i <<"," << t <<") = " << dual_cost.Nu[i*T+t] <<endl;
         }
     }
 
     //couts duaux demande
     for (int t = 0 ; t < T ; t++) {
-        dual_cost.Mu[t] = SCIPgetDualsolLinear(scip, Master->demand_cstr[t]);
-         //cout << "mu: " << dual_cost.Mu[t] <<endl;
+        if (!Farkas) {
+            dual_cost.Mu[t] = SCIPgetDualsolLinear(scip, Master->demand_cstr[t]);
+        }
+        else{
+            dual_cost.Mu[t] = SCIPgetDualfarkasLinear(scip, Master->demand_cstr[t]);
+        }
+        if (print) cout << "mu: " << dual_cost.Mu[t] <<endl;
     }
 
     //couts duaux contrainte convexité
     for (int s = 0 ; s < S ; s++) {
-        dual_cost.Sigma[s] = SCIPgetDualsolLinear(scip, Master->convexity_cstr[s]);
-       //cout << "sigma: " << dual_cost.Sigma[s] <<endl;
+        if (!Farkas) {
+            dual_cost.Sigma[s] = SCIPgetDualsolLinear(scip, Master->convexity_cstr[s]);
+        }
+        else{
+            dual_cost.Sigma[s] = SCIPgetDualfarkasLinear(scip, Master->convexity_cstr[s]);
+        }
+        if (print) cout << "sigma: " << dual_cost.Sigma[s] <<endl;
     }
-    cout << endl ;
+
+    if (print) cout << endl ;
+
+}
+
+void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas             /**< SCIP data structure */)
+{
+#ifdef OUTPUT_PRICER
+    cout<<"**************PRICER************ ";
+    // SCIPprintBestSol(scip, NULL, FALSE);
+#endif
+
+    int print = 0 ;
+
+    /// PMR courant et sa solution
+    //SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
+
+    //cout << "solution du PMR:" << endl ;
+    //SCIPprintSol(scip, NULL, NULL, FALSE);
+
+    //cout << "solution réalisable:" << endl ;
+    //SCIPprintBestSol(scip, NULL, FALSE);
+
+    //// Cout duaux
+    int T = inst->getT() ;
+    int S = inst->getS() ;
+
+    DualCosts dual_cost = DualCosts(inst) ;
+    updateDualCosts(scip, dual_cost, Farkas);
+
 
     for (int s = 0 ; s < S ; s++) {
 
-        cout << "site "<< s << endl;
+       //cout << "site "<< s << endl;
 
         ///// MISE A JOUR DES OBJECTIFS DES SOUS PROBLEMES
-        (AlgoCplex[s])->updateObjCoefficients(inst, dual_cost) ;
+       // cout << "mise à jour des couts, farkas=" << Farkas << endl;
+        (AlgoCplex[s])->updateObjCoefficients(inst, dual_cost, Farkas) ;
 
         //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
         double objvalue = 0 ;
         IloNumArray upDownPlan = IloNumArray((AlgoCplex[s])->env, inst->nbUnits(s)*T) ;
         int solutionFound = (AlgoCplex[s])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue) ;
 
-        cout << "solution found: " << solutionFound << endl;
+        // cout << "solution found: " << solutionFound << endl;
         if (!solutionFound) {
             //PRUNE THE NODE
         }
-        cout << "Minimum reduced cost plan: "<< objvalue << endl ;
+        if (print) cout << "Minimum reduced cost plan: "<< objvalue << endl ;
 
-        for (int t=0 ; t < T ; t++)  {
-            for (int i=0 ; i < inst->nbUnits(s) ; i++) {
-                cout << fabs(upDownPlan[i*T+t]) << " " ;
+        if (print) {
+            for (int t=0 ; t < T ; t++)  {
+                for (int i=0 ; i < inst->nbUnits(s) ; i++) {
+                    cout << fabs(upDownPlan[i*T+t]) << " " ;
+                }
+                cout << endl ;
             }
             cout << endl ;
         }
 
-        cout << endl ;
-
         if (SCIPisNegative(scip, objvalue)) {
 
             Master_Variable* lambda = new Master_Variable(s, upDownPlan);
-            //cout << "Plan found for site " << s << " with reduced cost = " << objvalue <<" : ";
+            cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " ";
             //// CREATION D'UNE NOUVELLE VARIABLE DANS LE MASTER
             Master->initMasterVariable(scip, inst, lambda) ;
 
@@ -220,8 +253,8 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas           
     }
 
 #ifdef OUTPUT_PRICER
-  SCIPwriteTransProblem(scip, "ucp.lp", "lp", FALSE);
-  cout<<"************END PRICER******************"<<endl;
+    SCIPwriteTransProblem(scip, "ucp.lp", "lp", FALSE);
+    cout<<"************END PRICER******************"<<endl;
 #endif
 
 }
