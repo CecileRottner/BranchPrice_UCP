@@ -21,9 +21,10 @@ class CplexChecker {
 
   IloBoolVarArray x;
   IloBoolVarArray u;
+  IloNumVarArray pp ;
 
   CplexChecker(InstanceUCP* inst) ;
-  int check();
+  double checkValue();
 
 };
 

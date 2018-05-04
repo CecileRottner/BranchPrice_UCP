@@ -14,7 +14,7 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
     x = IloBoolVarArray(env, n*T) ;
     u = IloBoolVarArray(env, n*T) ;
 
-    IloNumVarArray pp(env, n*T, 0.0, 1000);
+    pp = IloNumVarArray(env, n*T, 0.0, 1000);
 
 
     // Objective Function: Minimize Cost
@@ -104,7 +104,7 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
         Prod.end() ;
     }
 
-    int conti = 0;
+    int conti = 1;
     if (conti) {
         model.add(IloConversion(env, x, IloNumVar::Float) ) ;
         model.add(IloConversion(env, u, IloNumVar::Float) ) ;
@@ -113,16 +113,19 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
     cplex = IloCplex(model);
 }
 
-int CplexChecker::check() {
+double CplexChecker::checkValue() {
     int T = inst->getT() ;
     int n = inst->getn();
     cplex.solve() ;
     double objvalue = cplex.getObjValue() ;
     IloNumArray solution = IloNumArray(env, n*T) ;
     IloNumArray solution_u = IloNumArray(env, n*T) ;
+    IloNumArray solution_p = IloNumArray(env, n*T) ;
     cplex.getValues(solution, x) ;
     cplex.getValues(solution_u, u) ;
+    cplex.getValues(solution_p, pp) ;
 
+    cout.precision(6);
     cout << "X: " << endl ;
     for (int t=0 ; t < T ; t++) {
         for (int i=0 ; i < n ; i++) {
@@ -140,6 +143,26 @@ int CplexChecker::check() {
         cout << endl ;
     }
     cout << endl ;
+
+    cout << "U: " << endl ;
+
+    int t = 9;
+        for (int i=0 ; i < n ; i++) {
+            cout << fabs(solution_p[i*T+t]) + inst->getPmin(i) << " " ;
+        }
+        cout << endl ;
+
+        double valeur=0.778481 ;
+        double cost_gencol = valeur*inst->getcf(7)  ;
+        cost_gencol += valeur*inst->getPmax(7) *inst->getcp(7);
+
+        double cost_cplex = inst->getcf(7) ;
+        cost_cplex += ( 123)*(inst->getcp(7))  ;
+
+        cout << "cout gen col: " << cost_gencol << endl ;
+        cout << "cout cplex : " << cost_cplex << endl ;
+
+
 
     return objvalue ;
 }

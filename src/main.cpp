@@ -50,9 +50,9 @@ int main(int argc, char** argv)
 
     if (argc==1) { // pour debug
         //Paramètres de l'instance
-        T = 6;
-        n = 10 ;
-        sym = 3 ;
+        T = 24;
+        n = 10;
+        sym = 0;
         demande = 3;
         cat01 = 0;
         bloc = 1;
@@ -180,10 +180,10 @@ int main(int argc, char** argv)
     //////////////////////////
 
     BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
-    BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
+//    BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
 
     SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
-    SCIPincludeObjBranchrule(scip, branchRule, TRUE);
+//    SCIPincludeObjBranchrule(scip, branchRule, TRUE);
 
 
     //////////////////////
@@ -208,9 +208,11 @@ int main(int argc, char** argv)
     //////  CHECK    /////
     //////////////////////
 
+    cout.precision(15);
+
     CplexChecker checker = CplexChecker(inst) ;
-    double value = checker.check() ;
-    cout << "VALEUR OPTIMALE A TROUVER: " << value << endl ;
+    double value = checker.checkValue() ;
+    cout << "VALEUR RELAXEE A TROUVER : " << value << endl ;
     fichier << "& " << value ;
     fichier <<" \\\\ " << endl ;
 

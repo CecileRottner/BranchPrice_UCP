@@ -90,7 +90,7 @@ void Master_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Var
                   0.0,                     // lower bound
                   SCIPinfinity(scip),      // upper bound
                   cost,                     // objective
-                  SCIP_VARTYPE_INTEGER,    // variable type
+                  SCIP_VARTYPE_CONTINUOUS,    // variable type
                   false, false, NULL, NULL, NULL, NULL, NULL);
 
     //// Add new variable to the list
@@ -240,7 +240,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
         SCIPcreateVar(scip, &var, slack_demand_name,
                       0.0,                     // lower bound
-                      1000,      // upper bound
+                      10000,      // upper bound
                       0.0,                     // objective
                       SCIP_VARTYPE_CONTINUOUS, // variable type
                       true, false, NULL, NULL, NULL, NULL, NULL);
