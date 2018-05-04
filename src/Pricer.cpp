@@ -98,11 +98,39 @@ SCIP_DECL_PRICERREDCOST(ObjPricerUCP::scip_redcost)
     /* set result pointer, see above */
     *result = SCIP_SUCCESS;
     /* call pricing routine */
-    pricingUCP(scip);
+    pricingUCP(scip,0);
     return SCIP_OKAY;
 }
 
-void ObjPricerUCP::pricingUCP( SCIP*              scip               /**< SCIP data structure */)
+
+//SCIP_RETCODE ObjPricerUCP::scip_farkas ( SCIP* scip){
+//#ifdef DEBUG_Appel
+//    std::cout << "\n******************************" << std::endl;
+//    std::cout << "PLNE SCIP FARKAS APPELÉ\n\n";
+
+//    ObjProbDataUCP* data = dynamic_cast<ObjProbDataUCP*>(SCIPgetObjProbData(scip));
+//    std::cout << "Pointeur branche " << data->cons_data << std::endl;
+
+//    std::cout << " ############# Couples dans la structure  \n";
+//    SCIP_ConsData* tmp = data->cons_data;
+//    while(tmp != NULL) {
+//    print_cons_data(tmp);
+//    tmp = tmp->prec;
+//    }
+
+//    std::cout << std::endl << std::endl;
+
+//#endif
+
+
+
+//    SCIP_CALL (solve_pricer(scip, NULL, NULL, true) );
+
+//    return SCIP_OKAY;
+//}
+
+
+void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas             /**< SCIP data structure */)
 {
 #ifdef OUTPUT_PRICER
     cout<<"**************PRICER************"<<endl;
@@ -117,7 +145,6 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip               /**< SCIP d
 
     cout << "solution réalisable:" << endl ;
     //SCIPprintBestSol(scip, NULL, FALSE);
-
 
     //// Cout duaux
     int n = inst->getn() ;
@@ -148,8 +175,6 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip               /**< SCIP d
         dual_cost.Sigma[s] = SCIPgetDualsolLinear(scip, Master->convexity_cstr[s]);
        //cout << "sigma: " << dual_cost.Sigma[s] <<endl;
     }
-
-
     cout << endl ;
 
     for (int s = 0 ; s < S ; s++) {
@@ -157,9 +182,7 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip               /**< SCIP d
         cout << "site "<< s << endl;
 
         ///// MISE A JOUR DES OBJECTIFS DES SOUS PROBLEMES
-
         (AlgoCplex[s])->updateObjCoefficients(inst, dual_cost) ;
-
 
         //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
         double objvalue = 0 ;
@@ -183,55 +206,23 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip               /**< SCIP d
 
         if (SCIPisNegative(scip, objvalue)) {
 
+            Master_Variable* lambda = new Master_Variable(s, upDownPlan);
             //cout << "Plan found for site " << s << " with reduced cost = " << objvalue <<" : ";
-
             //// CREATION D'UNE NOUVELLE VARIABLE DANS LE MASTER
-            char var_name[255];
-            SCIPsnprintf(var_name, 255, "V_%d",Master->L_var.size());
-            SCIPdebugMsg(scip, "new variable <%s>\n", var_name);
-
-            /* create the new variable: Use upper bound of infinity such that we do not have to care about
-             * the reduced costs of the variable in the pricing. The upper bound of 1 is implicitly satisfied
-             * due to the set partitioning constraints.
-             */
-
-
-            Master_Variable *var = new Master_Variable(s, upDownPlan);
-            var->computeCost(inst);
-            double cost= var->cost;
-            SCIPcreateVar(scip, &(var->ptr), var_name,
-                          0.0,                     // lower bound
-                          SCIPinfinity(scip),      // upper bound
-                          cost,                     // objective
-                          SCIP_VARTYPE_INTEGER,    // variable type
-                          false, false, NULL, NULL, NULL, NULL, NULL);
+            Master->initMasterVariable(scip, inst, lambda) ;
 
             /* add new variable to the list of variables to price into LP (score: leave 1 here) */
-            SCIPaddPricedVar(scip, var->ptr, 1.0);
+            SCIPaddPricedVar(scip, lambda->ptr, 1.0);
 
             ///// ADD COEFFICIENTS TO DEMAND, POWER LIMITS and CONVEXITY CONSTRAINTS
-            Master->addCoefsToConstraints(scip, var, inst) ;
-
-            //// Add new variable to the list
-            Master->L_var.push_back(var);
-
-            cout << "Variable " << var_name << " added, with plan:" << endl ;
-            for (int t=0 ; t < T ; t++) {
-                for (int i=0 ; i < inst->nbUnits(s) ; i++) {
-                    cout << upDownPlan[i*T+t] << " " ;
-                }
-                cout << endl ;
-            }
+            Master->addCoefsToConstraints(scip, lambda, inst) ;
         }
     }
-
 
 #ifdef OUTPUT_PRICER
   SCIPwriteTransProblem(scip, "ucp.lp", "lp", FALSE);
   cout<<"************END PRICER******************"<<endl;
 #endif
-
-
 
 }
 

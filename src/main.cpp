@@ -71,6 +71,8 @@ int main(int argc, char** argv)
 
         /* include default plugins */
         //SCIPincludeDefaultPlugins(scip);
+
+
         SCIPincludeConshdlrLinear(scip);
         SCIPincludeNodeselBfs(scip);
         SCIPincludeConshdlrIntegral(scip);

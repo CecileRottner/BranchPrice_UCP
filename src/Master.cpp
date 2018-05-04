@@ -43,6 +43,7 @@ void Master_Variable::computeCost(InstanceUCP* inst) {
 }
 
 
+
 void Master_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) {
 
     int s = lambda->Site ;
@@ -71,6 +72,39 @@ void Master_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, In
 
 }
 
+
+void Master_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Variable* var) {
+
+    char var_name[255];
+    SCIPsnprintf(var_name, 255, "V_%d",L_var.size());
+    SCIPdebugMsg(scip, "new variable <%s>\n", var_name);
+
+    /* create the new variable: Use upper bound of infinity such that we do not have to care about
+     * the reduced costs of the variable in the pricing. The upper bound of 1 is implicitly satisfied
+     * due to the set partitioning constraints.
+     */
+
+    var->computeCost(inst);
+    double cost= var->cost;
+    SCIPcreateVar(scip, &(var->ptr), var_name,
+                  0.0,                     // lower bound
+                  SCIPinfinity(scip),      // upper bound
+                  cost,                     // objective
+                  SCIP_VARTYPE_INTEGER,    // variable type
+                  false, false, NULL, NULL, NULL, NULL, NULL);
+
+    //// Add new variable to the list
+    L_var.push_back(var);
+
+
+    cout << "Variable " << var_name << " added, with plan:" << endl ;
+    for (int t=0 ; t < T ; t++) {
+        for (int i=0 ; i < inst->nbUnits(var->Site) ; i++) {
+            cout << var->UpDown_plan[i*T+t] << " " ;
+        }
+        cout << endl ;
+    }
+}
 
 Master_Model::Master_Model(InstanceUCP* inst) {
     n = inst->getn() ;
@@ -265,40 +299,18 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
     L_var.clear();
 
-    char varlambda_name[255];
+
 
     for (int s=0 ; s<S ; s++)
     {
-        SCIPsnprintf(varlambda_name, 255, "all_up_(site_%d)",s);
-        SCIPdebugMsg(scip, "new variable <%s>\n", varlambda_name);
-
-        /* create the new variable: Use upper bound of infinity such that we do not have to care about
-       * the reduced costs of the variable in the pricing. The upper bound of 1 is implicitly satisfied
-       * due to the set partitioning constraints.
-       */
-
         IloNumArray plan = IloNumArray(env, inst->nbUnits(s)*T) ;
         for (int index=0 ; index < inst->nbUnits(s)*T ; index++) {
             plan[index]=1 ;
         }
 
         Master_Variable* lambda = new Master_Variable(s, plan);
+        initMasterVariable(scip, inst, lambda);
 
-        lambda->computeCost(inst);
-        double cost= lambda->cost;
-        cout << "cost: " << cost << endl ;
-
-        L_var.push_back(lambda);
-
-        SCIPcreateVar(scip, &(lambda->ptr), varlambda_name,
-                      0.0,                     // lower bound
-                      SCIPinfinity(scip),      // upper bound
-                      cost,                     // objective
-                      SCIP_VARTYPE_INTEGER,    // variable type
-                      true, false, NULL, NULL, NULL, NULL, NULL);
-
-
-        /* add new variable to the list of variables to price into LP (score: leave 1 here) */
         SCIPaddVar(scip, lambda->ptr);
 
         addCoefsToConstraints(scip, lambda, inst) ;
@@ -306,33 +318,34 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
     // test
 
-//    int s=1 ;
-//    SCIPsnprintf(varlambda_name, 255, "test_(site_%d)",s);
-//    SCIPdebugMsg(scip, "new variable <%s>\n", varlambda_name);
+    char varlambda_name[255];
+    int s=1 ;
+    SCIPsnprintf(varlambda_name, 255, "test_(site_%d)",s);
+    SCIPdebugMsg(scip, "new variable <%s>\n", varlambda_name);
 
-//    IloNumArray plan = IloNumArray(env, 4) ;
-//    plan[0] = 0;
-//    plan[1] = 1 ;
-//    plan[T] = 1 ;
-//    plan[T+1] = 1 ;
+    IloNumArray plan = IloNumArray(env, 4) ;
+    plan[0] = 0;
+    plan[1] = 1 ;
+    plan[T] = 1 ;
+    plan[T+1] = 1 ;
 
-//    Master_Variable* lambda = new Master_Variable(s, plan);
+    Master_Variable* lambda = new Master_Variable(s, plan);
 
-//    lambda->computeCost(inst);
-//    double cost= lambda->cost;
-//    cout << "cost of this lambda: " << cost << endl ;
+    lambda->computeCost(inst);
+    double cost= lambda->cost;
+    cout << "cost of this lambda: " << cost << endl ;
 
-//    L_var.push_back(lambda);
+    L_var.push_back(lambda);
 
-//    SCIPcreateVar(scip, &(lambda->ptr), varlambda_name,
-//                  0.0,                     // lower bound
-//                  SCIPinfinity(scip),      // upper bound
-//                  cost,                     // objective
-//                  SCIP_VARTYPE_INTEGER,    // variable type
-//                  true, false, NULL, NULL, NULL, NULL, NULL);
+    SCIPcreateVar(scip, &(lambda->ptr), varlambda_name,
+                  0.0,                     // lower bound
+                  SCIPinfinity(scip),      // upper bound
+                  cost,                     // objective
+                  SCIP_VARTYPE_INTEGER,    // variable type
+                  true, false, NULL, NULL, NULL, NULL, NULL);
 
-//    SCIPaddVar(scip, lambda->ptr);
+    SCIPaddVar(scip, lambda->ptr);
 
-//    addCoefsToConstraints(scip, lambda, inst) ;
+    addCoefsToConstraints(scip, lambda, inst) ;
 
 }

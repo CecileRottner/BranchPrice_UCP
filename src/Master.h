@@ -60,7 +60,10 @@ public:
     Master_Model(InstanceUCP* inst) ;
 
     void addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) ;
+    void computeCost(InstanceUCP* inst) ;
+
     void  InitScipMasterModel(SCIP* scip, InstanceUCP* inst);
+    void initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Variable* lambda) ;
 
 
 };

@@ -42,7 +42,8 @@ public:
 
    /** performs pricing */
    void pricingUCP(
-      SCIP*              scip               /**< SCIP data structure */
+      SCIP*              scip,               /**< SCIP data structure */
+      bool               Farkas
       );
 
 
