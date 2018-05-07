@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <string>  
+#include <string>
 #include "scip/dialog_default.h"
 
 #include <ilcplex/ilocplex.h>
@@ -52,12 +52,12 @@ int main(int argc, char** argv)
         //Paramètres de l'instance
         T = 24;
         n = 10;
-        sym = 0;
+        sym = 3;
         demande = 3;
         cat01 = 0;
         bloc = 1;
         intra = 1 ;
-        id=1 ;
+        id=6 ;
         localisation = "data/" ;
     }
     if (argc>1) {
@@ -179,11 +179,11 @@ int main(int argc, char** argv)
     //////  BRANCHING    /////
     //////////////////////////
 
-    BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
-//    BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
+    //    BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
+    //    BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
 
-    SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
-//    SCIPincludeObjBranchrule(scip, branchRule, TRUE);
+    //    SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
+    //    SCIPincludeObjBranchrule(scip, branchRule, TRUE);
 
 
     //////////////////////
@@ -193,6 +193,42 @@ int main(int argc, char** argv)
     SCIPsolve(scip);
 
 
+    /// Solution en x
+    //    n=inst->getn();
+    //    T=inst->getT();
+
+    //    vector<double> x_frac = vector<double>(n*T, 0) ;
+
+    //    list<Master_Variable*>::const_iterator itv;
+    //    SCIP_Real frac_value;
+
+    //    for (itv = Master.L_var.begin(); itv!=Master.L_var.end(); itv++) {
+
+    //        frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
+
+    //        int site = (*itv)->Site ;
+    //        int first = inst->firstUnit(site) ;
+    //        for (int i=0 ; i < inst->nbUnits(site) ; i++) {
+    //            for (int t=0 ; t < T ; t++) {
+
+    //                if ((*itv)->UpDown_plan[i*T+t] > 0.000001) {
+
+    //                    x_frac[(first+i)*T+t] += frac_value ;
+    //                }
+    //            }
+    //        }
+    //    }
+
+
+    //    cout << "solution x frac: " << endl;
+
+    //    for (int t=0 ; t < T ; t++) {
+    //        for (int i=0 ; i <n ; i++) {
+    //            cout << x_frac[i*T+t] << " " ;
+    //        }
+    //        cout << endl ;
+    //    }
+
     //////////////////////
     //////   STATS   /////
     //////////////////////
@@ -201,7 +237,7 @@ int main(int argc, char** argv)
     fichier << " & " << SCIPgetNNodes(scip) ;
     fichier << " & " << SCIPgetSolvingTime(scip) ;
     fichier << " & " << SCIPgetGap(scip);
-    fichier << " & " << SCIPgetPrimalbound(scip);
+    fichier << " &  " << SCIPgetPrimalbound(scip);
     fichier << " & " << SCIPgetDualbound(scip);
 
     //////////////////////
@@ -211,11 +247,24 @@ int main(int argc, char** argv)
     cout.precision(15);
 
     CplexChecker checker = CplexChecker(inst) ;
+
+//    vector<double> x_frac = vector<double>(n*T, 0) ;
+//    for (int i=0 ; i < n*T ; i++) {
+//        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
+//    }
+
+
+
     double value = checker.checkValue() ;
     cout << "VALEUR RELAXEE A TROUVER : " << value << endl ;
-    fichier << "& " << value ;
+    //fichier << "& " << checker.noIntraObj ;
+    fichier << "& " << checker.ObjValue ;
+//    fichier << "& " << checker.ObjValue/checker.noIntraObj ;
     fichier <<" \\\\ " << endl ;
 
-return 0;
+//    cout << "check x_frac: " << endl ;
+//    checker.checkSolution(x_frac);
+
+    return 0;
 }
 

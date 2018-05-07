@@ -223,22 +223,22 @@ SCIP_RETCODE BranchConsHandler::scip_check(
         }
     }
 
-    for (int t=0 ; t < T ; t++) {
-        for (int i=0 ; i <n ; i++) {
-            cout << x_frac[i*T+t] << " " ;
-        }
-        cout << endl ;
-    }
-
-//    for (int i=0 ; i < n ; i++) {
-//        for (int t=0 ; t < T ; t++) {
-//            if ( (x_frac[i*T+t] < 1-eps) && (x_frac[i*T+t] > eps) ) {
-//                cout << "solution fractionnaire" << endl;
-//                *result=SCIP_INFEASIBLE;
-//                return SCIP_OKAY;
-//            }
+//    for (int t=0 ; t < T ; t++) {
+//        for (int i=0 ; i <n ; i++) {
+//            cout << x_frac[i*T+t] << " " ;
 //        }
+//        cout << endl ;
 //    }
+
+    for (int i=0 ; i < n ; i++) {
+        for (int t=0 ; t < T ; t++) {
+            if ( (x_frac[i*T+t] < 1-eps) && (x_frac[i*T+t] > eps) ) {
+                cout << "solution fractionnaire" << endl;
+                *result=SCIP_INFEASIBLE;
+                return SCIP_OKAY;
+            }
+        }
+    }
 
     *result = SCIP_FEASIBLE;
     return SCIP_OKAY;

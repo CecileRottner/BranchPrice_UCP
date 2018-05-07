@@ -300,7 +300,6 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
     L_var.clear();
 
 
-
     for (int s=0 ; s<S ; s++)
     {
         IloNumArray plan = IloNumArray(env, inst->nbUnits(s)*T) ;

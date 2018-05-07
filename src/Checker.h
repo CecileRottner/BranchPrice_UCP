@@ -23,8 +23,12 @@ class CplexChecker {
   IloBoolVarArray u;
   IloNumVarArray pp ;
 
+  double noIntraObj;
+  double ObjValue ;
+
   CplexChecker(InstanceUCP* inst) ;
   double checkValue();
+  void checkSolution(const vector<double> & x_frac);
 
 };
 
