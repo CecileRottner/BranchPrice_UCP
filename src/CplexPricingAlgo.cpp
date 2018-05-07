@@ -90,7 +90,7 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
     }
 
     cplex = IloCplex(model);
-
+    cplex.setParam(IloCplex::EpGap, 0.00001) ;
 
     //Initialisation des coefficients objectifs (primaux) de x
     BaseObjCoefX.resize(ns, 0) ;

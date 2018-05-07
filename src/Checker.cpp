@@ -96,16 +96,17 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
         Prod.end() ;
     }
 
-    int conti = 1;
+    int conti =1;
     if (conti) {
         model.add(IloConversion(env, x, IloNumVar::Float) ) ;
         model.add(IloConversion(env, u, IloNumVar::Float) ) ;
     }
 
-//    IloCplex noIntraCplex = IloCplex(model) ;
-//    noIntraCplex.solve() ;
+    IloCplex noIntraCplex = IloCplex(model) ;
+    noIntraCplex.setParam(IloCplex::EpGap, 0) ;
+    noIntraCplex.solve() ;
 
-//    noIntraObj = noIntraCplex.getObjValue() ;
+    noIntraObj = noIntraCplex.getObjValue() ;
 
 
     //Contraintes intra-site
@@ -123,9 +124,9 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
     }
 
     cplex = IloCplex(model);
-    cplex.solve();
 
-    cout << "feasible: " << cplex.isPrimalFeasible() << endl ;
+    cplex.setParam(IloCplex::EpGap, 0) ;
+    cplex.solve();
 
     ObjValue = cplex.getObjValue() ;
 

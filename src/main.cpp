@@ -50,14 +50,14 @@ int main(int argc, char** argv)
 
     if (argc==1) { // pour debug
         //Paramètres de l'instance
-        T = 24;
-        n = 10;
+        T = 5;
+        n = 3;
         sym = 3;
         demande = 3;
         cat01 = 0;
         bloc = 1;
         intra = 1 ;
-        id=6 ;
+        id=1 ;
         localisation = "data/" ;
     }
     if (argc>1) {
@@ -136,6 +136,7 @@ int main(int argc, char** argv)
     SCIPincludeHeurRounding(scip);
 
     //SCIPsetLongintParam(scip, "limits/nodes", 12);
+    SCIPsetRealParam(scip, "limits/time", 3600);
 
     SCIPincludeDispDefault(scip) ;
     SCIPincludeDialogDefault(scip) ;
@@ -175,15 +176,15 @@ int main(int argc, char** argv)
     SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
 
 
-    //////////////////////////
-    //////  BRANCHING    /////
-    //////////////////////////
+    /////////////////////////
+    /////  BRANCHING    /////
+    /////////////////////////
 
-    //    BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
-    //    BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
+//    BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
+//    BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
 
-    //    SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
-    //    SCIPincludeObjBranchrule(scip, branchRule, TRUE);
+//    SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
+//    SCIPincludeObjBranchrule(scip, branchRule, TRUE);
 
 
     //////////////////////
@@ -248,22 +249,22 @@ int main(int argc, char** argv)
 
     CplexChecker checker = CplexChecker(inst) ;
 
-//    vector<double> x_frac = vector<double>(n*T, 0) ;
-//    for (int i=0 ; i < n*T ; i++) {
-//        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
-//    }
+    //    vector<double> x_frac = vector<double>(n*T, 0) ;
+    //    for (int i=0 ; i < n*T ; i++) {
+    //        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
+    //    }
 
 
 
     double value = checker.checkValue() ;
     cout << "VALEUR RELAXEE A TROUVER : " << value << endl ;
-    //fichier << "& " << checker.noIntraObj ;
+   // fichier << "& " << checker.noIntraObj ;
     fichier << "& " << checker.ObjValue ;
-//    fichier << "& " << checker.ObjValue/checker.noIntraObj ;
+   // fichier << "& " << checker.ObjValue/checker.noIntraObj ;
     fichier <<" \\\\ " << endl ;
 
-//    cout << "check x_frac: " << endl ;
-//    checker.checkSolution(x_frac);
+    //    cout << "check x_frac: " << endl ;
+    //    checker.checkSolution(x_frac);
 
     return 0;
 }
