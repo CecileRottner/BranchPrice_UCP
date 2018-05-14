@@ -25,6 +25,7 @@ class CplexChecker {
 
   double noIntraObj;
   double ObjValue ;
+  double LRCplexVal ;
 
   CplexChecker(InstanceUCP* inst) ;
   double checkValue();

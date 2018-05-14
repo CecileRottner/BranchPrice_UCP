@@ -29,18 +29,18 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
     model.add(IloMinimize(env, cost));
 
     // Conditions initiales
-//    for (int i=0; i<n; i++) {
-//        model.add(u[i*T] >= x[i*T] - 1 ) ;
-//    }
+    //    for (int i=0; i<n; i++) {
+    //        model.add(u[i*T] >= x[i*T] - 1 ) ;
+    //    }
 
-//    for (int i=0; i<n; i++) {
-//        IloExpr sum(env) ;
-//        for (int k= 0; k < inst->getl(i) ; k++) {
-//            sum += u[i*T + k] ;
-//        }
-//        model.add(sum <= 0 ) ;
-//        sum.end() ;
-//    }
+    //    for (int i=0; i<n; i++) {
+    //        IloExpr sum(env) ;
+    //        for (int k= 0; k < inst->getl(i) ; k++) {
+    //            sum += u[i*T + k] ;
+    //        }
+    //        model.add(sum <= 0 ) ;
+    //        sum.end() ;
+    //    }
 
 
     // Min up constraints
@@ -96,7 +96,21 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
         Prod.end() ;
     }
 
-    int conti =1;
+    int ramp=0 ;
+    if (ramp==1) {
+        cout << "gradients" << endl;
+        for (int i = 0 ; i <n ; i++) {
+           // model.add(pp[i*T] <= 0 ) ;
+            for (int t = 1 ; t < T ; t++) {
+                model.add(pp[i*T + t] - pp[i*T + t-1] <= (inst->getPmax(i)-inst->getPmin(i))*x[i*T + t-1]/3 );
+                model.add(pp[i*T + t-1] - pp[i*T + t] <= (inst->getPmax(i)-inst->getPmin(i))*x[i*T + t]/2 );
+            }
+        }
+    }
+
+
+
+    int conti = 1;
     if (conti) {
         model.add(IloConversion(env, x, IloNumVar::Float) ) ;
         model.add(IloConversion(env, u, IloNumVar::Float) ) ;
@@ -106,7 +120,7 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
     noIntraCplex.setParam(IloCplex::EpGap, 0) ;
     noIntraCplex.solve() ;
 
-    noIntraObj = noIntraCplex.getObjValue() ;
+    noIntraObj = noIntraCplex.getBestObjValue() ;
 
 
     //Contraintes intra-site
@@ -129,6 +143,14 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
     cplex.solve();
 
     ObjValue = cplex.getObjValue() ;
+
+
+    IloCplex LRCplex = IloCplex(model) ;
+    LRCplex.setParam(IloCplex::EpGap, 0) ;
+    LRCplex.setParam(IloCplex::Param::MIP::Limits::Nodes, 1) ;
+    LRCplex.solve() ;
+
+    LRCplexVal = LRCplex.getBestObjValue() ;
 
 }
 
@@ -278,9 +300,9 @@ void CplexChecker::checkSolution(const vector<double> & x_frac) {
     double value = CheckCplex.getObjValue() ;
     cout << "value: " <<  value << endl ;
 
-//    IloNumArray solution_p = IloNumArray(env, n*T) ;
-//    CheckCplex.getValues(solution_p, p) ;
-//    cout << solution_p << endl ;
+    //    IloNumArray solution_p = IloNumArray(env, n*T) ;
+    //    CheckCplex.getValues(solution_p, p) ;
+    //    cout << solution_p << endl ;
 
 
 }

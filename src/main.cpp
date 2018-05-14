@@ -50,15 +50,15 @@ int main(int argc, char** argv)
 
     if (argc==1) { // pour debug
         //Paramètres de l'instance
-        T = 5;
-        n = 3;
+        T = 24;
+        n = 20;
         sym = 3;
         demande = 3;
         cat01 = 0;
         bloc = 1;
         intra = 1 ;
         id=1 ;
-        localisation = "data/" ;
+        localisation = "data/symsite/" ;
     }
     if (argc>1) {
         localisation = argv[2] ;
@@ -80,6 +80,11 @@ int main(int argc, char** argv)
     IloEnv env;
     InstanceUCP* inst = new InstanceUCP(env, file) ;
 
+
+    Parameters param;
+    param.IP= 0;
+    param.ManageSym = 0;
+    param.Ramp = 0 ;
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -176,20 +181,20 @@ int main(int argc, char** argv)
     SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
 
 
-    /////////////////////////
-    /////  BRANCHING    /////
-    /////////////////////////
+//    /////////////////////////
+//    /////  BRANCHING    /////
+//    /////////////////////////
 
-//    BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
-//    BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
+////    BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
+////    BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
 
-//    SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
-//    SCIPincludeObjBranchrule(scip, branchRule, TRUE);
+////    SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
+////    SCIPincludeObjBranchrule(scip, branchRule, TRUE);
 
 
-    //////////////////////
-    //////  SOLVE    /////
-    //////////////////////
+//    //////////////////////
+//    //////  SOLVE    /////
+//    //////////////////////
 
     SCIPsolve(scip);
 
@@ -234,9 +239,10 @@ int main(int argc, char** argv)
     //////   STATS   /////
     //////////////////////
 
-    fichier <<  " & " << n << " & " << T << " & " << id ;
+    fichier << n << " & " << T << " & " << id ;
     fichier << " & " << SCIPgetNNodes(scip) ;
     fichier << " & " << SCIPgetSolvingTime(scip) ;
+    fichier << " & " << SCIPgetNLPIterations(scip) ;
     fichier << " & " << SCIPgetGap(scip);
     fichier << " &  " << SCIPgetPrimalbound(scip);
     fichier << " & " << SCIPgetDualbound(scip);
@@ -258,9 +264,9 @@ int main(int argc, char** argv)
 
     double value = checker.checkValue() ;
     cout << "VALEUR RELAXEE A TROUVER : " << value << endl ;
-   // fichier << "& " << checker.noIntraObj ;
+   // fichier << "& " << checker.LRCplexVal ;
     fichier << "& " << checker.ObjValue ;
-   // fichier << "& " << checker.ObjValue/checker.noIntraObj ;
+    //fichier << "& " << checker.ObjValue/checker.noIntraObj ;
     fichier <<" \\\\ " << endl ;
 
     //    cout << "check x_frac: " << endl ;

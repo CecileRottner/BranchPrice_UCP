@@ -13,6 +13,13 @@
 
 using namespace std ;
 
+struct Parameters
+{
+    bool IP ;
+    bool ManageSym;
+    bool Ramp ;
+};
+
 class InstanceProcessed {
 public :
 

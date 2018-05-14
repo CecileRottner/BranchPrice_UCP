@@ -11,6 +11,77 @@ DualCosts::DualCosts(InstanceUCP* inst) {
     Sigma.resize(inst->getS(), 0) ;
 }
 
+void AddSSBI(IloEnv env, IloModel model, IloBoolVarArray x, IloBoolVarArray u, int site, InstanceUCP* inst) {
+
+    int allCoupleInequalities=0;
+
+    int T = inst->getT() ;
+    int firstOfSite = inst->firstUnit(site) ;
+    int ns = inst->nbUnits(site) ;
+    int k ;
+
+    //inégalités symétries
+    for (int i=0; i<ns; i++) {
+        if (inst->getFirst(i+firstOfSite)) { // i est la première unité d'un groupe de symétrie
+            int g = inst->getGroup(i+firstOfSite) ;
+
+            int first = inst->getFirstG(g) - firstOfSite ;
+            int last = inst->getLastG(g) - firstOfSite ;
+
+            for (int i=first ; i <= last ; i++) {
+
+                int l = inst->getl(i+firstOfSite) ;
+                int L = inst->getL(i+firstOfSite) ;
+
+                if (i < last) {
+                    for (int t = l ; t < T ; t++) {
+
+                        IloExpr rhs(env) ;
+                        rhs += x[i*T+t] + x[i*T+t - l];
+
+                        for (k=t -l + 1 ; k < t ; k++) {
+                            rhs+= u[i*T+k] ;
+                        }
+
+                        int ub_j = i+1 ;
+                        if (allCoupleInequalities) {
+                            ub_j=last ;
+                        }
+
+                        for (int j=i+1 ; j <= ub_j ; j++) {
+                            model.add(u[j*T + t] <= rhs) ;
+                        }
+                        rhs.end() ;
+                    }
+                }
+
+                if (i>first) {
+
+                    for (int t = L ; t < T ; t++) {
+
+                        IloExpr rhs_w(env) ;
+                        rhs_w += 2 - x[i*T+t] - x[i*T+t - L];
+
+                        for (k=t -L + 1 ; k < t ; k++) {
+                            rhs_w += x[i*T + k-1] - x[i*T+k] + u[i*T+k] ;
+                        }
+
+
+                        int lb_j = i-1 ;
+                        if (allCoupleInequalities) {
+                            lb_j=first ;
+                        }
+                        for (int j=i-1 ; j >= lb_j ; j--) {
+                            model.add(x[j*T + t-1] - x[j*T+t] + u[j*T + t] <= rhs_w) ;
+                        }
+
+                        rhs_w.end() ;
+                    }
+                }
+            }
+        }
+    }
+}
 
 CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
     Site=site ;
@@ -20,24 +91,28 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
     int T = inst->getT() ;
     model = IloModel(env) ;
 
+
     x = IloBoolVarArray(env, ns*T) ;
     u = IloBoolVarArray(env, ns*T) ;
 
+
+    AddSSBI(env, model, x,u, site, inst) ;
+
     obj = IloAdd(model, IloMinimize(env, 0.0));
 
-//    // Conditions initiales
-//    for (int i=0; i<ns; i++) {
-//        model.add(u[i*T] >= x[i*T] - 1 ) ;
-//    }
+    //    // Conditions initiales
+    //    for (int i=0; i<ns; i++) {
+    //        model.add(u[i*T] >= x[i*T] - 1 ) ;
+    //    }
 
-//    for (int i=0; i<ns; i++) {
-//        IloExpr sum(env) ;
-//        for (int k= 0; k < inst->getl(first+i) ; k++) {
-//            sum += u[i*T + k] ;
-//        }
-//        model.add(sum <= 0 ) ;
-//        sum.end() ;
-//    }
+    //    for (int i=0; i<ns; i++) {
+    //        IloExpr sum(env) ;
+    //        for (int k= 0; k < inst->getl(first+i) ; k++) {
+    //            sum += u[i*T + k] ;
+    //        }
+    //        model.add(sum <= 0 ) ;
+    //        sum.end() ;
+    //    }
 
     // Min up constraints
     for (int i=0; i<ns; i++) {
@@ -96,7 +171,7 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
     BaseObjCoefX.resize(ns, 0) ;
     for (int i=0 ; i <ns ; i++) {
         BaseObjCoefX[i] = inst->getcf(first+i) + (inst->getPmin(first+i))*inst->getcp(first+i) ;
-      //  cout << "unit i: " << inst->getcf(first+i) + (inst->getPmax(first+i) - inst->getPmin(first+i))*inst->getcp(first+i) << endl ;
+        //  cout << "unit i: " << inst->getcf(first+i) + (inst->getPmax(first+i) - inst->getPmin(first+i))*inst->getcp(first+i) << endl ;
     }
 
 }
@@ -128,23 +203,23 @@ bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual,
     cplex.setOut(LogFile);
 
     if ( !cplex.solve() ) {
-      env.error() << "Failed to optimize Pricer with Cplex" << endl;
-      exit(1);
+        env.error() << "Failed to optimize Pricer with Cplex" << endl;
+        exit(1);
     }
 
     if (cplex.getStatus()==CPX_STAT_INFEASIBLE){
-      cout<<"NO SOLUTION TO PRICER"<<endl;
-      cout<<endl<<" ************************* END PRICER with CPLEX"<<endl<<endl;
+        cout<<"NO SOLUTION TO PRICER"<<endl;
+        cout<<endl<<" ************************* END PRICER with CPLEX"<<endl<<endl;
 
-      return false;
+        return false;
     }
     else {
 
-       cplex.getValues(x, UpDownPlan) ;
+        cplex.getValues(x, UpDownPlan) ;
 
-       /*cout << "for site " << Site << "; " << endl ;
+        /*cout << "for site " << Site << "; " << endl ;
        cout << "obj value without sigma: " << cplex.getObjValue() << endl;*/
-       objvalue = cplex.getObjValue() - Dual.Sigma[Site] ;
+        objvalue = cplex.getObjValue() - Dual.Sigma[Site] ;
     }
 
 
