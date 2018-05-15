@@ -13,6 +13,7 @@
 /* user defined includes */
 #include "InstanceUCP.h"
 #include "Process.h"
+#include "Process.h"
 
 
 /* namespace usage */
@@ -46,6 +47,9 @@ public:
     int T ;
     int S ;
 
+
+    const Parameters Param ;
+
     IloEnv env;
 
     // Keep a pointer on every constraint of the Master program
@@ -57,7 +61,7 @@ public:
     //NB: le fait d'utiliser une liste ne permet pas de supprimer des variables
     list<Master_Variable*> L_var;
 
-    Master_Model(InstanceUCP* inst) ;
+    Master_Model(InstanceUCP* inst, const Parameters & Param) ;
 
     void addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) ;
     void computeCost(InstanceUCP* inst) ;

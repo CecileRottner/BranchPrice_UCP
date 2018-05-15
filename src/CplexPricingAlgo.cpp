@@ -96,7 +96,7 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
     u = IloBoolVarArray(env, ns*T) ;
 
 
-    AddSSBI(env, model, x,u, site, inst) ;
+    //AddSSBI(env, model, x,u, site, inst) ;
 
     obj = IloAdd(model, IloMinimize(env, 0.0));
 

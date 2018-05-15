@@ -53,12 +53,12 @@ int main(int argc, char** argv)
         T = 24;
         n = 20;
         sym = 3;
-        demande = 3;
+        demande = 4;
         cat01 = 0;
         bloc = 1;
         intra = 1 ;
         id=1 ;
-        localisation = "data/symsite/" ;
+        localisation = "data/sym=site/" ;
     }
     if (argc>1) {
         localisation = argv[2] ;
@@ -81,10 +81,12 @@ int main(int argc, char** argv)
     InstanceUCP* inst = new InstanceUCP(env, file) ;
 
 
-    Parameters param;
-    param.IP= 0;
-    param.ManageSym = 0;
-    param.Ramp = 0 ;
+    ///// Paramètres ////
+    bool IP=0 ; // est-ce qu'on résout le master en variable entières ?
+    bool ManageSubPbSym=0 ; // est-ce qu'on gère les symétries dans le sous problème ?
+    bool Ramp=0 ; // est-ce qu'on considère les gradients ?
+    Parameters const param(IP, ManageSubPbSym, Ramp);
+
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -159,7 +161,7 @@ int main(int argc, char** argv)
     //////  MASTER PROBLEM INITIALIZATION    /////
     //////////////////////////////////////////////
 
-    Master_Model Master(inst) ;
+    Master_Model Master(inst, param) ;
     Master.InitScipMasterModel(scip, inst) ;
 
 
@@ -181,20 +183,20 @@ int main(int argc, char** argv)
     SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
 
 
-//    /////////////////////////
-//    /////  BRANCHING    /////
-//    /////////////////////////
+////    /////////////////////////
+////    /////  BRANCHING    /////
+////    /////////////////////////
 
-////    BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
-////    BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
+//////    BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
+//////    BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
 
-////    SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
-////    SCIPincludeObjBranchrule(scip, branchRule, TRUE);
+//////    SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
+//////    SCIPincludeObjBranchrule(scip, branchRule, TRUE);
 
 
-//    //////////////////////
-//    //////  SOLVE    /////
-//    //////////////////////
+    //////////////////////
+    //////  SOLVE    /////
+    //////////////////////
 
     SCIPsolve(scip);
 
@@ -240,12 +242,12 @@ int main(int argc, char** argv)
     //////////////////////
 
     fichier << n << " & " << T << " & " << id ;
-    fichier << " & " << SCIPgetNNodes(scip) ;
-    fichier << " & " << SCIPgetSolvingTime(scip) ;
-    fichier << " & " << SCIPgetNLPIterations(scip) ;
-    fichier << " & " << SCIPgetGap(scip);
+    fichier << " &  " << SCIPgetNNodes(scip) ;
+    fichier << " &  " << SCIPgetSolvingTime(scip) ;
+    fichier << " &  " << SCIPgetNLPIterations(scip) ;
+    fichier << " &  " << SCIPgetGap(scip);
     fichier << " &  " << SCIPgetPrimalbound(scip);
-    fichier << " & " << SCIPgetDualbound(scip);
+    fichier << " &  " << SCIPgetDualbound(scip);
 
     //////////////////////
     //////  CHECK    /////

@@ -16,8 +16,9 @@ using namespace std ;
 struct Parameters
 {
     bool IP ;
-    bool ManageSym;
+    bool ManageSubPbSym;
     bool Ramp ;
+    Parameters(bool ip, bool managesubpbsym, bool ramp) : IP(ip), ManageSubPbSym(managesubpbsym), Ramp(ramp) {}
 };
 
 class InstanceProcessed {

@@ -86,11 +86,19 @@ void Master_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Var
 
     var->computeCost(inst);
     double cost= var->cost;
+
+    SCIP_Vartype type ;
+    if (Param.IP) {
+        type = SCIP_VARTYPE_INTEGER;
+    }
+    else {
+        type = SCIP_VARTYPE_CONTINUOUS ;
+    }
     SCIPcreateVar(scip, &(var->ptr), var_name,
                   0.0,                     // lower bound
                   SCIPinfinity(scip),      // upper bound
                   cost,                     // objective
-                  SCIP_VARTYPE_CONTINUOUS,    // variable type
+                  type,    // variable type
                   false, false, NULL, NULL, NULL, NULL, NULL);
 
     //// Add new variable to the list
@@ -106,7 +114,7 @@ void Master_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Var
 //    }
 }
 
-Master_Model::Master_Model(InstanceUCP* inst) {
+Master_Model::Master_Model(InstanceUCP* inst, const Parameters & Parametres) : Param(Parametres) {
     n = inst->getn() ;
     T = inst->getT() ;
     S = inst->getS() ;
@@ -114,7 +122,6 @@ Master_Model::Master_Model(InstanceUCP* inst) {
     demand_cstr.resize(T, (SCIP_CONS*) NULL);
     power_limits.resize(n*T, (SCIP_CONS*) NULL) ;
     convexity_cstr.resize(S, (SCIP_CONS*) NULL) ;
-
 }
 
 void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
