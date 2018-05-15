@@ -109,20 +109,6 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
     }
 
 
-
-    int conti = 1;
-    if (conti) {
-        model.add(IloConversion(env, x, IloNumVar::Float) ) ;
-        model.add(IloConversion(env, u, IloNumVar::Float) ) ;
-    }
-
-    IloCplex noIntraCplex = IloCplex(model) ;
-    noIntraCplex.setParam(IloCplex::EpGap, 0) ;
-    noIntraCplex.solve() ;
-
-    noIntraObj = noIntraCplex.getBestObjValue() ;
-
-
     //Contraintes intra-site
     int S = inst->getS() ;
     for (int s = 0 ; s < S ; s++) {
@@ -137,12 +123,11 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
         }
     }
 
-    cplex = IloCplex(model);
+    IloCplex noIntraCplex = IloCplex(model) ; // ou juste valeur opt entière
+    noIntraCplex.setParam(IloCplex::EpGap, 0) ;
+    noIntraCplex.solve() ;
 
-    cplex.setParam(IloCplex::EpGap, 0) ;
-    cplex.solve();
-
-    ObjValue = cplex.getObjValue() ;
+    noIntraObj = noIntraCplex.getBestObjValue() ;
 
 
     IloCplex LRCplex = IloCplex(model) ;
@@ -151,6 +136,24 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
     LRCplex.solve() ;
 
     LRCplexVal = LRCplex.getBestObjValue() ;
+
+
+
+    int conti = 1;
+    if (conti) {
+        model.add(IloConversion(env, x, IloNumVar::Float) ) ;
+        model.add(IloConversion(env, u, IloNumVar::Float) ) ;
+    }
+
+
+    cplex = IloCplex(model);
+
+    cplex.setParam(IloCplex::EpGap, 0) ;
+    cplex.solve();
+
+    ObjValue = cplex.getObjValue() ;
+
+
 
 }
 

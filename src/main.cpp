@@ -266,9 +266,10 @@ int main(int argc, char** argv)
 
     double value = checker.checkValue() ;
     cout << "VALEUR RELAXEE A TROUVER : " << value << endl ;
-   // fichier << "& " << checker.LRCplexVal ;
-    fichier << "& " << checker.ObjValue ;
-    //fichier << "& " << checker.ObjValue/checker.noIntraObj ;
+
+    fichier << "& " << checker.ObjValue ; // RL
+    fichier << "& " << checker.LRCplexVal ; // RL CPLEX
+    fichier << " & " << checker.noIntraObj ; // OPT
     fichier <<" \\\\ " << endl ;
 
     //    cout << "check x_frac: " << endl ;
