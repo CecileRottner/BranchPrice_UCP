@@ -8,6 +8,7 @@
 
 #include "InstanceUCP.h"
 #include "Master.h"
+#include "Process.h"
 
 using namespace std;
 using namespace scip;
@@ -17,6 +18,8 @@ public:
     vector<double> Mu ;
     vector<double> Nu ;
     vector<double> Sigma ;
+    vector<double> Phi ;
+    vector<double> Psi ;
 
     DualCosts(InstanceUCP* inst) ;
 };
@@ -37,7 +40,7 @@ class CplexPricingAlgo {
 
   CplexPricingAlgo(InstanceUCP* inst, int site);
 
-  void updateObjCoefficients(InstanceUCP* inst, const DualCosts & Dual, bool Farkas);
+  void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCosts & Dual, bool Farkas);
   void addBranchingConstraint(); //local to the branch considered
 
   // Launch Cplex solver and get back an optimal up/down plan

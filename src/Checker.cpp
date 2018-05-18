@@ -3,7 +3,7 @@
 
 using namespace std;
 
-CplexChecker::CplexChecker(InstanceUCP* instance) {
+CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Param(param) {
     cout << "start check" << endl ;
 
     inst = instance;
@@ -96,8 +96,7 @@ CplexChecker::CplexChecker(InstanceUCP* instance) {
         Prod.end() ;
     }
 
-    int ramp=0 ;
-    if (ramp==1) {
+    if (Param.Ramp) {
         cout << "gradients" << endl;
         for (int i = 0 ; i <n ; i++) {
            // model.add(pp[i*T] <= 0 ) ;

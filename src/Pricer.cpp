@@ -20,9 +20,10 @@ ObjPricerUCP::ObjPricerUCP(
         SCIP*                                scip,          /**< SCIP pointer */
         const char*                         pp_name,      /**< name of pricer */
         Master_Model*                        M,
-        InstanceUCP*                        instance
+        InstanceUCP*                        instance,
+        const Parameters &                  param
         ):
-    ObjPricer(scip, pp_name, "Find production plans with negative reduced costs for each site.", 0, TRUE)
+    ObjPricer(scip, pp_name, "Find production plans with negative reduced costs for each site.", 0, TRUE), Param(param)
 {
 
 
@@ -70,6 +71,16 @@ SCIP_DECL_PRICERINIT(ObjPricerUCP::scip_init)
     for (int s = 0 ; s < inst->getS() ; s++) {
         SCIPgetTransformedCons(scip, Master->convexity_cstr[s], &(Master->convexity_cstr[s]));
     }
+
+
+//    if (Param.Ramp) {
+//        for (int t = 1; t < T; t++) {
+//            for (int i = 0 ; i < inst->getn() ; i++) {
+//                SCIPgetTransformedCons(scip, Master->ramp_up[i*T+t], &(Master->ramp_up[i*T+t]));
+//                SCIPgetTransformedCons(scip, Master->ramp_up[i*T+t], &(Master->ramp_down[i*T+t]));
+//            }
+//        }
+//    }
 
 
     //variables ?
@@ -156,6 +167,22 @@ void ObjPricerUCP::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Farka
         }
     }
 
+    //couts duaux des ramp
+    //RAMPSTUFF
+//    if (Param.Ramp) {
+//        for (int i = 0; i < n; i++) {
+//            for (int t = 1 ; t < T ; t++) {
+//                if (!Farkas) {
+//                    dual_cost.Phi[i*T+t] = SCIPgetDualsolLinear(scip, Master->ramp_up[i*T+t]);
+//                    dual_cost.Psi[i*T+t] = SCIPgetDualsolLinear(scip, Master->ramp_down[i*T+t]);
+//                }
+//                else{
+//                    dual_cost.Phi[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->ramp_up[i*T+t]);
+//                    dual_cost.Psi[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->ramp_down[i*T+t]);
+//                }
+//            }
+//        }
+//    }
     //couts duaux demande
     for (int t = 0 ; t < T ; t++) {
         if (!Farkas) {
@@ -214,7 +241,7 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas           
 
         ///// MISE A JOUR DES OBJECTIFS DES SOUS PROBLEMES
        // cout << "mise à jour des couts, farkas=" << Farkas << endl;
-        (AlgoCplex[s])->updateObjCoefficients(inst, dual_cost, Farkas) ;
+        (AlgoCplex[s])->updateObjCoefficients(inst, Param, dual_cost, Farkas) ;
 
         //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
         double objvalue = 0 ;

@@ -8,6 +8,8 @@ DualCosts::DualCosts(InstanceUCP* inst) {
     int T= inst->getT() ;
     Mu.resize(T, 0) ;
     Nu.resize(n*T, 0) ;
+    Phi.resize(n*T, 0) ;
+    Psi.resize(n*T, 0) ;
     Sigma.resize(inst->getS(), 0) ;
 }
 
@@ -176,18 +178,32 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
 
 }
 
-void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const DualCosts & Dual, bool Farkas) {
+void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCosts & Dual, bool Farkas) {
     int ns = inst->nbUnits(Site) ;
     int T = inst->getT();
     int first = inst->firstUnit(Site) ;
     for (int i=0 ; i<ns ; i++) {
+
+//        double RU = (inst->getPmax(first+i) - inst->getPmin(first+i))/3 ;
+//        double RD = (inst->getPmax(first+i) - inst->getPmin(first+i))/2 ;
+
         for (int t=0 ; t < T ; t++) {
+            //RAMPSTUFF
+//            double dual_coef = - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] ;
+//            if (Param.Ramp) {
+//                if (t > 0) {
+//                    dual_coef += RD*Dual.Psi[(first+i)*T+t] ;
+//                }
+//                if (t < T-1) {
+//                    dual_coef += RU*Dual.Phi[(first+i)*T+t+1] ;
+//                }
+//            }
             if (!Farkas) {
-                obj.setLinearCoef(x[i*T +t],BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] );
+                obj.setLinearCoef(x[i*T +t],BaseObjCoefX[i]  - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] );
                 obj.setLinearCoef(u[i*T +t],inst->getc0(first+i)) ;
             }
             else{
-                obj.setLinearCoef(x[i*T +t],- inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] );
+                obj.setLinearCoef(x[i*T +t],  - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] );
                 obj.setLinearCoef(u[i*T +t],0.0) ;
             }
             //cout << "obj coef: " << BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] - Dual.Sigma[Site] << endl ;

@@ -6,6 +6,7 @@
 #include <vector>
 #include <list>
 
+#include "Process.h"
 #include "InstanceUCP.h"
 
 using namespace std;
@@ -15,6 +16,7 @@ class CplexChecker {
  public:
 
   InstanceUCP* inst ;
+  const Parameters Param ;
   IloEnv   env;
   IloModel model;
   IloCplex cplex;
@@ -27,7 +29,7 @@ class CplexChecker {
   double ObjValue ;
   double LRCplexVal ;
 
-  CplexChecker(InstanceUCP* inst) ;
+  CplexChecker(InstanceUCP* inst, const Parameters & param) ;
   double checkValue();
   void checkSolution(const vector<double> & x_frac);
 

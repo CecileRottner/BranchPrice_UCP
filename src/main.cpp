@@ -172,7 +172,7 @@ int main(int argc, char** argv)
     static const char* PRICER_NAME = "Pricer_UCP";
 
     // include UCP pricer
-    ObjPricerUCP* pricer_ptr = new ObjPricerUCP(scip, PRICER_NAME, &Master, inst);
+    ObjPricerUCP* pricer_ptr = new ObjPricerUCP(scip, PRICER_NAME, &Master, inst, param);
 
     SCIPincludeObjPricer(scip, pricer_ptr, true);
 
@@ -197,6 +197,7 @@ int main(int argc, char** argv)
     //////////////////////
     //////  SOLVE    /////
     //////////////////////
+
 
     SCIPsolve(scip);
 
@@ -255,7 +256,7 @@ int main(int argc, char** argv)
 
     cout.precision(15);
 
-    CplexChecker checker = CplexChecker(inst) ;
+    CplexChecker checker = CplexChecker(inst, param) ;
 
     //    vector<double> x_frac = vector<double>(n*T, 0) ;
     //    for (int i=0 ; i < n*T ; i++) {

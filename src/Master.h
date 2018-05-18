@@ -55,6 +55,8 @@ public:
     // Keep a pointer on every constraint of the Master program
     vector<SCIP_CONS*> demand_cstr;
     vector<SCIP_CONS*> power_limits;
+    vector<SCIP_CONS*> ramp_up;
+    vector<SCIP_CONS*> ramp_down;
     vector<SCIP_CONS*> convexity_cstr;
 
     // Keep informations on every variables of the Master program

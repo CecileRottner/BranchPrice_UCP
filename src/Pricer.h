@@ -20,6 +20,8 @@ class ObjPricerUCP : public ObjPricer{
 public:
 
     InstanceUCP* inst ;
+    const Parameters Param ;
+
     Master_Model* Master ;
     vector<CplexPricingAlgo*> AlgoCplex;
 
@@ -28,7 +30,8 @@ public:
       SCIP*                               scip,        /**< SCIP pointer */
       const char*                         p_name,       /**< name of pricer */
       Master_Model*                       M,
-      InstanceUCP*                        inst
+      InstanceUCP*                        inst,
+      const Parameters &                  param
       );
 
    /** Destructs the pricer object. */

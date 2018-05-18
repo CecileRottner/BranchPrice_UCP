@@ -67,6 +67,26 @@ void Master_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, In
         }
     }
 
+    /* for each time period and each unit in site S, add coefficient RU (resp RD) into the ramp up (resp down) constraint of unit i at t+1 */
+    //RAMPSTUFF
+//    if (Param.Ramp) {
+//        for (int t=0 ; t < T ; t++) {
+//            for (int i=0 ; i < inst->nbUnits(s) ; i++) {
+//                double RU = (inst->getPmax(first+i) - inst->getPmin(first+i))/3 ;
+//                double RD = (inst->getPmax(first+i) - inst->getPmin(first+i))/2 ;
+//                if (lambda->UpDown_plan[i*T+t]) {
+//                    if ( t < T-1) {
+//                        SCIPaddCoefLinear(scip, ramp_up[(first+i)*T+t+1], lambda->ptr, -RU) ;
+//                    }
+//                    if ( t > 0) {
+//                        SCIPaddCoefLinear(scip, ramp_down[(first+i)*T+t], lambda->ptr, -RD) ;
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+
     /* add coefficient to the convexity constraint for site s */
     SCIPaddCoefLinear(scip, convexity_cstr[s], lambda->ptr, 1.0) ;
 
@@ -121,6 +141,8 @@ Master_Model::Master_Model(InstanceUCP* inst, const Parameters & Parametres) : P
 
     demand_cstr.resize(T, (SCIP_CONS*) NULL);
     power_limits.resize(n*T, (SCIP_CONS*) NULL) ;
+    ramp_up.resize(n*T, (SCIP_CONS*) NULL) ;
+    ramp_down.resize(n*T, (SCIP_CONS*) NULL) ;
     convexity_cstr.resize(S, (SCIP_CONS*) NULL) ;
 }
 
@@ -179,6 +201,60 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
             power_limits[i*T + t] = con;
         }
     }
+
+    ///// Ramp up & down constraints /////
+    //RAMPSTUFF
+//    if (Param.Ramp) {
+//        char con_name_ramp_up[255];
+//        for (int i = 0 ; i <n ; i++)
+//        {
+//            for (int t = 1; t < T; t++)
+//            {
+//                SCIP_CONS* con = NULL;
+//                (void) SCIPsnprintf(con_name_ramp_up, 255, "RampUp(%d,%d)", i, t); // nom de la contrainte
+//                SCIPcreateConsLinear( scip, &con, con_name_ramp_up, 0, NULL, NULL,
+//                                      -SCIPinfinity(scip),   // lhs
+//                                      0.0,   // rhs  SCIPinfinity(scip) if >=1
+//                                      true,  /* initial */
+//                                      false, /* separate */
+//                                      true,  /* enforce */
+//                                      true,  /* check */
+//                                      true,  /* propagate */
+//                                      false, /* local */
+//                                      true,  /* modifiable */
+//                                      false, /* dynamic */
+//                                      false, /* removable */
+//                                      false  /* stickingatnode */ );
+//                SCIPaddCons(scip, con);
+//                ramp_up[i*T + t] = con;
+//            }
+//        }
+
+//        char con_name_ramp_down[255];
+//        for (int i = 0 ; i <n ; i++)
+//        {
+//            for (int t = 1; t < T; t++)
+//            {
+//                SCIP_CONS* con = NULL;
+//                (void) SCIPsnprintf(con_name_ramp_down, 255, "RampDown(%d,%d)", i, t); // nom de la contrainte
+//                SCIPcreateConsLinear( scip, &con, con_name_ramp_down, 0, NULL, NULL,
+//                                      -SCIPinfinity(scip),   // lhs
+//                                      0.0,   // rhs  SCIPinfinity(scip) if >=1
+//                                      true,  /* initial */
+//                                      false, /* separate */
+//                                      true,  /* enforce */
+//                                      true,  /* check */
+//                                      true,  /* propagate */
+//                                      false, /* local */
+//                                      true,  /* modifiable */
+//                                      false, /* dynamic */
+//                                      false, /* removable */
+//                                      false  /* stickingatnode */ );
+//                SCIPaddCons(scip, con);
+//                ramp_down[i*T + t] = con;
+//            }
+//        }
+//    }
 
     ///// Convexity constraint ////
     char con_name_convex[255];
@@ -295,8 +371,24 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
             /* add coefficient to the power limit constraint */
             SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);
+
+
+            /* add coefficients to the ramp up and down constraints */
+
+            //RAMPSTUFF
+//            if (Param.Ramp) {
+//                if (t>0) {
+//                    SCIPaddCoefLinear(scip, ramp_up[i*T + t], var, 1.0);
+//                    SCIPaddCoefLinear(scip, ramp_down[i*T + t], var, -1.0);
+//                }
+//                if (t < T-1) {
+//                    SCIPaddCoefLinear(scip, ramp_up[i*T + t+1], var, -1.0);
+//                    SCIPaddCoefLinear(scip, ramp_down[i*T + t+1], var, 1.0);
+//                }
+//            }
         }
     }
+
 
     ///////////////////////////////////////////////////////////////
     //////////   MASTER LAMBDA VARIABLES INITIALIZATION   /////////
