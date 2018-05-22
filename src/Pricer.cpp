@@ -25,8 +25,6 @@ ObjPricerUCP::ObjPricerUCP(
         ):
     ObjPricer(scip, pp_name, "Find production plans with negative reduced costs for each site.", 0, TRUE), Param(param)
 {
-
-
     inst=instance ;
     Master=M;
 
@@ -35,7 +33,6 @@ ObjPricerUCP::ObjPricerUCP(
     for (int s=0 ; s < inst->getS() ; s++) {
         AlgoCplex[s] = new CplexPricingAlgo(inst, s) ;
     }
-
 }
 
 
@@ -53,15 +50,14 @@ ObjPricerUCP::~ObjPricerUCP()
  */
 SCIP_DECL_PRICERINIT(ObjPricerUCP::scip_init)
 {
-
     int T = inst->getT() ;
     // demand constraints
-    for (int t = 0; t < T; t++) {
+    for (int t = 0 ; t < T ; t++) {
         SCIPgetTransformedCons(scip, Master->demand_cstr[t], &(Master->demand_cstr[t]));
     }
 
     //power limits
-    for (int t = 0; t < T; t++) {
+    for (int t = 0 ; t < T ; t++) {
         for (int i = 0 ; i < inst->getn() ; i++) {
             SCIPgetTransformedCons(scip, Master->power_limits[i*T+t], &(Master->power_limits[i*T+t]));
         }
@@ -73,14 +69,14 @@ SCIP_DECL_PRICERINIT(ObjPricerUCP::scip_init)
     }
 
 
-//    if (Param.Ramp) {
-//        for (int t = 1; t < T; t++) {
-//            for (int i = 0 ; i < inst->getn() ; i++) {
-//                SCIPgetTransformedCons(scip, Master->ramp_up[i*T+t], &(Master->ramp_up[i*T+t]));
-//                SCIPgetTransformedCons(scip, Master->ramp_up[i*T+t], &(Master->ramp_down[i*T+t]));
-//            }
-//        }
-//    }
+    if (Param.Ramp) {
+        for (int t = 1; t < T; t++) {
+            for (int i = 0 ; i < inst->getn() ; i++) {
+                SCIPgetTransformedCons(scip, Master->ramp_up[i*T+t], &(Master->ramp_up[i*T+t]));
+                SCIPgetTransformedCons(scip, Master->ramp_down[i*T+t], &(Master->ramp_down[i*T+t]));
+            }
+        }
+    }
 
 
     //variables ?
@@ -169,20 +165,23 @@ void ObjPricerUCP::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Farka
 
     //couts duaux des ramp
     //RAMPSTUFF
-//    if (Param.Ramp) {
-//        for (int i = 0; i < n; i++) {
-//            for (int t = 1 ; t < T ; t++) {
-//                if (!Farkas) {
-//                    dual_cost.Phi[i*T+t] = SCIPgetDualsolLinear(scip, Master->ramp_up[i*T+t]);
-//                    dual_cost.Psi[i*T+t] = SCIPgetDualsolLinear(scip, Master->ramp_down[i*T+t]);
-//                }
-//                else{
-//                    dual_cost.Phi[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->ramp_up[i*T+t]);
-//                    dual_cost.Psi[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->ramp_down[i*T+t]);
-//                }
-//            }
-//        }
-//    }
+    if (Param.Ramp) {
+        for (int i = 0; i < n; i++) {
+            for (int t = 1 ; t < T ; t++) {
+                if (!Farkas) {
+                    dual_cost.Phi[i*T+t] = SCIPgetDualsolLinear(scip, Master->ramp_up[i*T+t]);
+                    dual_cost.Psi[i*T+t] = SCIPgetDualsolLinear(scip, Master->ramp_down[i*T+t]);
+                }
+                else{
+                    dual_cost.Phi[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->ramp_up[i*T+t]);
+                    dual_cost.Psi[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->ramp_down[i*T+t]);
+                }
+
+               if (print) cout << "phi(" << i <<"," << t <<") = " << dual_cost.Phi[i*T+t] <<endl;
+               if (print) cout << "psi(" << i <<"," << t <<") = " << dual_cost.Psi[i*T+t] <<endl;
+            }
+        }
+    }
     //couts duaux demande
     for (int t = 0 ; t < T ; t++) {
         if (!Farkas) {
@@ -218,14 +217,14 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas           
 
     int print = 0 ;
 
-    /// PMR courant et sa solution
-    //SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
+//    /// PMR courant et sa solution
+//    SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
 
-    //cout << "solution du PMR:" << endl ;
-    //SCIPprintSol(scip, NULL, NULL, FALSE);
+//   // cout << "solution du PMR:" << endl ;
+//    SCIPprintSol(scip, NULL, NULL, FALSE);
 
-    //cout << "solution réalisable:" << endl ;
-    //SCIPprintBestSol(scip, NULL, FALSE);
+//    //cout << "solution réalisable:" << endl ;
+//    SCIPprintBestSol(scip, NULL, FALSE);
 
     //// Cout duaux
     int T = inst->getT() ;

@@ -46,8 +46,6 @@ class BranchConsHandler : public scip::ObjConshdlr {
 
 public :
 
-
-
     ObjPricerUCP *pricer_ptr;
     Master_Model* Master ;
     InstanceUCP* inst ;

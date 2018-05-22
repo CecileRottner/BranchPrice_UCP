@@ -75,8 +75,6 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
     }
 
 
-
-
     //Limite de production
     for (int i=0; i<n; i++) {
         for (int t=0 ; t < T ; t++) {
@@ -127,6 +125,19 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
     noIntraCplex.solve() ;
 
     noIntraObj = noIntraCplex.getBestObjValue() ;
+
+    IloNumArray solution = IloNumArray(env, n*T) ;
+    noIntraCplex.getValues(solution, x) ;
+
+    cout.precision(6);
+    cout << "X: " << endl ;
+    for (int t=0 ; t < T ; t++) {
+        for (int i=0 ; i < n ; i++) {
+            cout << fabs(solution[i*T+t]) << " " ;
+        }
+        cout << endl ;
+    }
+    cout << endl ;
 
 
     IloCplex LRCplex = IloCplex(model) ;
@@ -245,6 +256,16 @@ void CplexChecker::checkSolution(const vector<double> & x_frac) {
         Prod.end() ;
     }
 
+    if (Param.Ramp) {
+        cout << "gradients" << endl;
+        for (int i = 0 ; i <n ; i++) {
+           // model.add(pp[i*T] <= 0 ) ;
+            for (int t = 1 ; t < T ; t++) {
+                CheckModel.add(p[i*T + t] - p[i*T + t-1] <= (inst->getPmax(i)-inst->getPmin(i))*x[i*T + t-1]/3 );
+                CheckModel.add(p[i*T + t-1] - p[i*T + t] <= (inst->getPmax(i)-inst->getPmin(i))*x[i*T + t]/2 );
+            }
+        }
+    }
 
     // Min up constraints
     for (int i=0; i<n; i++) {
@@ -287,6 +308,8 @@ void CplexChecker::checkSolution(const vector<double> & x_frac) {
             }
         }
     }
+
+
 
 
 

@@ -75,7 +75,7 @@ int main(int argc, char** argv)
     InstanceProcessed Instance = InstanceProcessed(n, T, bloc, demande, sym, cat01, intra, id, localisation) ;
 
     string nom = Instance.fileName() ;
-    const char* file = nom.c_str() ;
+    const char* file = strdup(nom.c_str()) ;
 
     IloEnv env;
     InstanceUCP* inst = new InstanceUCP(env, file) ;
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
     ///// Paramètres ////
     bool IP=0 ; // est-ce qu'on résout le master en variable entières ?
     bool ManageSubPbSym=0 ; // est-ce qu'on gère les symétries dans le sous problème ?
-    bool Ramp=0 ; // est-ce qu'on considère les gradients ?
+    bool Ramp=1 ; // est-ce qu'on considère les gradients ?
     Parameters const param(IP, ManageSubPbSym, Ramp);
 
 
@@ -161,9 +161,11 @@ int main(int argc, char** argv)
     //////  MASTER PROBLEM INITIALIZATION    /////
     //////////////////////////////////////////////
 
+    cout << "create master model: " << endl ;
     Master_Model Master(inst, param) ;
     Master.InitScipMasterModel(scip, inst) ;
 
+    cout << "done " << endl ;
 
     ////////////////////////////////
     //////  PRICING PROBLEM    /////
@@ -172,9 +174,13 @@ int main(int argc, char** argv)
     static const char* PRICER_NAME = "Pricer_UCP";
 
     // include UCP pricer
+
+    cout << "create pricer:" << endl ;
     ObjPricerUCP* pricer_ptr = new ObjPricerUCP(scip, PRICER_NAME, &Master, inst, param);
 
     SCIPincludeObjPricer(scip, pricer_ptr, true);
+
+    cout << "done" << endl ;
 
     // activate pricer
     SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
@@ -198,45 +204,46 @@ int main(int argc, char** argv)
     //////  SOLVE    /////
     //////////////////////
 
+    cout << "ici" << endl ;
 
     SCIPsolve(scip);
 
 
     /// Solution en x
-    //    n=inst->getn();
-    //    T=inst->getT();
+    n=inst->getn();
+    T=inst->getT();
 
-    //    vector<double> x_frac = vector<double>(n*T, 0) ;
+    vector<double> x_frac = vector<double>(n*T, 0) ;
 
-    //    list<Master_Variable*>::const_iterator itv;
-    //    SCIP_Real frac_value;
+    list<Master_Variable*>::const_iterator itv;
+    SCIP_Real frac_value;
 
-    //    for (itv = Master.L_var.begin(); itv!=Master.L_var.end(); itv++) {
+    for (itv = Master.L_var.begin(); itv!=Master.L_var.end(); itv++) {
 
-    //        frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
+        frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
 
-    //        int site = (*itv)->Site ;
-    //        int first = inst->firstUnit(site) ;
-    //        for (int i=0 ; i < inst->nbUnits(site) ; i++) {
-    //            for (int t=0 ; t < T ; t++) {
+        int site = (*itv)->Site ;
+        int first = inst->firstUnit(site) ;
+        for (int i=0 ; i < inst->nbUnits(site) ; i++) {
+            for (int t=0 ; t < T ; t++) {
 
-    //                if ((*itv)->UpDown_plan[i*T+t] > 0.000001) {
+                if ((*itv)->UpDown_plan[i*T+t] > 0.000001) {
 
-    //                    x_frac[(first+i)*T+t] += frac_value ;
-    //                }
-    //            }
-    //        }
-    //    }
+                    x_frac[(first+i)*T+t] += frac_value ;
+                }
+            }
+        }
+    }
 
 
-    //    cout << "solution x frac: " << endl;
+    cout << "solution x frac: " << endl;
 
-    //    for (int t=0 ; t < T ; t++) {
-    //        for (int i=0 ; i <n ; i++) {
-    //            cout << x_frac[i*T+t] << " " ;
-    //        }
-    //        cout << endl ;
-    //    }
+    for (int t=0 ; t < T ; t++) {
+        for (int i=0 ; i <n ; i++) {
+            cout << x_frac[i*T+t] << " " ;
+        }
+        cout << endl ;
+    }
 
     //////////////////////
     //////   STATS   /////
@@ -258,10 +265,10 @@ int main(int argc, char** argv)
 
     CplexChecker checker = CplexChecker(inst, param) ;
 
-    //    vector<double> x_frac = vector<double>(n*T, 0) ;
-    //    for (int i=0 ; i < n*T ; i++) {
-    //        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
-    //    }
+//    vector<double> x_frac = vector<double>(n*T, 0) ;
+//    for (int i=0 ; i < n*T ; i++) {
+//        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
+//    }
 
 
 
@@ -274,7 +281,7 @@ int main(int argc, char** argv)
     fichier <<" \\\\ " << endl ;
 
     //    cout << "check x_frac: " << endl ;
-    //    checker.checkSolution(x_frac);
+    checker.checkSolution(x_frac);
 
     return 0;
 }
