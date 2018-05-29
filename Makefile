@@ -57,8 +57,11 @@ MAINOBJ		=	main.o \
 			InstanceUCP.o \
 			Process.o \
 			Master.o \
+			MasterTime.o \
 			CplexPricingAlgo.o \
+			CplexPricingAlgoTime.o \
 			Pricer.o \
+			PricerTime.o \
 			BranchConsHandler.o \
 			BranchingRule.o \
 			Checker.o \

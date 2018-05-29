@@ -18,7 +18,9 @@ struct Parameters
     bool IP ;
     bool ManageSubPbSym;
     bool Ramp ;
-    Parameters(bool ip, bool managesubpbsym, bool ramp) : IP(ip), ManageSubPbSym(managesubpbsym), Ramp(ramp) {}
+    bool TimeStepDec ;
+    bool IntraSite ;
+    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra) : IP(ip), ManageSubPbSym(managesubpbsym), Ramp(ramp), TimeStepDec(time), IntraSite(intra) {}
 };
 
 class InstanceProcessed {

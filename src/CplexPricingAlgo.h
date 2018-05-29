@@ -49,5 +49,44 @@ class CplexPricingAlgo {
 };
 
 
+////////////////////////////////////////////////////
+////////// DECOMPOSITION PAR PAS DE TEMPS //////////
+////////////////////////////////////////////////////
+
+
+class DualCostsTime {
+public:
+    vector<double> Mu ;
+    vector<double> Nu ;
+    vector<double> Xi ;
+    vector<double> Eta ;
+    vector<double> Sigma ;
+
+    DualCostsTime(InstanceUCP* inst) ;
+};
+
+class CplexPricingAlgoTime {
+ public:
+
+  int time ;
+  IloEnv   env;
+  IloModel model;
+  IloObjective obj;
+  IloCplex cplex;
+
+  IloBoolVarArray x;
+  IloBoolVarArray u;
+
+  vector<double> BaseObjCoefX ;
+
+  CplexPricingAlgoTime(InstanceUCP* inst, int site);
+
+  void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas);
+  void addBranchingConstraint(); //local to the branch considered
+
+  // Launch Cplex solver and get back an optimal up/down plan
+  bool findUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double & objvalue, double & realCost);
+
+};
 
 #endif

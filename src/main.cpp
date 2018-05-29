@@ -84,8 +84,10 @@ int main(int argc, char** argv)
     ///// Paramètres ////
     bool IP=0 ; // est-ce qu'on résout le master en variable entières ?
     bool ManageSubPbSym=0 ; // est-ce qu'on gère les symétries dans le sous problème ?
-    bool Ramp=1 ; // est-ce qu'on considère les gradients ?
-    Parameters const param(IP, ManageSubPbSym, Ramp);
+    bool Ramp=0 ; // est-ce qu'on considère les gradients ?
+    bool TimeStepDec = 0 ;
+    bool IntraSite = 0 ; // Implémenté dans le cas de la décomposition time step
+    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite);
 
 
     ////////////////////////////////////
@@ -193,18 +195,17 @@ int main(int argc, char** argv)
 ////    /////  BRANCHING    /////
 ////    /////////////////////////
 
-//////    BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
-//////    BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
+    if (param.IP==1) {
+        BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
+        BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
 
-//////    SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
-//////    SCIPincludeObjBranchrule(scip, branchRule, TRUE);
-
+        SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
+        SCIPincludeObjBranchrule(scip, branchRule, TRUE);
+    }
 
     //////////////////////
     //////  SOLVE    /////
     //////////////////////
-
-    cout << "ici" << endl ;
 
     SCIPsolve(scip);
 
