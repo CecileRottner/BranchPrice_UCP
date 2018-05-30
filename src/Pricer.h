@@ -71,7 +71,7 @@ public:
     const Parameters Param ;
 
     MasterTime_Model* Master ;
-    vector<CplexPricingAlgo*> AlgoCplex;
+    vector<CplexPricingAlgoTime*> AlgoCplex;
 
    /** Constructs the pricer object with the data needed */
    ObjPricerTimeUCP(
@@ -97,7 +97,7 @@ public:
    virtual  SCIP_RETCODE scip_farkas(SCIP* scip, SCIP_PRICER* pricer, SCIP_RESULT* result) override;
 
    /*put dual costs or farkas cost in vector dual_cost*/
-   void updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Farkas) ;
+   void updateDualCosts(SCIP* scip, DualCostsTime & dual_cost, bool Farkas) ;
 
    /** performs pricing */
    void pricingUCP(

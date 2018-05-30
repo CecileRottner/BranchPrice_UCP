@@ -85,7 +85,7 @@ int main(int argc, char** argv)
     bool IP=0 ; // est-ce qu'on résout le master en variable entières ?
     bool ManageSubPbSym=0 ; // est-ce qu'on gère les symétries dans le sous problème ?
     bool Ramp=0 ; // est-ce qu'on considère les gradients ?
-    bool TimeStepDec = 0 ;
+    bool TimeStepDec = 1 ;
     bool IntraSite = 0 ; // Implémenté dans le cas de la décomposition time step
     Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite);
 
@@ -163,11 +163,18 @@ int main(int argc, char** argv)
     //////  MASTER PROBLEM INITIALIZATION    /////
     //////////////////////////////////////////////
 
-    cout << "create master model: " << endl ;
-    Master_Model Master(inst, param) ;
-    Master.InitScipMasterModel(scip, inst) ;
 
-    cout << "done " << endl ;
+
+    Master_Model Master(inst, param) ;
+    MasterTime_Model MasterTime(inst, param) ;
+
+    if (param.TimeStepDec) { // décomposition par pas de temps
+        MasterTime.InitScipMasterTimeModel(scip, inst);
+    }
+
+    else { // décomposition classique
+        Master.InitScipMasterModel(scip, inst) ;
+    }
 
     ////////////////////////////////
     //////  PRICING PROBLEM    /////
@@ -177,30 +184,32 @@ int main(int argc, char** argv)
 
     // include UCP pricer
 
-    cout << "create pricer:" << endl ;
-    ObjPricerUCP* pricer_ptr = new ObjPricerUCP(scip, PRICER_NAME, &Master, inst, param);
+    if (param.TimeStepDec) {
+        ObjPricerTimeUCP* pricer_ptr = new ObjPricerTimeUCP(scip, PRICER_NAME, &MasterTime, inst, param);
+        SCIPincludeObjPricer(scip, pricer_ptr, true);
+        SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
 
-    SCIPincludeObjPricer(scip, pricer_ptr, true);
-
-    cout << "done" << endl ;
-
-    // activate pricer
-    SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
+    }
+    else {
+        ObjPricerUCP* pricer_ptr = new ObjPricerUCP(scip, PRICER_NAME, &Master, inst, param);
+        SCIPincludeObjPricer(scip, pricer_ptr, true);
+        SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
+    }
 
     cout<<"Write init pl"<<endl;
     SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
 
 
-////    /////////////////////////
-////    /////  BRANCHING    /////
-////    /////////////////////////
+    ////    /////////////////////////
+    ////    /////  BRANCHING    /////
+    ////    /////////////////////////
 
     if (param.IP==1) {
-        BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
-        BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
+        //        BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
+        //        BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
 
-        SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
-        SCIPincludeObjBranchrule(scip, branchRule, TRUE);
+        //        SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
+        //        SCIPincludeObjBranchrule(scip, branchRule, TRUE);
     }
 
     //////////////////////
@@ -209,41 +218,43 @@ int main(int argc, char** argv)
 
     SCIPsolve(scip);
 
-
     /// Solution en x
+
     n=inst->getn();
     T=inst->getT();
 
     vector<double> x_frac = vector<double>(n*T, 0) ;
 
-    list<Master_Variable*>::const_iterator itv;
-    SCIP_Real frac_value;
+    if (!param.TimeStepDec) {
+        list<Master_Variable*>::const_iterator itv;
+        SCIP_Real frac_value;
 
-    for (itv = Master.L_var.begin(); itv!=Master.L_var.end(); itv++) {
+        for (itv = Master.L_var.begin(); itv!=Master.L_var.end(); itv++) {
 
-        frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
+            frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
 
-        int site = (*itv)->Site ;
-        int first = inst->firstUnit(site) ;
-        for (int i=0 ; i < inst->nbUnits(site) ; i++) {
-            for (int t=0 ; t < T ; t++) {
+            int site = (*itv)->Site ;
+            int first = inst->firstUnit(site) ;
+            for (int i=0 ; i < inst->nbUnits(site) ; i++) {
+                for (int t=0 ; t < T ; t++) {
 
-                if ((*itv)->UpDown_plan[i*T+t] > 0.000001) {
+                    if ((*itv)->UpDown_plan[i*T+t] > 0.000001) {
 
-                    x_frac[(first+i)*T+t] += frac_value ;
+                        x_frac[(first+i)*T+t] += frac_value ;
+                    }
                 }
             }
         }
-    }
 
 
-    cout << "solution x frac: " << endl;
+        cout << "solution x frac: " << endl;
 
-    for (int t=0 ; t < T ; t++) {
-        for (int i=0 ; i <n ; i++) {
-            cout << x_frac[i*T+t] << " " ;
+        for (int t=0 ; t < T ; t++) {
+            for (int i=0 ; i <n ; i++) {
+                cout << x_frac[i*T+t] << " " ;
+            }
+            cout << endl ;
         }
-        cout << endl ;
     }
 
     //////////////////////
@@ -266,10 +277,10 @@ int main(int argc, char** argv)
 
     CplexChecker checker = CplexChecker(inst, param) ;
 
-//    vector<double> x_frac = vector<double>(n*T, 0) ;
-//    for (int i=0 ; i < n*T ; i++) {
-//        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
-//    }
+    //    vector<double> x_frac = vector<double>(n*T, 0) ;
+    //    for (int i=0 ; i < n*T ; i++) {
+    //        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
+    //    }
 
 
 
@@ -281,8 +292,9 @@ int main(int argc, char** argv)
     fichier << " & " << checker.noIntraObj ; // OPT
     fichier <<" \\\\ " << endl ;
 
+
     //    cout << "check x_frac: " << endl ;
-    checker.checkSolution(x_frac);
+    //checker.checkSolution(x_frac);
 
     return 0;
 }

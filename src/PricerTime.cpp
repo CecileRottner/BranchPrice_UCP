@@ -28,10 +28,10 @@ ObjPricerTimeUCP::ObjPricerTimeUCP(
     inst=instance ;
     Master=M;
 
-    AlgoCplex = vector<CplexPricingAlgo*>(inst->getS(), NULL) ;
+    AlgoCplex = vector<CplexPricingAlgoTime*>(inst->getT(), NULL) ;
 
-    for (int s=0 ; s < inst->getS() ; s++) {
-        AlgoCplex[s] = new CplexPricingAlgo(inst, s) ;
+    for (int t=0 ; t < inst->getT() ; t++) {
+        AlgoCplex[t] = new CplexPricingAlgoTime(inst, t) ;
     }
 }
 
@@ -50,38 +50,40 @@ ObjPricerTimeUCP::~ObjPricerTimeUCP()
  */
 SCIP_DECL_PRICERINIT(ObjPricerTimeUCP::scip_init)
 {
-//    int T = inst->getT() ;
-//    // demand constraints
-//    for (int t = 0 ; t < T ; t++) {
-//        SCIPgetTransformedCons(scip, Master->demand_cstr[t], &(Master->demand_cstr[t]));
-//    }
 
-//    //power limits
-//    for (int t = 0 ; t < T ; t++) {
-//        for (int i = 0 ; i < inst->getn() ; i++) {
-//            SCIPgetTransformedCons(scip, Master->power_limits[i*T+t], &(Master->power_limits[i*T+t]));
-//        }
-//    }
+    int T = inst->getT() ;
+    int n = inst->getn();
 
-//    //convexity constraints
-//    for (int s = 0 ; s < inst->getS() ; s++) {
-//        SCIPgetTransformedCons(scip, Master->convexity_cstr[s], &(Master->convexity_cstr[s]));
-//    }
+    // logical constraints
+    for (int i = 0 ; i <n ; i++) {
+        for (int t = 1 ; t < T ; t++) {
 
+        SCIPgetTransformedCons( scip, Master->logical.at(i*T+t), &(Master->logical.at(i*T+t)) );
+        }
+    }
 
-//    if (Param.Ramp) {
-//        for (int t = 1; t < T; t++) {
-//            for (int i = 0 ; i < inst->getn() ; i++) {
-//                SCIPgetTransformedCons(scip, Master->ramp_up[i*T+t], &(Master->ramp_up[i*T+t]));
-//                SCIPgetTransformedCons(scip, Master->ramp_down[i*T+t], &(Master->ramp_down[i*T+t]));
-//            }
-//        }
-//    }
+    // min-up constraints
+    for (int i = 0 ; i <n ; i++) {
+        int L = inst->getL(i) ;
+        for (int t = L ; t < T ; t++) {
+            SCIPgetTransformedCons( scip, Master->min_up.at(i*T+t), &(Master->min_up.at(i*T+t)) );
+        }
+    }
+
+    // min-down constraints
+    for (int i = 0 ; i <n ; i++) {
+        int l = inst->getl(i) ;
+        for (int t = l ; t < T ; t++) {
+            SCIPgetTransformedCons( scip, Master->min_down.at(i*T+t), &(Master->min_down.at(i*T+t)) );
+        }
+    }
+
+    for (int t=0 ; t < T ; t++) {
+        SCIPgetTransformedCons( scip, Master->convexity_cstr.at(t), &(Master->convexity_cstr.at(t)) );
+    }
 
 
     //variables ?
-
-
     //pour l'instant on n'a pas besoin de les manipuler a priori
 
     return SCIP_OKAY;
@@ -140,71 +142,72 @@ SCIP_RETCODE ObjPricerTimeUCP::scip_farkas( SCIP* scip, SCIP_PRICER* pricer, SCI
 
 
 
-void ObjPricerTimeUCP::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Farkas) {
+void ObjPricerTimeUCP::updateDualCosts(SCIP* scip, DualCostsTime & dual_cost, bool Farkas) {
     ///// RECUPERATION DES COUTS DUAUX
 
-//    int print = 0 ;
-//    int n = inst->getn() ;
-//    int T = inst->getT() ;
-//    int S = inst->getS() ;
+    int print = 0 ;
+    int n = inst->getn() ;
+    int T = inst->getT() ;
 
-//    //cout << "solution duale :" << endl ;
-//    //couts duaux des power limits
-//    for (int i = 0; i < n; i++) {
-//        for (int t = 0 ; t < T ; t++) {
-//            if (!Farkas) {
-//                dual_cost.Nu[i*T+t] = SCIPgetDualsolLinear(scip, Master->power_limits[i*T+t]);
-//            }
-//            else{
-//                dual_cost.Nu[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->power_limits[i*T+t]);
-//            }
-//            if (print)
-//                cout << "nu(" << i <<"," << t <<") = " << dual_cost.Nu[i*T+t] <<endl;
-//        }
-//    }
+    //cout << "solution duale :" << endl ;
 
-//    //couts duaux des ramp
-//    //RAMPSTUFF
-//    if (Param.Ramp) {
-//        for (int i = 0; i < n; i++) {
-//            for (int t = 1 ; t < T ; t++) {
-//                if (!Farkas) {
-//                    dual_cost.Phi[i*T+t] = SCIPgetDualsolLinear(scip, Master->ramp_up[i*T+t]);
-//                    dual_cost.Psi[i*T+t] = SCIPgetDualsolLinear(scip, Master->ramp_down[i*T+t]);
-//                }
-//                else{
-//                    dual_cost.Phi[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->ramp_up[i*T+t]);
-//                    dual_cost.Psi[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->ramp_down[i*T+t]);
-//                }
+    //couts duaux "logical constraint"
+    for (int i = 0; i < n; i++) {
+        for (int t = 1 ; t < T ; t++) {
+            if (!Farkas) {
+                dual_cost.Mu.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->logical.at(i*T+t));
+            }
+            else{
+                dual_cost.Mu.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->logical.at(i*T+t));
+            }
+            if (print)
+                cout << "mu(" << i <<"," << t <<") = " << dual_cost.Mu[i*T+t] <<endl;
+        }
+    }
 
-//               if (print) cout << "phi(" << i <<"," << t <<") = " << dual_cost.Phi[i*T+t] <<endl;
-//               if (print) cout << "psi(" << i <<"," << t <<") = " << dual_cost.Psi[i*T+t] <<endl;
-//            }
-//        }
-//    }
-//    //couts duaux demande
-//    for (int t = 0 ; t < T ; t++) {
-//        if (!Farkas) {
-//            dual_cost.Mu[t] = SCIPgetDualsolLinear(scip, Master->demand_cstr[t]);
-//        }
-//        else{
-//            dual_cost.Mu[t] = SCIPgetDualfarkasLinear(scip, Master->demand_cstr[t]);
-//        }
-//        if (print) cout << "mu: " << dual_cost.Mu[t] <<endl;
-//    }
+    //couts duaux "min-up constraint"
+    for (int i = 0; i < n; i++) {
+        int L = inst->getL(i) ;
+        for (int t = L ; t < T ; t++) {
+            if (!Farkas) {
+                dual_cost.Nu.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->min_up.at(i*T+t));
+            }
+            else{
+                dual_cost.Nu.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->min_up.at(i*T+t));
+            }
+            if (print)
+                cout << "nu(" << i <<"," << t <<") = " << dual_cost.Nu.at(i*T+t) <<endl;
+        }
+    }
 
-//    //couts duaux contrainte convexité
-//    for (int s = 0 ; s < S ; s++) {
-//        if (!Farkas) {
-//            dual_cost.Sigma[s] = SCIPgetDualsolLinear(scip, Master->convexity_cstr[s]);
-//        }
-//        else{
-//            dual_cost.Sigma[s] = SCIPgetDualfarkasLinear(scip, Master->convexity_cstr[s]);
-//        }
-//        if (print) cout << "sigma: " << dual_cost.Sigma[s] <<endl;
-//    }
+    //couts duaux "min-down constraint"
+    for (int i = 0; i < n; i++) {
+        int l = inst->getl(i) ;
+        for (int t = l ; t < T ; t++) {
+            if (!Farkas) {
+                dual_cost.Xi.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->min_down.at(i*T+t));
+            }
+            else{
+                dual_cost.Xi.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->min_down.at(i*T+t));
+            }
+            if (print)
+                cout << "xi(" << i <<"," << t <<") = " << dual_cost.Xi.at(i*T+t) <<endl;
+        }
+    }
 
-//    if (print) cout << endl ;
+    //couts duaux "convexity constraint"
+    for (int t = 0 ; t < T ; t++) {
+        if (!Farkas) {
+            dual_cost.Sigma.at(t) = SCIPgetDualsolLinear(scip, Master->convexity_cstr.at(t));
+        }
+        else{
+            dual_cost.Sigma.at(t) = SCIPgetDualfarkasLinear(scip, Master->convexity_cstr.at(t));
+        }
+        if (print)
+            cout << "sigma(" << t <<") = " << dual_cost.Sigma[t] <<endl;
+    }
+
+    if (print) cout << endl ;
 
 }
 
@@ -217,72 +220,77 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
 
     int print = 0 ;
 
-//    /// PMR courant et sa solution
-//    SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
+    if (print) {
 
-//   // cout << "solution du PMR:" << endl ;
-//    SCIPprintSol(scip, NULL, NULL, FALSE);
+        /// PMR courant et sa solution
+        SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
 
-//    //cout << "solution réalisable:" << endl ;
-//    SCIPprintBestSol(scip, NULL, FALSE);
+        // cout << "solution du PMR:" << endl ;
+        SCIPprintSol(scip, NULL, NULL, FALSE);
+
+        //cout << "solution réalisable:" << endl ;
+        SCIPprintBestSol(scip, NULL, FALSE);
+    }
 
     //// Cout duaux
-//    int T = inst->getT() ;
-//    int S = inst->getS() ;
+    int T = inst->getT() ;
+    int n = inst->getn() ;
 
-//    DualCosts dual_cost = DualCosts(inst) ;
-//    updateDualCosts(scip, dual_cost, Farkas);
+    DualCostsTime dual_cost = DualCostsTime(inst) ;
+    updateDualCosts(scip, dual_cost, Farkas);
 
 
-//    for (int s = 0 ; s < S ; s++) {
+    for (int t = 0 ; t < T ; t++) {
 
-//       //cout << "site "<< s << endl;
+       if (print) cout << "time "<< t << endl;
 
-//        ///// MISE A JOUR DES OBJECTIFS DES SOUS PROBLEMES
-//       // cout << "mise à jour des couts, farkas=" << Farkas << endl;
-//        (AlgoCplex[s])->updateObjCoefficients(inst, Param, dual_cost, Farkas) ;
+        ///// MISE A JOUR DES OBJECTIFS DES SOUS PROBLEMES
+       // cout << "mise à jour des couts, farkas=" << Farkas << endl;
+        (AlgoCplex[t])->updateObjCoefficients(inst, Param, dual_cost, Farkas) ;
 
-//        //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
-//        double objvalue = 0 ;
-//        IloNumArray upDownPlan = IloNumArray((AlgoCplex[s])->env, inst->nbUnits(s)*T) ;
-//        int solutionFound = (AlgoCplex[s])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue) ;
+        //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
+        double objvalue = 0 ;
+        double realCost=0 ;
+        IloNumArray upDownPlan = IloNumArray((AlgoCplex[t])->env, n) ;
 
-//        // cout << "solution found: " << solutionFound << endl;
-//        if (!solutionFound) {
-//            //PRUNE THE NODE
-//        }
-//        if (print) cout << "Minimum reduced cost plan: "<< objvalue << endl ;
+        int solutionFound = (AlgoCplex[t])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue, realCost) ;
 
-//        if (print) {
-//            for (int t=0 ; t < T ; t++)  {
-//                for (int i=0 ; i < inst->nbUnits(s) ; i++) {
-//                    cout << fabs(upDownPlan[i*T+t]) << " " ;
-//                }
-//                cout << endl ;
-//            }
-//            cout << endl ;
-//        }
+        // cout << "solution found: " << solutionFound << endl;
+        if (!solutionFound) {
+            //PRUNE THE NODE
+        }
+        if (print) cout << "Minimum reduced cost plan: "<< objvalue << endl ;
 
-//        if (SCIPisNegative(scip, objvalue)) {
+        if (print) {
 
-//            Master_Variable* lambda = new Master_Variable(s, upDownPlan);
-//            cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " ";
-//            //// CREATION D'UNE NOUVELLE VARIABLE DANS LE MASTER
-//            Master->initMasterVariable(scip, inst, lambda) ;
+            for (int i=0 ; i < n ; i++) {
+                cout << fabs(upDownPlan[i]) << " " ;
+            }
+            cout << endl ;
 
-//            /* add new variable to the list of variables to price into LP (score: leave 1 here) */
-//            SCIPaddPricedVar(scip, lambda->ptr, 1.0);
+        }
 
-//            ///// ADD COEFFICIENTS TO DEMAND, POWER LIMITS and CONVEXITY CONSTRAINTS
-//            Master->addCoefsToConstraints(scip, lambda, inst) ;
-//        }
-//    }
+        if (SCIPisNegative(scip, objvalue)) {
+
+            MasterTime_Variable* lambda = new MasterTime_Variable(t, upDownPlan, realCost);
+            cout << "Plan found for time " << t << " with reduced cost = " << objvalue << " ";
+            //// CREATION D'UNE NOUVELLE VARIABLE DANS LE MASTER
+            Master->initMasterTimeVariable(scip, inst, lambda) ;
+
+            /* add new variable to the list of variables to price into LP (score: leave 1 here) */
+            SCIPaddPricedVar(scip, lambda->ptr, 1.0);
+
+            ///// ADD COEFFICIENTS TO DEMAND, POWER LIMITS and CONVEXITY CONSTRAINTS
+            Master->addCoefsToConstraints(scip, lambda, inst) ;
+        }
+    }
 
 #ifdef OUTPUT_PRICER
     SCIPwriteTransProblem(scip, "ucp.lp", "lp", FALSE);
     cout<<"************END PRICER******************"<<endl;
 #endif
 
+    cout << "ICI FIN PRICER" << endl ;
 }
 
 

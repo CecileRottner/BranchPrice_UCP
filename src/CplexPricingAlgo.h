@@ -59,7 +59,6 @@ public:
     vector<double> Mu ;
     vector<double> Nu ;
     vector<double> Xi ;
-    vector<double> Eta ;
     vector<double> Sigma ;
 
     DualCostsTime(InstanceUCP* inst) ;
@@ -75,11 +74,11 @@ class CplexPricingAlgoTime {
   IloCplex cplex;
 
   IloBoolVarArray x;
-  IloBoolVarArray u;
+  IloNumVarArray p ;
 
   vector<double> BaseObjCoefX ;
 
-  CplexPricingAlgoTime(InstanceUCP* inst, int site);
+  CplexPricingAlgoTime(InstanceUCP* inst, int t);
 
   void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas);
   void addBranchingConstraint(); //local to the branch considered

@@ -107,16 +107,18 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
 
 
     //Contraintes intra-site
-    int S = inst->getS() ;
-    for (int s = 0 ; s < S ; s++) {
-        int first = inst->firstUnit(s) ;
-        for (int t=1 ; t < T ; t++) {
-            IloExpr sum2(env) ;
-            for (int i=0 ; i < inst->nbUnits(s) ; i++) {
-                sum2+=u[(first+i)*T+t] ;
+    if (Param.IntraSite) {
+        int S = inst->getS() ;
+        for (int s = 0 ; s < S ; s++) {
+            int first = inst->firstUnit(s) ;
+            for (int t=1 ; t < T ; t++) {
+                IloExpr sum2(env) ;
+                for (int i=0 ; i < inst->nbUnits(s) ; i++) {
+                    sum2+=u[(first+i)*T+t] ;
+                }
+                model.add(sum2 <= 1);
+                sum2.end() ;
             }
-            model.add(sum2 <= 1);
-            sum2.end() ;
         }
     }
 
