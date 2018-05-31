@@ -124,22 +124,22 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
 
     IloCplex IntegerObjCplex = IloCplex(model) ; // ou juste valeur opt entière
     IntegerObjCplex.setParam(IloCplex::EpGap, 0) ;
-    IntegerObjCplex.solve() ;
+//    IntegerObjCplex.solve() ;
 
-    IntegerObj = IntegerObjCplex.getBestObjValue() ;
+//    IntegerObj = IntegerObjCplex.getBestObjValue() ;
+//    IloNumArray solution = IloNumArray(env, n*T) ;
+//    IntegerObjCplex.getValues(solution, x) ;
 
-    IloNumArray solution = IloNumArray(env, n*T) ;
-    IntegerObjCplex.getValues(solution, x) ;
+//    cout.precision(6);
+//    cout << "X: " << endl ;
+//    for (int t=0 ; t < T ; t++) {
+//        for (int i=0 ; i < n ; i++) {
+//            cout << fabs(solution[i*T+t]) << " " ;
+//        }
+//        cout << endl ;
+//    }
+//    cout << endl ;
 
-    cout.precision(6);
-    cout << "X: " << endl ;
-    for (int t=0 ; t < T ; t++) {
-        for (int i=0 ; i < n ; i++) {
-            cout << fabs(solution[i*T+t]) << " " ;
-        }
-        cout << endl ;
-    }
-    cout << endl ;
 
 
     IloCplex LRCplex = IloCplex(model) ;

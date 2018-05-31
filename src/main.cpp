@@ -323,12 +323,12 @@ int main(int argc, char** argv)
 
     fichier << "& " << checker.LRValue ; // RL
     fichier << "& " << checker.LRCplexVal ; // RL CPLEX
-    fichier << " & " << checker.IntegerObj ; // OPT
+    //fichier << " & " << checker.IntegerObj ; // OPT
     fichier <<" \\\\ " << endl ;
 
 
     //    cout << "check x_frac: " << endl ;
-    checker.checkSolution(x_frac);
+   // checker.checkSolution(x_frac);
 
     return 0;
 }

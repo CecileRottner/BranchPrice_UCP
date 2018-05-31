@@ -59,7 +59,7 @@ void MasterTime_Model::initMasterTimeVariable(SCIP* scip, InstanceUCP* inst , Ma
 
     // Dans ce cas le coûts est initialisé dès la déclaration de la variable
     double cost= var->cost;
-    cout << var_name << ", cost: " << cost << endl ;
+    //cout << var_name << ", cost: " << cost << endl ;
 
     SCIP_Vartype type ;
     if (Param.IP) {
