@@ -59,6 +59,7 @@ void MasterTime_Model::initMasterTimeVariable(SCIP* scip, InstanceUCP* inst , Ma
 
     // Dans ce cas le coûts est initialisé dès la déclaration de la variable
     double cost= var->cost;
+    cout << var_name << ", cost: " << cost << endl ;
 
     SCIP_Vartype type ;
     if (Param.IP) {
@@ -246,7 +247,7 @@ void  MasterTime_Model::InitScipMasterTimeModel(SCIP* scip, InstanceUCP* inst) {
 
             /* add coefficients to the min up constraints */
             int max_min_up = fmin(T-1, t + inst->getL(i) - 1) ;
-            int min_min_up = inst->getL(i) ;
+            int min_min_up = fmax(inst->getL(i), t) ;
             // u(i,t) apparait dans les contraintes de min-up de min_min_up à max_min_up :
             for (int k = min_min_up ; k <= max_min_up ; k++) {
                 SCIPaddCoefLinear(scip, min_up.at(i*T + k), var, -1.0);
@@ -254,7 +255,7 @@ void  MasterTime_Model::InitScipMasterTimeModel(SCIP* scip, InstanceUCP* inst) {
 
             /* add coefficients to the min down constraints */
             int max_min_down = fmin(T-1, t + inst->getl(i) - 1) ;
-            int min_min_down = inst->getl(i);
+            int min_min_down = fmax(inst->getl(i), t);
             // u(i,t) apparait dans les contraintes de min-down de t à max_min_down :
             for (int k = min_min_down ; k <= max_min_down ; k++) {
                 SCIPaddCoefLinear(scip, min_down.at(i*T + k), var, -1.0);

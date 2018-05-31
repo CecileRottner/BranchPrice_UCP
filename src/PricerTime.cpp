@@ -290,7 +290,6 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
     cout<<"************END PRICER******************"<<endl;
 #endif
 
-    cout << "ICI FIN PRICER" << endl ;
 }
 
 

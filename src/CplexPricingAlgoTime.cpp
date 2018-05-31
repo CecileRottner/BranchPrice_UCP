@@ -123,11 +123,11 @@ bool CplexPricingAlgoTime::findUpDownPlan(InstanceUCP* inst, const DualCostsTime
 
         realCost = 0 ;
         for (int i=0 ; i <n ; i++) {
-            realCost += inst->getcf(i) + inst->getcp(i)*( inst->getPmin(i)*UpDownPlan[i] + prod[i]) ;
+            realCost += UpDownPlan[i]*inst->getcf(i) + inst->getcp(i)*( inst->getPmin(i)*UpDownPlan[i] + prod[i]) ;
         }
 
-        /*cout << "for site " << Site << "; " << endl ;
-       cout << "obj value without sigma: " << cplex.getObjValue() << endl;*/
+       /* cout << "for time " << time << "; " << endl ;
+        cout << "obj value without sigma: " << cplex.getObjValue() << endl;*/
         objvalue = cplex.getObjValue() - Dual.Sigma[time] ;
     }
 
