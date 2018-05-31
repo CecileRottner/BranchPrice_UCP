@@ -25,8 +25,8 @@ class CplexChecker {
   IloBoolVarArray u;
   IloNumVarArray pp ;
 
-  double noIntraObj;
-  double ObjValue ;
+  double IntegerObj;
+  double LRValue ;
   double LRCplexVal ;
 
   CplexChecker(InstanceUCP* inst, const Parameters & param) ;

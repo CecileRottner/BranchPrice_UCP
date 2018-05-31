@@ -122,14 +122,14 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
         }
     }
 
-    IloCplex noIntraCplex = IloCplex(model) ; // ou juste valeur opt entière
-    noIntraCplex.setParam(IloCplex::EpGap, 0) ;
-    noIntraCplex.solve() ;
+    IloCplex IntegerObjCplex = IloCplex(model) ; // ou juste valeur opt entière
+    IntegerObjCplex.setParam(IloCplex::EpGap, 0) ;
+    IntegerObjCplex.solve() ;
 
-    noIntraObj = noIntraCplex.getBestObjValue() ;
+    IntegerObj = IntegerObjCplex.getBestObjValue() ;
 
     IloNumArray solution = IloNumArray(env, n*T) ;
-    noIntraCplex.getValues(solution, x) ;
+    IntegerObjCplex.getValues(solution, x) ;
 
     cout.precision(6);
     cout << "X: " << endl ;
@@ -163,7 +163,7 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
     cplex.setParam(IloCplex::EpGap, 0) ;
     cplex.solve();
 
-    ObjValue = cplex.getObjValue() ;
+    LRValue = cplex.getObjValue() ;
 
 
 
@@ -297,6 +297,7 @@ void CplexChecker::checkSolution(const vector<double> & x_frac) {
 
 
     //Contraintes intra-site
+    if (Param.IntraSite) {
     int S = inst->getS() ;
     for (int s = 0 ; s < S ; s++) {
         int first = inst->firstUnit(s) ;
@@ -311,6 +312,7 @@ void CplexChecker::checkSolution(const vector<double> & x_frac) {
         }
     }
 
+    }
 
 
 

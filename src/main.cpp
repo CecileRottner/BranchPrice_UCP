@@ -225,7 +225,39 @@ int main(int argc, char** argv)
 
     vector<double> x_frac = vector<double>(n*T, 0) ;
 
-    if (!param.TimeStepDec) {
+    if (param.TimeStepDec) {
+        list<MasterTime_Variable*>::const_iterator itv;
+        SCIP_Real frac_value;
+
+
+        for (itv = MasterTime.L_var.begin(); itv!=MasterTime.L_var.end(); itv++) {
+
+            frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
+
+            int time = (*itv)->time ;
+            for (int i=0 ; i < n ; i++) {
+
+                    if ((*itv)->UpDown_plan[i] > 0.000001) {
+
+                        x_frac[i*T+time] += frac_value ;
+                    }
+
+            }
+        }
+
+
+        cout << "solution x frac: " << endl;
+
+        for (int t=0 ; t < T ; t++) {
+            for (int i=0 ; i <n ; i++) {
+                cout << x_frac[i*T+t] << " " ;
+            }
+            cout << endl ;
+        }
+    }
+
+
+    else {
         list<Master_Variable*>::const_iterator itv;
         SCIP_Real frac_value;
 
@@ -257,6 +289,8 @@ int main(int argc, char** argv)
         }
     }
 
+
+
     //////////////////////
     //////   STATS   /////
     //////////////////////
@@ -287,14 +321,14 @@ int main(int argc, char** argv)
     double value = checker.checkValue() ;
     cout << "VALEUR RELAXEE A TROUVER : " << value << endl ;
 
-    fichier << "& " << checker.ObjValue ; // RL
+    fichier << "& " << checker.LRValue ; // RL
     fichier << "& " << checker.LRCplexVal ; // RL CPLEX
-    fichier << " & " << checker.noIntraObj ; // OPT
+    fichier << " & " << checker.IntegerObj ; // OPT
     fichier <<" \\\\ " << endl ;
 
 
     //    cout << "check x_frac: " << endl ;
-    //checker.checkSolution(x_frac);
+    checker.checkSolution(x_frac);
 
     return 0;
 }

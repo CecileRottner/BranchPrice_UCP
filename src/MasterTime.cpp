@@ -218,6 +218,14 @@ void  MasterTime_Model::InitScipMasterTimeModel(SCIP* scip, InstanceUCP* inst) {
     ////////   MASTER START UP VARIABLES   //////////
     /////////////////////////////////////////////////
 
+    SCIP_Vartype type ;
+    if (Param.IP) {
+        type = SCIP_VARTYPE_INTEGER;
+    }
+    else {
+        type = SCIP_VARTYPE_CONTINUOUS ;
+    }
+
     char var_name[255];
 
     for (int i = 0 ; i <n ; i++)
@@ -234,7 +242,7 @@ void  MasterTime_Model::InitScipMasterTimeModel(SCIP* scip, InstanceUCP* inst) {
                           0.0,                     // lower bound
                           1.0,      // upper bound
                           inst->getc0(i),                     // objective
-                          SCIP_VARTYPE_INTEGER, // variable type
+                          type, // variable type
                           true, false, NULL, NULL, NULL, NULL, NULL);
 
 
@@ -258,7 +266,7 @@ void  MasterTime_Model::InitScipMasterTimeModel(SCIP* scip, InstanceUCP* inst) {
             int min_min_down = fmax(inst->getl(i), t);
             // u(i,t) apparait dans les contraintes de min-down de t à max_min_down :
             for (int k = min_min_down ; k <= max_min_down ; k++) {
-                SCIPaddCoefLinear(scip, min_down.at(i*T + k), var, -1.0);
+                SCIPaddCoefLinear(scip, min_down.at(i*T + k), var, 1.0);
             }
         }
     }
