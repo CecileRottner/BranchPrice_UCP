@@ -85,9 +85,10 @@ int main(int argc, char** argv)
     bool IP=0 ; // est-ce qu'on résout le master en variable entières ?
     bool ManageSubPbSym=0 ; // est-ce qu'on gère les symétries dans le sous problème ?
     bool Ramp=0 ; // est-ce qu'on considère les gradients ?
-    bool TimeStepDec = 1 ;
-    bool IntraSite = 0 ; // Implémenté dans le cas de la décomposition time step
-    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite);
+    bool TimeStepDec = 0 ;
+    bool IntraSite = 0 ; // à implémenter
+    bool DemandeResiduelle = 1 ;
+    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle);
 
 
     ////////////////////////////////////
@@ -323,12 +324,12 @@ int main(int argc, char** argv)
 
     fichier << "& " << checker.LRValue ; // RL
     fichier << "& " << checker.LRCplexVal ; // RL CPLEX
-    //fichier << " & " << checker.IntegerObj ; // OPT
+    fichier << " & " << checker.IntegerObj ; // OPT
     fichier <<" \\\\ " << endl ;
 
 
     //    cout << "check x_frac: " << endl ;
-   // checker.checkSolution(x_frac);
+    checker.checkSolution(x_frac);
 
     return 0;
 }

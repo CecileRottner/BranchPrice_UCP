@@ -20,7 +20,15 @@ struct Parameters
     bool Ramp ;
     bool TimeStepDec ;
     bool IntraSite ;
-    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra) : IP(ip), ManageSubPbSym(managesubpbsym), Ramp(ramp), TimeStepDec(time), IntraSite(intra) {}
+    bool DemandeResiduelle ;
+    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr) :
+        IP(ip),
+        ManageSubPbSym(managesubpbsym),
+        Ramp(ramp),
+        TimeStepDec(time),
+        IntraSite(intra),
+        DemandeResiduelle(dr)
+    {}
 };
 
 class InstanceProcessed {

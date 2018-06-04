@@ -31,7 +31,7 @@ ObjPricerUCP::ObjPricerUCP(
     AlgoCplex = vector<CplexPricingAlgo*>(inst->getS(), NULL) ;
 
     for (int s=0 ; s < inst->getS() ; s++) {
-        AlgoCplex[s] = new CplexPricingAlgo(inst, s) ;
+        AlgoCplex[s] = new CplexPricingAlgo(inst, param, s) ;
     }
 }
 

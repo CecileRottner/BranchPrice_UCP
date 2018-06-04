@@ -85,11 +85,13 @@ void AddSSBI(IloEnv env, IloModel model, IloBoolVarArray x, IloBoolVarArray u, i
     }
 }
 
-CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
+CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int site) : Param(p) {
     Site=site ;
 
     int ns = inst->nbUnits(Site) ;
     int first = inst->firstUnit(Site) ;
+    int last = first+ns-1;
+
     int T = inst->getT() ;
     model = IloModel(env) ;
 
@@ -149,6 +151,7 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
     }
 
     //Contraintes intra-site
+    if (Param.IntraSite) {
     for (int t=1 ; t < T ; t++) {
         IloExpr sum(env) ;
         for (int i=0 ; i <ns ; i++) {
@@ -156,6 +159,27 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, int site) {
         }
         model.add(sum <= 1);
         sum.end() ;
+    }
+    }
+
+    if (Param.DemandeResiduelle) {
+
+        double DR = 0 ;
+        for (int i=0 ; i <inst->getn() ; i++) {
+            if (i < first || i > last) {
+                DR += inst->getPmax(i) ;
+            }
+        }
+
+        //Demande
+        for (int t=0; t < T ; t++) {
+            IloExpr Prod(env) ;
+            for (int i=0; i<ns; i++) {
+                Prod += inst->getPmax(first+i)*x[i*T + t];
+            }
+            model.add(fmax(0,inst->getD(t) - DR) <= Prod);
+            Prod.end() ;
+        }
     }
 
 

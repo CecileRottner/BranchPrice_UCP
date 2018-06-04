@@ -27,6 +27,7 @@ public:
 class CplexPricingAlgo {
  public:
 
+  const Parameters Param ;
   int Site ;
   IloEnv   env;
   IloModel model;
@@ -38,7 +39,7 @@ class CplexPricingAlgo {
 
   vector<double> BaseObjCoefX ;
 
-  CplexPricingAlgo(InstanceUCP* inst, int site);
+  CplexPricingAlgo(InstanceUCP* inst, const Parameters & Param, int site);
 
   void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCosts & Dual, bool Farkas);
   void addBranchingConstraint(); //local to the branch considered

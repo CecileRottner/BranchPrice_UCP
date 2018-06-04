@@ -3,16 +3,15 @@ rm result.txt
 
 nom=result.txt
 
-
 n=20
 sym=0
-demand_type=3
+demand_type=4
 cat01=1
-intra=0
+intra=1
 
-dossier=data/Pmin=Pmax/
+dossier=data/Pmin=Pmax/Pmin=Pmax_sites/
 
-for T in 48 ; do
+for T in 24 ; do
   for id in {1..20}; do
       ./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dossier $n $T 1 $demand_type $sym $cat01 $intra $id $nom
   done
@@ -22,6 +21,7 @@ done
 
 printf "\n" >> result.txt
 printf "\n" >> result.txt
+
 
 
 
