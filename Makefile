@@ -64,6 +64,8 @@ MAINOBJ		=	main.o \
 			PricerTime.o \
 			BranchConsHandler.o \
 			BranchingRule.o \
+			IntervalUpSet.o \
+			IUPHandler.o \
 			Checker.o \
 
 MAINSRC		=	$(addprefix $(SRCDIR)/,$(MAINOBJ:.o=.cpp))

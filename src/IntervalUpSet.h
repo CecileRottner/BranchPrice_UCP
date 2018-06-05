@@ -6,7 +6,7 @@
 
 #include "InstanceUCP.h"
 
-using namespace std;;
+using namespace std;
 
 class Separation {
 
@@ -61,15 +61,15 @@ public :
     //affecte à C un C qui viole l'inégalité
     //valeur de retour : alpha de C si C violé, 0 sinon
 
-    IloInt separeRandom(IloInt t0, IloInt t1, IloInt i, IloIntArray & C) ;
+	IloInt separeRandom(IloInt t0, IloInt t1, IloInt i, IloIntArray & C) ;
 
     IloInt separeCover(IloInt t, IloIntArray & C) ;
     //Préconditions: couts à jour, vecteur indices trié
     //affecte à C un C qui viole l'inégalité de Cover associée
     //valeur de retour : alpha de C si C viole, 0 sinon
 
-    IloInt separeLetchford(IloInt t, IloIntArray & C) ;
-    //heuristique de Letchford
+	IloInt separeLetchford(IloInt t, IloIntArray & C) ;
+	//heuristique de Letchford
 
     IloInt separeExact(IloInt t0, IloInt t1, IloInt & i, IloIntArray & C) ;
     //Préconditions : couts à jour (coutW, coutZ)
@@ -102,7 +102,7 @@ public :
 
     IloInt getExiste_i(IloInt t0, IloInt t1, IloInt l) ;
 
-    IloInt isUpSet(IloInt t, const IloIntArray & C, IloInt sommeC) ;
+	IloInt isUpSet(IloInt t, const IloIntArray & C, IloInt sommeC) ;
 
     IloInt ComputeAlpha(IloInt t, const IloIntArray & C, IloInt sommeC) ;
     //Calcul de alpha(C,t), C étant trié par Pmax décroissants
@@ -113,7 +113,7 @@ public :
     //Calcul de alpha(C,t)^i, C étant trié par Pmax décroissants
     //Si i ne peut pas être éteint (condition de pleine dimension non vérifiée) alors renvoie n
 
-    void ComputeBetas_i(IloIntArray & Betas, IloInt t0, IloInt t1, IloInt i, const IloIntArray & C, IloInt sommeC, IloInt alphaMax) ;
+	void ComputeBetas_i(IloIntArray & Betas, IloInt t0, IloInt t1, IloInt i, const IloIntArray & C, IloInt sommeC, IloInt alphaMax) ;
 
     IloInt alphaMax_C(const IloIntArray & C, IloInt t0, IloInt t1, IloInt sommeC) ;
 
@@ -139,8 +139,8 @@ public :
     int getMinimalCover(IloIntArray & C, IloInt t, IloInt sommeC) ;
     void getStrong(IloIntArray & C, IloInt t, IloInt sommeC)  ;
     int getExt(IloIntArray & C) ; //returns alpha(E(S))
-    int getExt_(const IloIntArray & C, int c_size, IloIntArray & S, int & valS) ; //place l'extension dans S, et retourne alpha(S), met à jour valS
-
+	int getExt_(const IloIntArray & C, int c_size, IloIntArray & S, int & valS) ; //place l'extension dans S, et retourne alpha(S), met à jour valS
+	
     int getFacet(int alpha, int t, const IloIntArray & C, IloIntArray & S) ;//returns alpha(C)
     int no1contrib(IloIntArray & C) ;
     bool isFacet(IloIntArray & S, IloInt t) ;

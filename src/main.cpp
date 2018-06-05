@@ -20,6 +20,7 @@
 #include "BranchingRule.h"
 #include "CplexPricingAlgo.h"
 #include "Checker.h"
+#include "IUPHandler.h"
 
 /* namespace usage */
 using namespace std;
@@ -85,10 +86,11 @@ int main(int argc, char** argv)
     bool IP=0 ; // est-ce qu'on résout le master en variable entières ?
     bool ManageSubPbSym=0 ; // est-ce qu'on gère les symétries dans le sous problème ?
     bool Ramp=0 ; // est-ce qu'on considère les gradients ?
-    bool TimeStepDec = 0 ;
+    bool TimeStepDec = 1 ;
     bool IntraSite = 0 ; // à implémenter
-    bool DemandeResiduelle = 1 ;
-    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle);
+    bool DemandeResiduelle = 0 ;
+    bool Iup = 1 ;
+    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, Iup);
 
 
     ////////////////////////////////////
@@ -201,11 +203,21 @@ int main(int argc, char** argv)
     SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
 
 
-    ////    /////////////////////////
-    ////    /////  BRANCHING    /////
-    ////    /////////////////////////
 
-    if (param.IP==1) {
+    //////////////////////////////////
+    /////  VALID INEQUALITIES    /////
+    //////////////////////////////////
+
+    if (param.IntervalUpSet && param.TimeStepDec) {
+        IUPHandler* iupHandler = new IUPHandler(scip, &MasterTime, inst);
+        SCIPincludeObjConshdlr(scip, iupHandler, TRUE);
+    }
+
+    /////////////////////////
+    /////  BRANCHING    /////
+    /////////////////////////
+
+    if (param.IP) {
         //        BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer_ptr);
         //        BranchingRule* branchRule = new BranchingRule(scip, inst,  &Master, pricer_ptr);
 
