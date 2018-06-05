@@ -24,6 +24,20 @@ void InstanceUCP::Initialise() {
     }
 
 
+    /////////////////////////////////////////////////////////////////
+    ////////    Vecteur trié: unités par Pmax décroissants   ////////
+    /////////////////////////////////////////////////////////////////
+
+    Tri = IloIntArray(env, n);
+    IloNumArray ordrePmax = IloNumArray(env, n);
+
+    for (IloInt j = 0 ; j <n ; j++ ) {
+        Tri[j] = j ;
+        ordrePmax[j] = 1/Pmax[j] ;
+    }
+
+    quickSort(ordrePmax, Tri, 0, n);
+
     /////////////////////////////
     ////////    Sites    ////////
     /////////////////////////////
@@ -609,6 +623,10 @@ IloNum InstanceUCP::getordreT(IloInt t) const {
 
 IloInt InstanceUCP::getSommePmax()  const {
     return SommePmax ;
+}
+
+IloInt InstanceUCP::getTri(IloInt i)  const {
+    return Tri[i] ;
 }
 
 

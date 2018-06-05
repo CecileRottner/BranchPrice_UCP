@@ -23,6 +23,7 @@ private:
     ///// Calculé pendant l'initialisation /////
     IloInt SommePmax ;
 
+    IloIntArray Tri ; // vecteur où les unités sont triées par Pmax décroissants
 
     //// sites
     IloIntArray firstUnitofSite ; // premières unités de chaque site
@@ -93,6 +94,8 @@ public:
         ordre_ratio.end() ;
         isIncreasing.end() ;
 
+        Tri.end() ;
+
     }
 
 public:
@@ -124,6 +127,8 @@ public:
     IloNum getSizeG(IloInt g) const;
     IloNum getGroup(IloInt i) const;
     IloNum getordreT(IloInt t) const ;
+
+    IloInt getTri(IloInt i) const ;
 
     IloInt getSommePmax()  const ;
 
