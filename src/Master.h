@@ -104,7 +104,7 @@ public:
     int T ;
     int S ;
 
-
+    int cumul_resolution_pricing ;
     const Parameters Param ;
 
     IloEnv env;

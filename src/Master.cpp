@@ -163,9 +163,7 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
     for (int t = 0; t < T; t++)
     {
         SCIP_CONS* con = NULL;
-        cout << "d: " << inst->getD(t) << endl ;
         (void) SCIPsnprintf(con_name_demand, 255, "Demand(%d)", t); // nom de la contrainte
-        cout << con_name_demand << endl ;
         SCIPcreateConsLinear( scip, &con, con_name_demand, 0, NULL, NULL,
                               inst->getD(t),   // lhs
                               inst->getD(t),   // rhs  SCIPinfinity(scip) if >=1
@@ -179,15 +177,11 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
                               false, /* dynamic */
                               false, /* removable */
                               false  /* stickingatnode */ );
-        cout << "contrainte creee" << endl ;
         SCIPaddCons(scip, con);
-        cout << "ici" << endl ;
         demand_cstr[t] = con;
     }
 
-    cout << "fin" << endl ;
 
-    cout << "contrainte power limit" << endl ;
     ///// Power limits /////
     char con_name_power_limit[255];
     for (int i = 0 ; i <n ; i++)
@@ -434,8 +428,6 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
         addCoefsToConstraints(scip, lambda, inst) ;
     }
-
-
 
 
     /// test

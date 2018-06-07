@@ -14,7 +14,7 @@ DualCostsTime::DualCostsTime(InstanceUCP* inst) {
 
 
 
-CplexPricingAlgoTime::CplexPricingAlgoTime(InstanceUCP* inst, int t) {
+CplexPricingAlgoTime::CplexPricingAlgoTime(InstanceUCP* inst, const Parameters & par, int t) : Param(par) {
     time=t;
 
     int n = inst->getn() ;
@@ -22,6 +22,7 @@ CplexPricingAlgoTime::CplexPricingAlgoTime(InstanceUCP* inst, int t) {
 
 
     x = IloBoolVarArray(env, n) ;
+
     p = IloNumVarArray(env, n, 0.0, 1000.0) ;
 
     obj = IloAdd(model, IloMinimize(env, 0.0));
@@ -47,7 +48,7 @@ CplexPricingAlgoTime::CplexPricingAlgoTime(InstanceUCP* inst, int t) {
     }
 
     cplex = IloCplex(model);
-    cplex.setParam(IloCplex::EpGap, 0.00001) ;
+    cplex.setParam(IloCplex::EpGap, 0.000001) ;
 
     //Initialisation des coefficients objectifs (primaux) de x
     BaseObjCoefX.resize(n, 0) ;
@@ -96,7 +97,7 @@ void CplexPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Parame
 }
 
 
-bool CplexPricingAlgoTime::findUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& objvalue, double& realCost) {
+bool CplexPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue) {
     //returns True if an improving Up/Down plan has been found
 
     ofstream LogFile("LogFile.txt");
@@ -114,23 +115,25 @@ bool CplexPricingAlgoTime::findUpDownPlan(InstanceUCP* inst, const DualCostsTime
         return false;
     }
     else {
-
-        int n = inst->getn() ;
-        cplex.getValues(x, UpDownPlan) ;
-
-        IloNumArray prod(env, n) ;
-        cplex.getValues(p, prod) ;
-
-        realCost = 0 ;
-        for (int i=0 ; i <n ; i++) {
-            realCost += UpDownPlan[i]*inst->getcf(i) + inst->getcp(i)*( inst->getPmin(i)*UpDownPlan[i] + prod[i]) ;
-        }
-
-       /* cout << "for time " << time << "; " << endl ;
-        cout << "obj value without sigma: " << cplex.getObjValue() << endl;*/
         objvalue = cplex.getObjValue() - Dual.Sigma[time] ;
+        if (objvalue < - Param.Epsilon) {
+            return true ;
+        }
+    }
+    return false;
+}
+
+void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan, double& realCost) {
+
+    int n = inst->getn() ;
+    cplex.getValues(x, UpDownPlan) ;
+
+    IloNumArray prod(env, n) ;
+    cplex.getValues(p, prod) ;
+
+    realCost = 0 ;
+    for (int i=0 ; i <n ; i++) {
+        realCost += UpDownPlan[i]*inst->getcf(i) + inst->getcp(i)*( inst->getPmin(i)*UpDownPlan[i] + prod[i]) ;
     }
 
-
-    return true;
 }

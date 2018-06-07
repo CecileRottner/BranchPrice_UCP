@@ -31,7 +31,7 @@ ObjPricerTimeUCP::ObjPricerTimeUCP(
     AlgoCplex = vector<CplexPricingAlgoTime*>(inst->getT(), NULL) ;
 
     for (int t=0 ; t < inst->getT() ; t++) {
-        AlgoCplex[t] = new CplexPricingAlgoTime(inst, t) ;
+        AlgoCplex[t] = new CplexPricingAlgoTime(inst, param, t) ;
     }
 }
 
@@ -250,31 +250,31 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
 
         //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
         double objvalue = 0 ;
-        double realCost=0 ;
-        IloNumArray upDownPlan = IloNumArray((AlgoCplex[t])->env, n) ;
+        bool ImprovingSolutionFound = (AlgoCplex[t])->findImprovingSolution(inst, dual_cost, objvalue);
 
-        int solutionFound = (AlgoCplex[t])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue, realCost) ;
+        if (ImprovingSolutionFound) {
 
-        // cout << "solution found: " << solutionFound << endl;
-        if (!solutionFound) {
-            //PRUNE THE NODE
-        }
-        if (print) cout << "Minimum reduced cost plan: "<< objvalue << endl ;
+            double realCost=0 ;
+            IloNumArray upDownPlan = IloNumArray((AlgoCplex[t])->env, n) ;
+            (AlgoCplex[t])->getUpDownPlan(inst, upDownPlan, realCost) ;
 
-        if (print) {
+            if (print) cout << "Minimum reduced cost plan: "<< objvalue << endl ;
 
-            for (int i=0 ; i < n ; i++) {
-                cout << fabs(upDownPlan[i]) << " " ;
+            if (print) {
+
+                for (int i=0 ; i < n ; i++) {
+                    cout << fabs(upDownPlan[i]) << " " ;
+                }
+                cout << endl ;
+
             }
-            cout << endl ;
 
-        }
 
-        if (SCIPisNegative(scip, objvalue)) {
+            /// AJOUT VARIABLE DANS LE MAITRE ////
 
             MasterTime_Variable* lambda = new MasterTime_Variable(t, upDownPlan, realCost);
             cout << "Plan found for time " << t << " with reduced cost = " << objvalue << " ";
-            //// CREATION D'UNE NOUVELLE VARIABLE DANS LE MASTER
+            //// CREATION D'UNE NOUVELLE VARIABLE
             Master->initMasterTimeVariable(scip, inst, lambda) ;
 
             /* add new variable to the list of variables to price into LP (score: leave 1 here) */

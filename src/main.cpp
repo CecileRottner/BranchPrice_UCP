@@ -89,8 +89,9 @@ int main(int argc, char** argv)
     bool TimeStepDec = 1 ;
     bool IntraSite = 0 ; // à implémenter
     bool DemandeResiduelle = 0 ;
-    bool Iup = 1 ;
-    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, Iup);
+    bool Iup = 0 ;
+    double eps = 0.000001;
+    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, Iup, eps);
 
 
     ////////////////////////////////////
@@ -187,15 +188,18 @@ int main(int argc, char** argv)
 
     // include UCP pricer
 
+    ObjPricerTimeUCP* pricerTime ;
+    ObjPricerUCP* pricer ;
+
     if (param.TimeStepDec) {
-        ObjPricerTimeUCP* pricer_ptr = new ObjPricerTimeUCP(scip, PRICER_NAME, &MasterTime, inst, param);
-        SCIPincludeObjPricer(scip, pricer_ptr, true);
+        pricerTime = new ObjPricerTimeUCP(scip, PRICER_NAME, &MasterTime, inst, param);
+        SCIPincludeObjPricer(scip, pricerTime, true);
         SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
 
     }
     else {
-        ObjPricerUCP* pricer_ptr = new ObjPricerUCP(scip, PRICER_NAME, &Master, inst, param);
-        SCIPincludeObjPricer(scip, pricer_ptr, true);
+        pricer = new ObjPricerUCP(scip, PRICER_NAME, &Master, inst, param);
+        SCIPincludeObjPricer(scip, pricer, true);
         SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
     }
 
@@ -308,8 +312,12 @@ int main(int argc, char** argv)
     //////   STATS   /////
     //////////////////////
 
+    SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
+
     fichier << n << " & " << T << " & " << id ;
     fichier << " &  " << SCIPgetNNodes(scip) ;
+    fichier << " & " << SCIPgetNPricevarsFound(scip) ;
+    fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
     fichier << " &  " << SCIPgetSolvingTime(scip) ;
     fichier << " &  " << SCIPgetNLPIterations(scip) ;
     fichier << " &  " << SCIPgetGap(scip);

@@ -93,6 +93,8 @@ MasterTime_Model::MasterTime_Model(InstanceUCP* inst, const Parameters & Paramet
     T = inst->getT() ;
     S = inst->getS() ;
 
+    cumul_resolution_pricing= 0 ;
+
     logical.resize(n*T, (SCIP_CONS*) NULL) ;
     min_up.resize(n*T, (SCIP_CONS*) NULL) ;
     min_down.resize(n*T, (SCIP_CONS*) NULL) ;
@@ -301,8 +303,6 @@ void  MasterTime_Model::InitScipMasterTimeModel(SCIP* scip, InstanceUCP* inst) {
 
         addCoefsToConstraints(scip, lambda, inst) ;
     }
-
-
 
 
     /// test

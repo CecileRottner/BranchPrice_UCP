@@ -68,6 +68,7 @@ public:
 class CplexPricingAlgoTime {
  public:
 
+  Parameters Param ;
   int time ;
   IloEnv   env;
   IloModel model;
@@ -79,13 +80,14 @@ class CplexPricingAlgoTime {
 
   vector<double> BaseObjCoefX ;
 
-  CplexPricingAlgoTime(InstanceUCP* inst, int t);
+  CplexPricingAlgoTime(InstanceUCP* inst, const Parameters & par, int t);
 
   void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas);
   void addBranchingConstraint(); //local to the branch considered
 
   // Launch Cplex solver and get back an optimal up/down plan
-  bool findUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double & objvalue, double & realCost);
+  bool findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue) ; // returns true if an improving solution has been found. objvalue is updated in this case
+  void getUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan, double& realCost) ; //updates UpDownPlan and realCost
 
 };
 

@@ -233,7 +233,7 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas           
     DualCosts dual_cost = DualCosts(inst) ;
     updateDualCosts(scip, dual_cost, Farkas);
 
-
+    double epsilon= 0.0000001 ;
     for (int s = 0 ; s < S ; s++) {
 
        //cout << "site "<< s << endl;
@@ -246,6 +246,14 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas           
         double objvalue = 0 ;
         IloNumArray upDownPlan = IloNumArray((AlgoCplex[s])->env, inst->nbUnits(s)*T) ;
         int solutionFound = (AlgoCplex[s])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue) ;
+        for (int index=0 ; index <inst->nbUnits(s)*T ; index++ ) {
+            if (upDownPlan[index]>1-epsilon) {
+                upDownPlan[index]=1 ;
+            }
+            if (upDownPlan[index]< epsilon) {
+                upDownPlan[index]=0 ;
+            }
+        }
 
         // cout << "solution found: " << solutionFound << endl;
         if (!solutionFound) {
@@ -263,7 +271,10 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas           
             cout << endl ;
         }
 
-        if (SCIPisNegative(scip, objvalue)) {
+        //if (SCIPisNegative(scip, objvalue)) {
+
+        if (objvalue < -epsilon) {
+
 
             Master_Variable* lambda = new Master_Variable(s, upDownPlan);
             cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " ";

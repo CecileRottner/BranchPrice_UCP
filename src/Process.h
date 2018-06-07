@@ -22,14 +22,16 @@ struct Parameters
     bool IntraSite ;
     bool DemandeResiduelle ;
     bool IntervalUpSet ;
-    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup) :
+    double Epsilon ;
+    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps) :
         IP(ip),
         ManageSubPbSym(managesubpbsym),
         Ramp(ramp),
         TimeStepDec(time),
         IntraSite(intra),
         DemandeResiduelle(dr),
-        IntervalUpSet(iup)
+        IntervalUpSet(iup),
+        Epsilon(eps)
     {}
 };
 
