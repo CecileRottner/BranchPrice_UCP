@@ -73,6 +73,8 @@ public:
     MasterTime_Model* Master ;
     vector<CplexPricingAlgoTime*> AlgoCplex;
 
+    vector<int> TimeSolNotFound ;
+
    /** Constructs the pricer object with the data needed */
    ObjPricerTimeUCP(
       SCIP*                               scip,        /**< SCIP pointer */
@@ -98,6 +100,8 @@ public:
 
    /*put dual costs or farkas cost in vector dual_cost*/
    void updateDualCosts(SCIP* scip, DualCostsTime & dual_cost, bool Farkas) ;
+
+
 
    /** performs pricing */
    void pricingUCP(

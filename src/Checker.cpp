@@ -4,7 +4,6 @@
 using namespace std;
 
 CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Param(param) {
-    cout << "start check" << endl ;
 
     inst = instance;
     model = IloModel(env) ;
@@ -27,20 +26,6 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
     }
 
     model.add(IloMinimize(env, cost));
-
-    // Conditions initiales
-    //    for (int i=0; i<n; i++) {
-    //        model.add(u[i*T] >= x[i*T] - 1 ) ;
-    //    }
-
-    //    for (int i=0; i<n; i++) {
-    //        IloExpr sum(env) ;
-    //        for (int k= 0; k < inst->getl(i) ; k++) {
-    //            sum += u[i*T + k] ;
-    //        }
-    //        model.add(sum <= 0 ) ;
-    //        sum.end() ;
-    //    }
 
 
     // Min up constraints
@@ -122,13 +107,103 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
         }
     }
 
-    IloCplex IntegerObjCplex = IloCplex(model) ; // ou juste valeur opt entière
-    IntegerObjCplex.setParam(IloCplex::EpGap, 0) ;
-//    IntegerObjCplex.solve() ;
 
-//    IntegerObj = IntegerObjCplex.getBestObjValue() ;
+}
+
+double CplexChecker::getIntegerObjValue() {
+
+    int print=0 ;
+    IloModel IntegerModel(env) ;
+    IntegerModel.add(model) ;
+
+    IloCplex IntegerObjCplex = IloCplex(IntegerModel) ; // ou juste valeur opt entière
+    IntegerObjCplex.setParam(IloCplex::EpGap, 0) ;
+    IntegerObjCplex.solve() ;
+
+    IntegerObj = IntegerObjCplex.getBestObjValue() ;
+
+    int n = inst->getn();
+    int T= inst->getT() ;
+    if (print) {
+
+        IloNumArray solution = IloNumArray(env, n*T) ;
+        IntegerObjCplex.getValues(solution, x) ;
+
+        cout.precision(6);
+        cout << "X: " << endl ;
+        for (int t=0 ; t < T ; t++) {
+            for (int i=0 ; i < n ; i++) {
+                cout << fabs(solution[i*T+t]) << " " ;
+            }
+            cout << endl ;
+        }
+        cout << endl ;
+    }
+
+    return IntegerObj;
+}
+
+double CplexChecker::getLRValue() {
+
+    //Modèle
+    IloModel LRModel(env) ;
+    LRModel.add(model) ;
+    LRModel.add(IloConversion(env, x, IloNumVar::Float) ) ;
+    LRModel.add(IloConversion(env, u, IloNumVar::Float) ) ;
+
+    //Résolution
+    IloCplex LRVal = IloCplex(LRModel) ;
+    LRVal.setParam(IloCplex::EpGap, 0) ;
+    LRVal.solve() ;
+
+    LRValue = LRVal.getObjValue();
+    return LRValue;
+}
+
+double CplexChecker::getLRCplex() {
+
+    //Modèle
+    IloModel LRCplexModel(env) ;
+    LRCplexModel.add(model) ;
+
+    //Résolution
+    IloCplex LRCplex = IloCplex(LRCplexModel) ;
+    LRCplex.setParam(IloCplex::EpGap, 0) ;
+    LRCplex.setParam(IloCplex::Param::MIP::Limits::Nodes, 1) ;
+    LRCplex.solve() ;
+
+    LRCplexVal = LRCplex.getBestObjValue() ;
+    return LRCplexVal ;
+}
+
+
+void CplexChecker::CplexPrimalHeuristic(IloNumArray solution, IloNumArray solution_p) {
+
+    //Modèle
+    IloModel LRCplexModel(env) ;
+    LRCplexModel.add(model) ;
+
+    //Résolution
+    IloCplex LRCplex = IloCplex(LRCplexModel) ;
+    LRCplex.setParam(IloCplex::EpGap, 0) ;
+    LRCplex.setParam(IloCplex::Param::MIP::Limits::Nodes, 1) ;
+    LRCplex.solve() ;
+
+    LRCplex.getValues(solution, x) ;
+    LRCplex.getValues(solution_p, pp) ;
+}
+
+//double CplexChecker::printSolution() {
+//    int T = inst->getT() ;
+//    int n = inst->getn();
+//  /*  cplex.solve() ;
+//    double objvalue = cplex.getObjValue() ;*/
 //    IloNumArray solution = IloNumArray(env, n*T) ;
-//    IntegerObjCplex.getValues(solution, x) ;
+//    IloNumArray solution_u = IloNumArray(env, n*T) ;
+//    IloNumArray solution_p = IloNumArray(env, n*T) ;
+//    cplex.getValues(solution, x) ;
+//    cplex.getValues(solution_u, u) ;
+//    cplex.getValues(solution_p, pp) ;
 
 //    cout.precision(6);
 //    cout << "X: " << endl ;
@@ -140,70 +215,19 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
 //    }
 //    cout << endl ;
 
-
-
-    IloCplex LRCplex = IloCplex(model) ;
-    LRCplex.setParam(IloCplex::EpGap, 0) ;
-    LRCplex.setParam(IloCplex::Param::MIP::Limits::Nodes, 1) ;
-    LRCplex.solve() ;
-
-    LRCplexVal = LRCplex.getBestObjValue() ;
-
-
-
-    int conti = 1;
-    if (conti) {
-        model.add(IloConversion(env, x, IloNumVar::Float) ) ;
-        model.add(IloConversion(env, u, IloNumVar::Float) ) ;
-    }
-
-
-    cplex = IloCplex(model);
-
-    cplex.setParam(IloCplex::EpGap, 0) ;
-    cplex.solve();
-
-    LRValue = cplex.getObjValue() ;
+//    cout << "U: " << endl ;
+//    for (int t=0 ; t < T ; t++) {
+//        for (int i=0 ; i < n ; i++) {
+//            cout << fabs(solution_u[i*T+t]) << " " ;
+//        }
+//        cout << endl ;
+//    }
+//    cout << endl ;
 
 
 
-}
-
-double CplexChecker::checkValue() {
-    int T = inst->getT() ;
-    int n = inst->getn();
-    cplex.solve() ;
-    double objvalue = cplex.getObjValue() ;
-    IloNumArray solution = IloNumArray(env, n*T) ;
-    IloNumArray solution_u = IloNumArray(env, n*T) ;
-    IloNumArray solution_p = IloNumArray(env, n*T) ;
-    cplex.getValues(solution, x) ;
-    cplex.getValues(solution_u, u) ;
-    cplex.getValues(solution_p, pp) ;
-
-    cout.precision(6);
-    cout << "X: " << endl ;
-    for (int t=0 ; t < T ; t++) {
-        for (int i=0 ; i < n ; i++) {
-            cout << fabs(solution[i*T+t]) << " " ;
-        }
-        cout << endl ;
-    }
-    cout << endl ;
-
-    cout << "U: " << endl ;
-    for (int t=0 ; t < T ; t++) {
-        for (int i=0 ; i < n ; i++) {
-            cout << fabs(solution_u[i*T+t]) << " " ;
-        }
-        cout << endl ;
-    }
-    cout << endl ;
-
-
-
-    return objvalue ;
-}
+//    return 0 ;
+//}
 
 
 
@@ -291,6 +315,9 @@ void CplexChecker::checkSolution(const vector<double> & x_frac) {
             }
             if (sum > 1 - x_frac[i*T + t - inst->getl(i)] + eps) {
                 cout << "min down " << i << ", " << t << " non satisfaite" << endl ;
+
+                cout << "sum: " << sum << endl ;
+                cout << "RHS: " << 1 - x_frac[i*T + t - inst->getl(i)]  << endl ;
             }
         }
     }

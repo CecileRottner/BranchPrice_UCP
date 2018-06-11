@@ -1,5 +1,6 @@
 #include "CplexPricingAlgo.h"
 #include <iostream>
+#include <ctime>
 
 using namespace std;
 
@@ -15,6 +16,8 @@ DualCostsTime::DualCostsTime(InstanceUCP* inst) {
 
 
 CplexPricingAlgoTime::CplexPricingAlgoTime(InstanceUCP* inst, const Parameters & par, int t) : Param(par) {
+    //env=IloEnv() ;
+
     time=t;
 
     int n = inst->getn() ;
@@ -48,7 +51,7 @@ CplexPricingAlgoTime::CplexPricingAlgoTime(InstanceUCP* inst, const Parameters &
     }
 
     cplex = IloCplex(model);
-    cplex.setParam(IloCplex::EpGap, 0.000001) ;
+    cplex.setParam(IloCplex::EpGap, Param.Epsilon) ;
 
     //Initialisation des coefficients objectifs (primaux) de x
     BaseObjCoefX.resize(n, 0) ;
@@ -97,16 +100,21 @@ void CplexPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Parame
 }
 
 
-bool CplexPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue) {
+bool CplexPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution) {
     //returns True if an improving Up/Down plan has been found
 
     ofstream LogFile("LogFile.txt");
     cplex.setOut(LogFile);
 
+    clock_t start;
+    start = clock();
+
     if ( !cplex.solve() ) {
         env.error() << "Failed to optimize Pricer with Cplex" << endl;
         exit(1);
     }
+
+    temps_resolution = ( clock() - start ) / (double) CLOCKS_PER_SEC;
 
     if (cplex.getStatus()==CPX_STAT_INFEASIBLE){
         cout<<"NO SOLUTION TO PRICER"<<endl;
@@ -123,17 +131,53 @@ bool CplexPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCo
     return false;
 }
 
-void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan, double& realCost) {
+void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, bool Farkas) {
 
-    int n = inst->getn() ;
+
+    int n = inst->getn();
+    int T = inst->getT() ;
+
     cplex.getValues(x, UpDownPlan) ;
 
-    IloNumArray prod(env, n) ;
-    cplex.getValues(p, prod) ;
-
-    realCost = 0 ;
-    for (int i=0 ; i <n ; i++) {
-        realCost += UpDownPlan[i]*inst->getcf(i) + inst->getcp(i)*( inst->getPmin(i)*UpDownPlan[i] + prod[i]) ;
+    if ( Farkas || !Param.DontGetPValue ) {
+        IloNumArray prod(env, n) ;
+        cplex.getValues(p, prod) ;
+        realCost = 0 ;
+        for (int i=0 ; i <n ; i++) {
+            if (UpDownPlan[i] > 1 - Param.Epsilon) {
+                realCost += inst->getcf(i) + inst->getcp(i)*( inst->getPmin(i) + prod[i]) ;
+            }
+        }
     }
+
+    else {
+        realCost = cplex.getObjValue() ;
+
+        for (int i=0 ; i<n ; i++) {
+
+            int L= inst->getL(i);
+            int l= inst->getl(i);
+
+            if (UpDownPlan[i] > 1 - Param.Epsilon) {
+                //// Cout réduit de x
+                if (time>0) {
+                    realCost -= - Dual.Mu.at(i*T + time) ;
+                }
+                if (time< T-1) {
+                    realCost -= Dual.Mu.at(i*T + time+1) ;
+                }
+                if (time>=L) {
+                    realCost -= - Dual.Nu.at(i*T+ time) ;
+                }
+
+                if (time<=T-l-1) {
+                    realCost -= - Dual.Xi.at(i*T + time + l) ;
+                }
+            }
+        }
+    }
+
+
+
 
 }

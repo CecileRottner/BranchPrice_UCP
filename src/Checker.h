@@ -30,7 +30,12 @@ class CplexChecker {
   double LRCplexVal ;
 
   CplexChecker(InstanceUCP* inst, const Parameters & param) ;
-  double checkValue();
+  double getIntegerObjValue() ;
+  double getLRValue() ;
+  double getLRCplex() ;
+  void CplexPrimalHeuristic(IloNumArray solution, IloNumArray solution_p) ;
+
+  double printSolution();
   void checkSolution(const vector<double> & x_frac);
 
 };

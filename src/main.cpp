@@ -47,6 +47,7 @@ int main(int argc, char** argv)
     int bloc ;
     int intra  ;
     int id;
+    int met = 0 ;
     string localisation;
 
     if (argc==1) { // pour debug
@@ -71,6 +72,7 @@ int main(int argc, char** argv)
         cat01 = atoi(argv[8]);
         intra = atoi(argv[9]);
         id = atoi(argv[10]);
+        met = atoi(argv[11]);
     }
 
     InstanceProcessed Instance = InstanceProcessed(n, T, bloc, demande, sym, cat01, intra, id, localisation) ;
@@ -90,13 +92,30 @@ int main(int argc, char** argv)
     bool IntraSite = 0 ; // à implémenter
     bool DemandeResiduelle = 0 ;
     bool Iup = 0 ;
-    double eps = 0.000001;
-    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, Iup, eps);
+    double eps = 0.0000001;
+    bool heuristicInit = 0 ;
+    bool DontPriceAllTimeSteps = 0;
+    bool DontGetPValue = 0 ;
+
+    cout << "met: " << met << endl ;
+    if (met==1) {
+        DontPriceAllTimeSteps=true ;
+    }
+
+    if (met==2) {
+        DontPriceAllTimeSteps=true ;
+        DontGetPValue = true ;
+    }
+
+    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, Iup, eps, DontPriceAllTimeSteps, heuristicInit, DontGetPValue);
 
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
     ////////////////////////////////////
+
+    clock_t start;
+    start = clock();
 
     // problem initialization
     SCIP *scip=NULL;
@@ -168,16 +187,28 @@ int main(int argc, char** argv)
     //////////////////////////////////////////////
 
 
+    // Initialisation du checker
+    CplexChecker checker = CplexChecker(inst, param) ;
 
+    //Master problem
     Master_Model Master(inst, param) ;
     MasterTime_Model MasterTime(inst, param) ;
 
+
     if (param.TimeStepDec) { // décomposition par pas de temps
-        MasterTime.InitScipMasterTimeModel(scip, inst);
+        MasterTime.initScipMasterTimeModel(scip);
     }
 
     else { // décomposition classique
         Master.InitScipMasterModel(scip, inst) ;
+    }
+
+
+    if (param.heuristicInit) {
+        IloNumArray x(env, n*T) ;
+        IloNumArray p(env, n*T) ;
+        checker.CplexPrimalHeuristic(x,p);
+        MasterTime.createColumns(scip, x,p);
     }
 
     ////////////////////////////////
@@ -235,6 +266,7 @@ int main(int argc, char** argv)
 
     SCIPsolve(scip);
 
+    double temps_scip = ( clock() - start ) / (double) CLOCKS_PER_SEC;
     /// Solution en x
 
     n=inst->getn();
@@ -254,15 +286,13 @@ int main(int argc, char** argv)
             int time = (*itv)->time ;
             for (int i=0 ; i < n ; i++) {
 
-                    if ((*itv)->UpDown_plan[i] > 0.000001) {
+                    if ((*itv)->UpDown_plan[i] > param.Epsilon) {
 
                         x_frac[i*T+time] += frac_value ;
                     }
 
             }
         }
-
-
         cout << "solution x frac: " << endl;
 
         for (int t=0 ; t < T ; t++) {
@@ -287,7 +317,7 @@ int main(int argc, char** argv)
             for (int i=0 ; i < inst->nbUnits(site) ; i++) {
                 for (int t=0 ; t < T ; t++) {
 
-                    if ((*itv)->UpDown_plan[i*T+t] > 0.000001) {
+                    if ((*itv)->UpDown_plan[i*T+t] > eps) {
 
                         x_frac[(first+i)*T+t] += frac_value ;
                     }
@@ -317,12 +347,18 @@ int main(int argc, char** argv)
     fichier << n << " & " << T << " & " << id ;
     fichier << " &  " << SCIPgetNNodes(scip) ;
     fichier << " & " << SCIPgetNPricevarsFound(scip) ;
-    fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
-    fichier << " &  " << SCIPgetSolvingTime(scip) ;
+    //fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
+    if (param.TimeStepDec) {
+    fichier << " & " << MasterTime.cumul_resolution_pricing ;
+    }
+    //fichier << " &  " << SCIPgetSolvingTime(scip) ;
+    fichier << " & " << temps_scip  ;
     fichier << " &  " << SCIPgetNLPIterations(scip) ;
     fichier << " &  " << SCIPgetGap(scip);
     fichier << " &  " << SCIPgetPrimalbound(scip);
     fichier << " &  " << SCIPgetDualbound(scip);
+
+    cout << "ici" << endl ;
 
     //////////////////////
     //////  CHECK    /////
@@ -330,21 +366,14 @@ int main(int argc, char** argv)
 
     cout.precision(15);
 
-    CplexChecker checker = CplexChecker(inst, param) ;
-
     //    vector<double> x_frac = vector<double>(n*T, 0) ;
     //    for (int i=0 ; i < n*T ; i++) {
     //        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
     //    }
 
-
-
-    double value = checker.checkValue() ;
-    cout << "VALEUR RELAXEE A TROUVER : " << value << endl ;
-
-    fichier << "& " << checker.LRValue ; // RL
-    fichier << "& " << checker.LRCplexVal ; // RL CPLEX
-    fichier << " & " << checker.IntegerObj ; // OPT
+    fichier << "& " << checker.getLRValue() ; // RL
+    fichier << "& " << checker.getLRCplex() ; // RL CPLEX
+    //fichier << " & " << checker.getIntegerObjValue(); // OPT
     fichier <<" \\\\ " << endl ;
 
 

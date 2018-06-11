@@ -11,7 +11,7 @@ Master_Variable::Master_Variable(int site, IloNumArray UpDown) {
     UpDown_plan = UpDown  ;
 }
 
-void Master_Variable::computeCost(InstanceUCP* inst) {
+void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
     //compute cost of up/down plan lambda: fixed cost (including minimum power output cost) and start up cost
     //init à prendre en compte plus tard
     cost=0 ;
@@ -27,11 +27,11 @@ void Master_Variable::computeCost(InstanceUCP* inst) {
     for (int i = first ; i <= last ; i++) {
         int down_t_1 = 0 ;
         for (int t = 0 ; t < T ; t++) {
-            if (down_t_1 && UpDown_plan[(i-first)*T+t]) { // il y a un démarrage en t
+            if (down_t_1 && UpDown_plan[(i-first)*T+t] > 1 - Param.Epsilon) { // il y a un démarrage en t
                 cost+= inst->getc0(i) ;
             }
 
-            if (UpDown_plan[(i-first)*T+t] == 0) {
+            if (UpDown_plan[(i-first)*T+t] < Param.Epsilon ) {
                 down_t_1=1;
             }
             else { // l'unité i est up en t
@@ -52,7 +52,7 @@ void Master_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, In
     /* for each time period, add coefficient pmin into the demand constraint at t, for each unit unit i up in site S */
     for (int t=0 ; t < T ; t++) {
         for (int i=0 ; i < inst->nbUnits(s) ; i++) {
-            if (lambda->UpDown_plan[i*T+t]) {
+            if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
                 SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(first+i)) ;
             }
         }
@@ -61,7 +61,7 @@ void Master_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, In
     /* for each time period and each unit in site S, add coefficient pmin(i) - pmax(i) into the power limit constraint of unit i at t */
     for (int t=0 ; t < T ; t++) {
         for (int i=0 ; i < inst->nbUnits(s) ; i++) {
-            if (lambda->UpDown_plan[i*T+t]) {
+            if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
                 SCIPaddCoefLinear(scip, power_limits[(first+i)*T+t], lambda->ptr, inst->getPmax(first+i) - inst->getPmin(first+i)) ;
             }
         }
@@ -76,10 +76,10 @@ void Master_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, In
             double RD = (inst->getPmax(first+i) - inst->getPmin(first+i))/2 ;
 
             for (int t=1 ; t < T ; t++) {
-                if (lambda->UpDown_plan[i*T+t-1]) {
+                if (lambda->UpDown_plan[i*T+t-1]  > 1 - Param.Epsilon) {
                     SCIPaddCoefLinear(scip, ramp_up[(first+i)*T+t], lambda->ptr, -RU) ;
                 }
-                if (lambda->UpDown_plan[i*T+t]) {
+                if (lambda->UpDown_plan[i*T+t]  > 1 - Param.Epsilon) {
                     SCIPaddCoefLinear(scip, ramp_down[(first+i)*T+t], lambda->ptr, -RD) ;
                 }
 
@@ -105,7 +105,7 @@ void Master_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Var
      * due to the set partitioning constraints.
      */
 
-    var->computeCost(inst);
+    var->computeCost(inst, Param);
     double cost= var->cost;
 
     SCIP_Vartype type ;

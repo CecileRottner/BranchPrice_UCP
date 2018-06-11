@@ -11,14 +11,14 @@ MasterTime_Variable::MasterTime_Variable(int t, IloNumArray UpDown, double costF
     cost= costFromSubPb ;
 }
 
-void MasterTime_Model::addCoefsToConstraints(SCIP* scip, MasterTime_Variable* lambda, InstanceUCP* inst) {
+void MasterTime_Model::addCoefsToConstraints(SCIP* scip, MasterTime_Variable* lambda) {
 
     int t = lambda->time ;
 
     /* for each unit i, add coefficient 1 to logical constraint logical(i,t) if t >=1, add coefficient -1 to logical(i, t+1) if t < T-1*/
 
     for (int i=0 ; i < n ; i++) {
-        if (lambda->UpDown_plan[i]) {
+        if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
             if (t>0) {
                 SCIPaddCoefLinear(scip, logical.at(i*T+t), lambda->ptr, 1.0) ;
             }
@@ -27,9 +27,10 @@ void MasterTime_Model::addCoefsToConstraints(SCIP* scip, MasterTime_Variable* la
             }
         }
     }
+
     /* coef in min-up / min-down constraints */
     for (int i=0 ; i < n ; i++) {
-        if (lambda->UpDown_plan[i]) {
+        if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
             if (t>=inst->getL(i)) {
                 SCIPaddCoefLinear(scip, min_up.at(i*T+t), lambda->ptr, 1.0) ;
             }
@@ -42,11 +43,10 @@ void MasterTime_Model::addCoefsToConstraints(SCIP* scip, MasterTime_Variable* la
 
     /* add coefficient to the convexity constraint for site s */
     SCIPaddCoefLinear(scip, convexity_cstr.at(t), lambda->ptr, 1.0) ;
-
 }
 
 
-void MasterTime_Model::initMasterTimeVariable(SCIP* scip, InstanceUCP* inst , MasterTime_Variable* var) {
+void MasterTime_Model::initMasterTimeVariable(SCIP* scip, MasterTime_Variable* var) {
 
     char var_name[255];
     SCIPsnprintf(var_name, 255, "V_%d",L_var.size());
@@ -79,19 +79,22 @@ void MasterTime_Model::initMasterTimeVariable(SCIP* scip, InstanceUCP* inst , Ma
     L_var.push_back(var);
 
 
-    cout << "Variable " << var_name << " added, with plan:" << endl ;
+//    cout << "Variable " << var_name << " added, with plan: " << endl  ;
 
-    for (int i=0 ; i < n ; i++) {
-        cout << var->UpDown_plan[i] << " " ;
-    }
-
+//    for (int i=0 ; i < inst->getn() ; i++) {
+//        cout << var->UpDown_plan[i] << " "  ;
+//    }
 }
 
-MasterTime_Model::MasterTime_Model(InstanceUCP* inst, const Parameters & Parametres) : Param(Parametres) {
+MasterTime_Model::MasterTime_Model(InstanceUCP* instance, const Parameters & Parametres) : Param(Parametres) {
+
+    inst=instance;
 
     n = inst->getn() ;
     T = inst->getT() ;
     S = inst->getS() ;
+
+
 
     cumul_resolution_pricing= 0 ;
 
@@ -103,7 +106,7 @@ MasterTime_Model::MasterTime_Model(InstanceUCP* inst, const Parameters & Paramet
 
 }
 
-void  MasterTime_Model::InitScipMasterTimeModel(SCIP* scip, InstanceUCP* inst) {
+void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
 
     ////////////////////////////////////////////////////////////////
     /////////////   MASTER CONSTRAINT INITIALIZATION   /////////////
@@ -297,29 +300,61 @@ void  MasterTime_Model::InitScipMasterTimeModel(SCIP* scip, InstanceUCP* inst) {
         }
 
         MasterTime_Variable* lambda = new MasterTime_Variable(t, plan, cost);
-        initMasterTimeVariable(scip, inst, lambda);
+        initMasterTimeVariable(scip, lambda);
 
         SCIPaddVar(scip, lambda->ptr);
 
-        addCoefsToConstraints(scip, lambda, inst) ;
+        addCoefsToConstraints(scip, lambda) ;
     }
 
 
     /// test
 
-    //    IloNumArray plan_test = IloNumArray(env, inst->nbUnits(0)*T) ;
-    //    for (int index=0 ; index < inst->nbUnits(0)*T ; index++) {
-    //        plan_test[index]=1 ;
-    //    }
-    //    plan_test[1*T] = 0 ;
-    //    plan_test[2*T] = 0 ;
-    //    plan_test[2*T+1] = 0 ;
+//        IloNumArray plan_test = IloNumArray(env, inst->nbUnits(0)*T) ;
+//        for (int index=0 ; index < inst->nbUnits(0)*T ; index++) {
+//            plan_test[index]=1 ;
+//        }
+//        plan_test[1*T] = 0 ;
+//        plan_test[2*T] = 0 ;
+//        plan_test[2*T+1] = 0 ;
 
-    //    Master_Variable* lambda = new Master_Variable(0, plan_test);
-    //    initMasterVariable(scip, inst, lambda);
+//        Master_Variable* lambda = new Master_Variable(0, plan_test);
+//        initMasterVariable(scip, inst, lambda);
 
-    //    SCIPaddVar(scip, lambda->ptr);
+//        SCIPaddVar(scip, lambda->ptr);
 
-    //    addCoefsToConstraints(scip, lambda, inst) ;
+//        addCoefsToConstraints(scip, lambda, inst) ;
 
+}
+
+
+void MasterTime_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p) {
+
+    int n = inst->getn() ;
+    int T = inst->getT() ;
+
+    for (int t = 0 ; t < T ; t++) {
+
+        IloNumArray plan = IloNumArray(env, n) ;
+        for (int i=0 ; i < n ; i++) {
+            if (x[i*T + t] > 1 - Param.Epsilon) {
+            plan[i]=1 ;
+            }
+            if (x[i*T + t] < Param.Epsilon) {
+            plan[i]=0 ;
+            }
+        }
+
+        double cost = 0 ;
+        for (int i=0 ; i <n ; i++) {
+            cost += inst->getcf(i)*plan[i] + (inst->getPmin(i)*plan[i] + p[i*T+t])*inst->getcp(i) ;
+        }
+
+        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan, cost) ;
+        initMasterTimeVariable(scip, lambda);
+
+        SCIPaddVar(scip, lambda->ptr);
+
+        addCoefsToConstraints(scip, lambda) ;
+    }
 }

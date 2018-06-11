@@ -288,6 +288,7 @@ void InstanceUCP::Lecture(const char* file) {
     fichier >> T;
 
 
+
     //Initialisation des vecteurs de taille n et T
 
     ordreT = IloIntArray(env, T) ;

@@ -23,7 +23,10 @@ struct Parameters
     bool DemandeResiduelle ;
     bool IntervalUpSet ;
     double Epsilon ;
-    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps) :
+    bool DontPriceAllTimeSteps ;
+    bool heuristicInit ;
+    bool DontGetPValue ;
+    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue) :
         IP(ip),
         ManageSubPbSym(managesubpbsym),
         Ramp(ramp),
@@ -31,7 +34,10 @@ struct Parameters
         IntraSite(intra),
         DemandeResiduelle(dr),
         IntervalUpSet(iup),
-        Epsilon(eps)
+        Epsilon(eps),
+        DontPriceAllTimeSteps(dont),
+        heuristicInit(h_init),
+        DontGetPValue(dontgetpvalue)
     {}
 };
 

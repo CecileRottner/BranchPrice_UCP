@@ -37,7 +37,7 @@ public:
     double cost ;
 
     Master_Variable(int site, IloNumArray UpDown) ;
-    void computeCost(InstanceUCP* inst) ;
+    void computeCost(InstanceUCP* inst, const Parameters & Param) ;
 
 };
 
@@ -66,11 +66,8 @@ public:
     Master_Model(InstanceUCP* inst, const Parameters & Param) ;
 
     void addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) ;
-    void computeCost(InstanceUCP* inst) ;
-
     void  InitScipMasterModel(SCIP* scip, InstanceUCP* inst);
     void initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Variable* lambda) ;
-
 
 };
 
@@ -104,7 +101,9 @@ public:
     int T ;
     int S ;
 
-    int cumul_resolution_pricing ;
+    InstanceUCP* inst ;
+
+    double cumul_resolution_pricing ;
     const Parameters Param ;
 
     IloEnv env;
@@ -121,10 +120,12 @@ public:
 
     MasterTime_Model(InstanceUCP* inst, const Parameters & Param) ;
 
-    void addCoefsToConstraints(SCIP* scip, MasterTime_Variable* lambda, InstanceUCP* inst) ;
+    void addCoefsToConstraints(SCIP* scip, MasterTime_Variable* lambda) ;
 
-    void  InitScipMasterTimeModel(SCIP* scip, InstanceUCP* inst);
-    void initMasterTimeVariable(SCIP* scip, InstanceUCP* inst , MasterTime_Variable* lambda) ;
+    void initScipMasterTimeModel(SCIP* scip);
+    void initMasterTimeVariable(SCIP* scip, MasterTime_Variable* lambda) ;
+
+    void createColumns(SCIP* scip, IloNumArray x, IloNumArray p) ;
 
 
 };

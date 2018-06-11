@@ -86,6 +86,8 @@ void AddSSBI(IloEnv env, IloModel model, IloBoolVarArray x, IloBoolVarArray u, i
 }
 
 CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int site) : Param(p) {
+
+    //env = IloEnv() ;
     Site=site ;
 
     int ns = inst->nbUnits(Site) ;
