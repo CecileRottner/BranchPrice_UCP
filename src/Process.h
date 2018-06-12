@@ -26,7 +26,8 @@ struct Parameters
     bool DontPriceAllTimeSteps ;
     bool heuristicInit ;
     bool DontGetPValue ;
-    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue) :
+    bool OneTimeStepPerIter ;
+    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue, bool one) :
         IP(ip),
         ManageSubPbSym(managesubpbsym),
         Ramp(ramp),
@@ -37,7 +38,8 @@ struct Parameters
         Epsilon(eps),
         DontPriceAllTimeSteps(dont),
         heuristicInit(h_init),
-        DontGetPValue(dontgetpvalue)
+        DontGetPValue(dontgetpvalue),
+        OneTimeStepPerIter(one)
     {}
 };
 

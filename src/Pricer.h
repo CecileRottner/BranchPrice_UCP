@@ -74,6 +74,8 @@ public:
     vector<CplexPricingAlgoTime*> AlgoCplex;
 
     vector<int> TimeSolNotFound ;
+    int lastTimeStep;
+    int nbCallsToCplex ;
 
    /** Constructs the pricer object with the data needed */
    ObjPricerTimeUCP(

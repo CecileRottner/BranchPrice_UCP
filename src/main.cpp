@@ -84,7 +84,10 @@ int main(int argc, char** argv)
     InstanceUCP* inst = new InstanceUCP(env, file) ;
 
 
-    ///// Paramètres ////
+    ///////////////////////////
+    //////  PARAMETERS    /////
+    ///////////////////////////
+
     bool IP=0 ; // est-ce qu'on résout le master en variable entières ?
     bool ManageSubPbSym=0 ; // est-ce qu'on gère les symétries dans le sous problème ?
     bool Ramp=0 ; // est-ce qu'on considère les gradients ?
@@ -94,8 +97,9 @@ int main(int argc, char** argv)
     bool Iup = 0 ;
     double eps = 0.0000001;
     bool heuristicInit = 0 ;
-    bool DontPriceAllTimeSteps = 0;
+    bool DontPriceAllTimeSteps = 1;
     bool DontGetPValue = 0 ;
+    bool OneTimeStepPerIter = 0;
 
     cout << "met: " << met << endl ;
     if (met==1) {
@@ -107,7 +111,7 @@ int main(int argc, char** argv)
         DontGetPValue = true ;
     }
 
-    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, Iup, eps, DontPriceAllTimeSteps, heuristicInit, DontGetPValue);
+    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, Iup, eps, DontPriceAllTimeSteps, heuristicInit, DontGetPValue, OneTimeStepPerIter);
 
 
     ////////////////////////////////////
@@ -349,7 +353,8 @@ int main(int argc, char** argv)
     fichier << " & " << SCIPgetNPricevarsFound(scip) ;
     //fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
     if (param.TimeStepDec) {
-    fichier << " & " << MasterTime.cumul_resolution_pricing ;
+        fichier << " & " << pricerTime->nbCallsToCplex ;
+        fichier << " & " << MasterTime.cumul_resolution_pricing ;
     }
     //fichier << " &  " << SCIPgetSolvingTime(scip) ;
     fichier << " & " << temps_scip  ;

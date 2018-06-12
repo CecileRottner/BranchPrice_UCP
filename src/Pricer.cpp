@@ -275,7 +275,6 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas           
 
         if (objvalue < -epsilon) {
 
-
             Master_Variable* lambda = new Master_Variable(s, upDownPlan);
             cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " ";
             //// CREATION D'UNE NOUVELLE VARIABLE DANS LE MASTER

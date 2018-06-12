@@ -86,8 +86,8 @@ class CplexPricingAlgoTime {
   void addBranchingConstraint(); //local to the branch considered
 
   // Launch Cplex solver and get back an optimal up/down plan
-  bool findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution) ; // returns true if an improving solution has been found. objvalue is updated in this case
-  void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, bool Farkas) ; //updates UpDownPlan and realCost
+  bool findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) ; // returns true if an improving solution has been found. objvalue is updated in this case
+  void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, double & totalProd, bool Farkas) ; //updates UpDownPlan and realCost
 
 };
 

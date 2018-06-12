@@ -36,6 +36,8 @@ ObjPricerTimeUCP::ObjPricerTimeUCP(
     }
 
     TimeSolNotFound = vector<int>(T,0) ;
+    lastTimeStep=-1 ;
+    nbCallsToCplex=0 ;
 }
 
 
@@ -53,8 +55,6 @@ ObjPricerTimeUCP::~ObjPricerTimeUCP()
  */
 SCIP_DECL_PRICERINIT(ObjPricerTimeUCP::scip_init)
 {
-
-
     int T = inst->getT() ;
     int n = inst->getn();
 
@@ -250,12 +250,25 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
         nb_cas=2 ;
     }
 
+    int min=0 ;
+    int max=T ;
+    if (Param.OneTimeStepPerIter) {
+        nb_cas=2 ;
+    }
+
     while (!oneImprovingSolution && cas < nb_cas) { // Si on n'a pas trouvé de colonne améliorante dans le cas 1, on passe au cas 2: on cherche une colonne pour tous les pas de temps
 
         cas ++ ;
 
+        if (Param.OneTimeStepPerIter) {
+            lastTimeStep = (lastTimeStep+1)%T;
+            min=lastTimeStep ;
+            max=min+1 ;
+        }
+
         //cout << "cas: " << cas << endl ;
-        for (int t = 0 ; t < T ; t++) {
+
+        for (int t=min ; t < max ; t++) {
 
             if (print) cout << "time "<< t << endl;
 
@@ -268,18 +281,21 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
                 //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
                 double objvalue = 0 ;
                 double temps ;
-                bool ImprovingSolutionFound = (AlgoCplex.at(t))->findImprovingSolution(inst, dual_cost, objvalue, temps);
+                bool ImprovingSolutionFound = (AlgoCplex.at(t))->findImprovingSolution(inst, dual_cost, objvalue, temps, cas-1);
 
+                nbCallsToCplex++;
                 Master->cumul_resolution_pricing += temps ;
 
                 if (ImprovingSolutionFound) {
                     oneImprovingSolution = true ;
+
                     TimeSolNotFound.at(t) = 0 ;
 
                     double realCost=0 ;
+                    double totalProd=0 ;
 
                     IloNumArray upDownPlan = IloNumArray((AlgoCplex.at(t))->env, n) ;
-                    (AlgoCplex.at(t))->getUpDownPlan(inst, dual_cost, upDownPlan, realCost, Farkas) ;
+                    (AlgoCplex.at(t))->getUpDownPlan(inst, dual_cost, upDownPlan, realCost, totalProd, Farkas) ;
 
                     if (print) cout << "Minimum reduced cost plan: "<< objvalue << endl ;
 
@@ -296,7 +312,7 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
                     /// AJOUT VARIABLE DANS LE MAITRE ////
 
                     MasterTime_Variable* lambda = new MasterTime_Variable(t, upDownPlan, realCost);
-                   // cout << "Plan found for time " << t << " with reduced cost = " << objvalue << " ";
+                    // cout << "Plan found for time " << t << " with reduced cost = " << objvalue << " ";
                     //// CREATION D'UNE NOUVELLE VARIABLE
                     Master->initMasterTimeVariable(scip, lambda) ;
 

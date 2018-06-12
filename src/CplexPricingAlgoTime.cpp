@@ -51,7 +51,7 @@ CplexPricingAlgoTime::CplexPricingAlgoTime(InstanceUCP* inst, const Parameters &
     }
 
     cplex = IloCplex(model);
-    cplex.setParam(IloCplex::EpGap, Param.Epsilon) ;
+    cplex.setParam(IloCplex::EpGap, 0.01) ;
 
     //Initialisation des coefficients objectifs (primaux) de x
     BaseObjCoefX.resize(n, 0) ;
@@ -100,11 +100,18 @@ void CplexPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Parame
 }
 
 
-bool CplexPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution) {
+bool CplexPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) {
     //returns True if an improving Up/Down plan has been found
 
     ofstream LogFile("LogFile.txt");
     cplex.setOut(LogFile);
+
+    if (exact) {
+        cplex.setParam(IloCplex::EpGap, Param.Epsilon) ;
+    }
+    else {
+        cplex.setParam(IloCplex::EpGap, 0.1) ;
+    }
 
     clock_t start;
     start = clock();
@@ -131,7 +138,7 @@ bool CplexPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCo
     return false;
 }
 
-void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, bool Farkas) {
+void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, double & totalProd, bool Farkas) {
 
 
     int n = inst->getn();
@@ -143,11 +150,16 @@ void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTime 
         IloNumArray prod(env, n) ;
         cplex.getValues(p, prod) ;
         realCost = 0 ;
+        totalProd=0 ;
         for (int i=0 ; i <n ; i++) {
+            totalProd += prod[i] ;
             if (UpDownPlan[i] > 1 - Param.Epsilon) {
                 realCost += inst->getcf(i) + inst->getcp(i)*( inst->getPmin(i) + prod[i]) ;
             }
         }
+
+
+
     }
 
     else {
