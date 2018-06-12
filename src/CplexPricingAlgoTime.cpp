@@ -152,11 +152,12 @@ void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTime 
         realCost = 0 ;
         totalProd=0 ;
         for (int i=0 ; i <n ; i++) {
-            totalProd += prod[i] ;
             if (UpDownPlan[i] > 1 - Param.Epsilon) {
+                totalProd += inst->getPmin(i) + prod[i] ;
                 realCost += inst->getcf(i) + inst->getcp(i)*( inst->getPmin(i) + prod[i]) ;
             }
         }
+        //cout << "Total prod: " << totalProd << endl ;
 
 
 

@@ -83,12 +83,36 @@ class CplexPricingAlgoTime {
   CplexPricingAlgoTime(InstanceUCP* inst, const Parameters & par, int t);
 
   void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas);
-  void addBranchingConstraint(); //local to the branch considered
+
+  // Launch Cplex solver and get back an optimal up/down plan
+  bool findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) ; // returns true if an improving solution has been found. objvalue is updated in this case
+  void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, double & totalProd, bool Farkas) ; //updates UpDownPlan and realCost
+};
+
+
+class DynProgPricingAlgoTime { // codé dans le cas Pmin=Pmax pour voir si c'est intéressant. Cas où D et les puissances sont entiers
+ public:
+
+  Parameters Param ;
+  int time ;
+  IloEnv   env;
+
+  int W ;
+  double totalBaseCost ;
+
+  vector<double> BaseObjCoefX ;
+  vector<double> ObjCoefX ;
+  vector<double> Table ;
+
+  DynProgPricingAlgoTime(InstanceUCP* inst, const Parameters & par, int t); // initialise les vecteurs, et W
+
+  void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas);
 
   // Launch Cplex solver and get back an optimal up/down plan
   bool findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) ; // returns true if an improving solution has been found. objvalue is updated in this case
   void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, double & totalProd, bool Farkas) ; //updates UpDownPlan and realCost
 
 };
+
 
 #endif

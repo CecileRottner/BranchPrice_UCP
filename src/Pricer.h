@@ -72,6 +72,7 @@ public:
 
     MasterTime_Model* Master ;
     vector<CplexPricingAlgoTime*> AlgoCplex;
+    vector<DynProgPricingAlgoTime*> AlgoDynProg;
 
     vector<int> TimeSolNotFound ;
     int lastTimeStep;

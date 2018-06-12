@@ -27,7 +27,10 @@ struct Parameters
     bool heuristicInit ;
     bool DontGetPValue ;
     bool OneTimeStepPerIter ;
-    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue, bool one) :
+    bool AddColumnToOtherTimeSteps ;
+    bool DynProgTime ;
+
+    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue, bool one, bool addColumn, bool dptime) :
         IP(ip),
         ManageSubPbSym(managesubpbsym),
         Ramp(ramp),
@@ -39,7 +42,9 @@ struct Parameters
         DontPriceAllTimeSteps(dont),
         heuristicInit(h_init),
         DontGetPValue(dontgetpvalue),
-        OneTimeStepPerIter(one)
+        OneTimeStepPerIter(one),
+        AddColumnToOtherTimeSteps(addColumn),
+        DynProgTime(dptime)
     {}
 };
 

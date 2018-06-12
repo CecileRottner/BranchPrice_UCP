@@ -97,21 +97,20 @@ int main(int argc, char** argv)
     bool Iup = 0 ;
     double eps = 0.0000001;
     bool heuristicInit = 0 ;
-    bool DontPriceAllTimeSteps = 1;
+    bool DontPriceAllTimeSteps = 0;
     bool DontGetPValue = 0 ;
     bool OneTimeStepPerIter = 0;
+    bool addColumnToOtherTimeSteps = 0 ;
+    bool DynProgTime = 1 ;
 
     cout << "met: " << met << endl ;
     if (met==1) {
-        DontPriceAllTimeSteps=true ;
+        addColumnToOtherTimeSteps=true ;
     }
 
-    if (met==2) {
-        DontPriceAllTimeSteps=true ;
-        DontGetPValue = true ;
-    }
 
-    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, Iup, eps, DontPriceAllTimeSteps, heuristicInit, DontGetPValue, OneTimeStepPerIter);
+    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, Iup, eps, DontPriceAllTimeSteps,
+                           heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime);
 
 
     ////////////////////////////////////
@@ -351,13 +350,13 @@ int main(int argc, char** argv)
     fichier << n << " & " << T << " & " << id ;
     fichier << " &  " << SCIPgetNNodes(scip) ;
     fichier << " & " << SCIPgetNPricevarsFound(scip) ;
-    //fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
-    if (param.TimeStepDec) {
+    fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
+    if (param.TimeStepDec && !param.DynProgTime) {
         fichier << " & " << pricerTime->nbCallsToCplex ;
         fichier << " & " << MasterTime.cumul_resolution_pricing ;
     }
-    //fichier << " &  " << SCIPgetSolvingTime(scip) ;
-    fichier << " & " << temps_scip  ;
+    fichier << " &  " << SCIPgetSolvingTime(scip) ;
+    //fichier << " & " << temps_scip  ;
     fichier << " &  " << SCIPgetNLPIterations(scip) ;
     fichier << " &  " << SCIPgetGap(scip);
     fichier << " &  " << SCIPgetPrimalbound(scip);

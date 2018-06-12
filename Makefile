@@ -60,6 +60,7 @@ MAINOBJ		=	main.o \
 			MasterTime.o \
 			CplexPricingAlgo.o \
 			CplexPricingAlgoTime.o \
+			DynProgPricingAlgoTime.o \
 			Pricer.o \
 			PricerTime.o \
 			BranchConsHandler.o \
