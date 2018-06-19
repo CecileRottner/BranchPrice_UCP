@@ -12,6 +12,8 @@
 
 #include "Master.h"
 #include "Pricer.h"
+#include "IntervalUpSet.h"
+#include "Process.h"
 
 using namespace std;
 
@@ -26,27 +28,14 @@ class IUPHandler : public scip::ObjConshdlr {
 
 public :
 
+    const Parameters Param ;
     MasterTime_Model* Master ;
     InstanceUCP* inst ;
+    vector<double> x_frac ;
+    vector<double> u_frac ;
+    Separation* Sep ;
 
-    IUPHandler(SCIP* scip, MasterTime_Model* M, InstanceUCP* i) :
-        scip::ObjConshdlr(
-            scip,
-            "IUPHandler",                    // const char *  	name,
-            "Handler For Interval Up Set inequalities",   // const char *  	desc,
-            2000000, -2000000, -2000000,           // int sepapriority, int enfopriority, int checkpriority,
-            1, -1, 1, 10,                           // int sepafreq, int propfreq, int eagerfreq, int maxprerounds,
-            FALSE, FALSE, FALSE,                   // delaysepa, delayprop, needscons,
-            SCIP_PROPTIMING_BEFORELP,              // SCIP_PROPTIMING  	proptiming,
-            SCIP_PRESOLTIMING_FAST                 // SCIP_PRESOLTIMING  	presoltiming
-            )
-
-    {
-        Master = M ;
-        inst = i ;
-    }
-
-
+    IUPHandler(SCIP* scip, MasterTime_Model* M, InstanceUCP* i, const Parameters & Pa) ;
 
     //////////////////////////:
     //////////////////////////

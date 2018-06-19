@@ -3,6 +3,8 @@
 
 #include <ilcplex/ilocplex.h>
 #include <string>
+#include <list>
+#include <vector>
 
 #include "InstanceUCP.h"
 
@@ -10,16 +12,12 @@ using namespace std;
 
 class Separation {
 
-
 public:
     IloEnv env ;
 
 
 public : // à remettre protected après les tests
     InstanceUCP* pb ;
-
-    IloBoolVarArray x ;
-    IloBoolVarArray u ;
 
     IloNum eps ;
 
@@ -77,9 +75,6 @@ public :
     //Si elle ne trouve pas un tel C, alors C est un vecteur vide (de taille 0)
     //retourne le alpha pour lequel l'inégalité est violée. Si alpha=0 alors on n'a pas trouvé d'inégalité violée.
 
-    void constructInequality(IloRange & cons, IloInt alpha, const IloIntArray & C, IloInt t0, IloInt t1, IloInt i, IloInt methode) ;
-    //à partir d'un C de taille non nulle
-
 
     ///////////    Fonctions annexes   ////////////////////
 
@@ -129,10 +124,10 @@ public :
     IloInt ComputeBound(IloInt t0, IloInt t1) ;
     //Calcule la borne sup générale (ne dépendant que de D) sur alpha pour l'intervalle [t0, t1]
 
-    void computeCosts(IloInt t0, IloInt t1, const IloNumArray & xx, const IloNumArray & uu) ;
+    void computeCosts(IloInt t0, IloInt t1, const vector<double> & xx, const vector<double> & uu) ;
     //Calcul de coutY et coutZ pour intervalle [t0, t1] et (xx,uu) donnés
 
-    void computeWeightedCosts(IloInt t0, IloInt t1, const IloNumArray & xx, const IloNumArray & uu) ;
+    void computeWeightedCosts(IloInt t0, IloInt t1, const vector<double> & xx, const vector<double> & uu) ;
     //calcule les contributions pondérées WeightedCost[j] = (1/Pjmax)*(x(j, t0) + Sum(t0+1, t1) u(j, t)) de chaque unité, et trie le vecteur indices par WeightedCost croissants
 
     int getS(int alpha, const IloIntArray & C, IloIntArray & S) ;
@@ -174,7 +169,7 @@ public :
 
 public:
 
-    Separation(IloEnv envir, InstanceUCP* inst, const IloBoolVarArray & x, const IloBoolVarArray & u, IloNum epsi) ;
+    Separation(InstanceUCP* inst) ;
     ~Separation() ;
 
     IloInt getn() ;
@@ -195,9 +190,7 @@ public:
 
     IloInt partition(IloNumArray const & ordre, IloIntArray & indices, IloInt p, IloInt q) ;
 
-    void Separe(IloRange & cons, IloInt i,  IloInt t0, IloInt t1, IloInt methode) ;
-    //prends en argument une méthode : gloutonne, autre heuristique, exacte, appelle la fonction liée à la méthode en argument puis construit le IloRange à partir du C renvoyé
-    //Vérifie que le C renvoyé par les méthodes de séparation est de taille >= 1
+    int SepareSCIP(list<int> & C_list, IloInt i, IloInt t0, IloInt t1) ;
 };
 
 

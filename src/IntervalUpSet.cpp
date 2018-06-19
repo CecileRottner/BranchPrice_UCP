@@ -3,15 +3,13 @@
 
 #include <ilcplex/ilocplex.h>
 #include <string>
+#include <list>
 
 using namespace std ;
 
-Separation::Separation(IloEnv envir, InstanceUCP* inst, const IloBoolVarArray & xx, const IloBoolVarArray & uu, IloNum epsi) :
-    env (envir),
-    pb (inst),
-    x (xx),
-    u (uu),
-    eps (epsi) {
+Separation::Separation(InstanceUCP* inst) :
+    pb (inst)
+    {
     n = pb->getn();
     T = pb->getT();
 
@@ -322,7 +320,7 @@ IloInt Separation::yDefine(IloIntArray & Y, int t0, int t1, int l) {
 
 ////// Mise à jour des coûts et des valeurs utiles ////////
 
-void Separation::computeCosts(IloInt t0, IloInt t1, const IloNumArray & xx, const IloNumArray & uu) {
+void Separation::computeCosts(IloInt t0, IloInt t1, const vector<double> & xx, const vector<double> & uu) {
     //Calcul de coutW et coutZ pour intervalle [t0, t1] et (xx,uu) donnés
 
     //coutW
@@ -349,7 +347,7 @@ void Separation::computeCosts(IloInt t0, IloInt t1, const IloNumArray & xx, cons
     }
 }
 
-void Separation::computeWeightedCosts(IloInt t0, IloInt t1, const IloNumArray & xx, const IloNumArray & uu) {
+void Separation::computeWeightedCosts(IloInt t0, IloInt t1, const vector<double> & xx, const vector<double> & uu) {
 
     //Calcul
     for (IloInt j = 0 ; j < n ; j++) {
@@ -1193,7 +1191,7 @@ IloInt Separation::separeLetchford(IloInt t, IloIntArray & C) {
 
             alpha = isUpSet(t, C, sommeC) ;
 
-            int alphaC=ComputeAlpha(t,C,sommeC) ;
+            //int alphaC=ComputeAlpha(t,C,sommeC) ;
 
             /*cout << "C: " << C << endl ;
                                 cout << "alpha: " << alpha << endl ;
@@ -1238,101 +1236,25 @@ IloInt Separation::separeLetchford(IloInt t, IloIntArray & C) {
 
 
 
-void Separation::constructInequality(IloRange & cons, IloInt alpha, const IloIntArray & C, IloInt t0, IloInt t1, IloInt i, IloInt methode) {
-
-    int sommeC = 0 ;
-    for (int j = 0 ; j < C.getSize() ; j++) {
-        sommeC +=getPmax(C[j]) ;
-    }
-
-    cout << "C: " << C << ", dont unité i=" << i <<endl ;
-    cout << "Intervalle: " << t0 << ", " << t1 << endl;
-    cout << "alpha: " << alpha << endl ;
 
 
-
-    //Contributions
-    double contribJ = 0 ;
-    for (int j = 0 ; j < C.getSize() ; j++) {
-        if (C[j] != i) {
-            contribJ += coutW[C[j]]  ;
-        }
-    }
-    contribJ += coutZ[i] ;
-
-    int c  = C.getSize() ;
-    IloIntArray Betas(env, t1 - t0 + 1) ;
-    for (int t=0 ; t < t1 - t0 + 1 ; t++) {
-        Betas[t] = 0 ;
-    }
-
-    //Calcul des bêtas
-    if (t0 < t1 && methode==3) {
-
-        ComputeBetas_i(Betas, t0, t1, i, C, sommeC, alpha) ;
-        cout << "Betas : " << Betas << endl;
-    }
-
-    if (t0==t1) {
-        cons.setLB(alpha) ;
-    }
-    else {
-        cons.setLB(alpha + Betas[t1-t0]) ;
-    }
-    IloExpr expr(env) ;
-
-    expr += x[pb->getTri(i)*T + t1] ;
-    for (int j=0 ; j < c ; j++) {
-        if (C[j] != i) {
-            expr += x[pb->getTri(C[j])*T + t0] ;
-
-        }
-        for (IloInt k=t0+1 ; k <= t1 ; k++)  {
-            if (C[j] != i) {
-                expr += u[pb->getTri(C[j])*T + k];
-            }
-            else {
-                expr -= (Betas[k-1-t0] + 1)*u[pb->getTri(C[j])*T + k];
-            }
-        }
-    }
-    if (t0 < t1) {
-        expr += Betas[t1-t0]*x[pb->getTri(i)*T + t1] ;
-    }
-    cons.setExpr(expr);
-    expr.end() ;
-
-}
-
-
-void Separation::Separe(IloRange & cons, IloInt i, IloInt t0, IloInt t1, IloInt methode)  {
+int Separation::SepareSCIP(list<int> & C_list, IloInt i, IloInt t0, IloInt t1)  {
     IloIntArray C(env, 0) ;
-    int alpha=0 ;
-    if (methode==1) {
-        alpha = separeCover(t0,C);
-        i=C[0];
-    }
-    if (methode==5) {
-        alpha = separeLetchford(t0,C);
-        if (C.getSize() > 0) {
-            i=C[0];
-        }
-        else {
-            i=0 ;
-        }
-    }
-    if (methode==2 || methode==3) {
-        alpha = separeGlouton(t0, t1, i, C) ;
-    }
-    if (methode==4) {
-        alpha = separeRandom(t0, t1, i, C) ;
-    }
-    if (alpha > 0) {
-        constructInequality(cons, alpha, C, t0, t1, i, methode) ;
-    }
-    C.end() ;
-}
 
+    int alpha = separeGlouton(t0, t1, i, C) ;
+
+    if (alpha > 0) {
+        cout << "i:" << i << endl;
+        cout << "interval: " << t0 << ", " << t1 << endl ;
+        cout << "alpha: " << alpha << endl ;
+        cout << "C: " << C << endl ;
+        for (int i=0 ; i < C.getSize() ; i++) {
+            C_list.push_back(pb->getTri(C[i])) ;
+        }
+        return alpha ;
+    }
+    return 0 ;
+}
 
 
 

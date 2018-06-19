@@ -148,6 +148,7 @@ Master_Model::Master_Model(InstanceUCP* inst, const Parameters & Parametres) : P
     ramp_down.resize(n*T, (SCIP_CONS*) NULL) ;
     convexity_cstr.resize(S, (SCIP_CONS*) NULL) ;
 
+
 }
 
 void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {

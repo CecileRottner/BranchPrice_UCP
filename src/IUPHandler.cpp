@@ -2,9 +2,38 @@
 
 #include "Pricer.h"
 #include "Master.h"
+#include "IntervalUpSet.h"
+#include "Process.h"
 
 #define eps 1e-6
 #define OUTPUT_HANDLER
+
+
+IUPHandler::IUPHandler(SCIP* scip, MasterTime_Model* M, InstanceUCP* i, const Parameters & Pa) :
+    scip::ObjConshdlr(
+        scip,
+        "IUPHandler",                    // const char *  	name,
+        "Handler For Interval Up Set inequalities",   // const char *  	desc,
+        2000000, -2000000, -2000000,           // int sepapriority, int enfopriority, int checkpriority,
+        1, -1, 1, 10,                           // int sepafreq, int propfreq, int eagerfreq, int maxprerounds,
+        FALSE, FALSE, FALSE,                   // delaysepa, delayprop, needscons,
+        SCIP_PROPTIMING_BEFORELP,              // SCIP_PROPTIMING  	proptiming,
+        SCIP_PRESOLTIMING_FAST                 // SCIP_PRESOLTIMING  	presoltiming
+        ),
+    Param(Pa)
+
+{
+    Master = M ;
+    inst = i ;
+    int n= inst->getn() ;
+    int T = inst->getT() ;
+    x_frac = vector<double>(n*T, 0) ;
+    u_frac = vector<double>(n*T, 0) ;
+    Sep = new Separation(inst) ;
+
+}
+
+
 
 
 /////////////////////////////////////////////
@@ -155,6 +184,65 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
     std::cout << " --------------------- Sepalp IUP handler ---------------  \n";
 #endif
 
+    int n = inst->getn() ;
+    int T = inst->getT() ;
+    for (int ind = 0 ; ind < n*T ; ind++) {
+        x_frac[ind]=0 ;
+        //u_frac[ind]=0 ;
+    }
+
+    /// récupération solution fractionnaire ////
+    list<MasterTime_Variable*>::const_iterator itv;
+    SCIP_Real frac_value;
+
+    for (itv = Master->L_var.begin(); itv!=Master->L_var.end(); itv++) {
+
+        frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
+
+        int time = (*itv)->time ;
+        for (int i=0 ; i < n ; i++) {
+
+            if ((*itv)->UpDown_plan[i] > Param.Epsilon) {
+                x_frac[i*T+time] += frac_value ;
+            }
+        }
+    }
+
+    for (int t=1 ; t < T ; t++) {
+        for (int i=0 ; i <n ; i++) {
+            u_frac[i*T+t] = fmax(0, x_frac[i*T+t] - x_frac[i*T+t-1]) ;
+        }
+    }
+    cout << "solution x frac: " << endl;
+
+    for (int t=0 ; t < T ; t++) {
+        for (int i=0 ; i <n ; i++) {
+            cout << x_frac[i*T+t] << " " ;
+        }
+        cout << endl ;
+    }
+    //// Separation ////
+
+    for (int t0=0 ; (t0 < T) ; t0++) {
+        for (int t1 = t0+1 ; (t1 <= fmin(T-1, t0+Sep->Lmax)) ; t1++) {
+
+            //Mise à jour des coûts
+            Sep->computeCosts(t0, t1, x_frac, u_frac) ;
+            Sep->computeWeightedCosts(t0, t1, x_frac, u_frac) ;
+
+            for (int i0 = 0 ; (i0 < n) ; i0++) {
+                list<int> C_list ;
+                C_list.clear() ;
+
+                if (Sep->iOK(i0, t0, t1)) {
+                    double alpha = Sep->SepareSCIP(C_list, i0, t0, t1) ;
+                    if (alpha > 0) {
+                        cout << "inegalite trouvee" << endl ;
+                    }
+                }
+            }
+        }
+    }
 
     *result = SCIP_DIDNOTRUN;
     return SCIP_OKAY;

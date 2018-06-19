@@ -247,7 +247,7 @@ int main(int argc, char** argv)
     //////////////////////////////////
 
     if (param.IntervalUpSet && param.TimeStepDec) {
-        IUPHandler* iupHandler = new IUPHandler(scip, &MasterTime, inst);
+        IUPHandler* iupHandler = new IUPHandler(scip, &MasterTime, inst, param);
         SCIPincludeObjConshdlr(scip, iupHandler, TRUE);
     }
 

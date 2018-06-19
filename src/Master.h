@@ -13,7 +13,7 @@
 /* user defined includes */
 #include "InstanceUCP.h"
 #include "Process.h"
-#include "Process.h"
+#include "IntervalUpSet.h"
 
 
 /* namespace usage */

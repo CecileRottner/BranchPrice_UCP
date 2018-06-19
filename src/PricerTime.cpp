@@ -5,7 +5,7 @@
 #include <iostream>
 
 
-#define OUTPUT_PRICER
+//#define OUTPUT_PRICER
 // à décommenter pour l'affichage de debug
 
 using namespace std;
