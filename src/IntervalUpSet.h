@@ -61,15 +61,15 @@ public :
     //affecte à C un C qui viole l'inégalité
     //valeur de retour : alpha de C si C violé, 0 sinon
 
-	IloInt separeRandom(IloInt t0, IloInt t1, IloInt i, IloIntArray & C) ;
+    IloInt separeRandom(IloInt t0, IloInt t1, IloInt i, IloIntArray & C) ;
 
     IloInt separeCover(IloInt t, IloIntArray & C) ;
     //Préconditions: couts à jour, vecteur indices trié
     //affecte à C un C qui viole l'inégalité de Cover associée
     //valeur de retour : alpha de C si C viole, 0 sinon
 
-	IloInt separeLetchford(IloInt t, IloIntArray & C) ;
-	//heuristique de Letchford
+    IloInt separeLetchford(IloInt t, IloIntArray & C) ;
+    //heuristique de Letchford
 
     IloInt separeExact(IloInt t0, IloInt t1, IloInt & i, IloIntArray & C) ;
     //Préconditions : couts à jour (coutW, coutZ)
@@ -102,7 +102,7 @@ public :
 
     IloInt getExiste_i(IloInt t0, IloInt t1, IloInt l) ;
 
-	IloInt isUpSet(IloInt t, const IloIntArray & C, IloInt sommeC) ;
+    IloInt isUpSet(IloInt t, const IloIntArray & C, IloInt sommeC) ;
 
     IloInt ComputeAlpha(IloInt t, const IloIntArray & C, IloInt sommeC) ;
     //Calcul de alpha(C,t), C étant trié par Pmax décroissants
@@ -113,7 +113,7 @@ public :
     //Calcul de alpha(C,t)^i, C étant trié par Pmax décroissants
     //Si i ne peut pas être éteint (condition de pleine dimension non vérifiée) alors renvoie n
 
-	void ComputeBetas_i(IloIntArray & Betas, IloInt t0, IloInt t1, IloInt i, const IloIntArray & C, IloInt sommeC, IloInt alphaMax) ;
+    void ComputeBetas_i(IloIntArray & Betas, IloInt t0, IloInt t1, IloInt i, const IloIntArray & C, IloInt sommeC, IloInt alphaMax) ;
 
     IloInt alphaMax_C(const IloIntArray & C, IloInt t0, IloInt t1, IloInt sommeC) ;
 
@@ -139,8 +139,8 @@ public :
     int getMinimalCover(IloIntArray & C, IloInt t, IloInt sommeC) ;
     void getStrong(IloIntArray & C, IloInt t, IloInt sommeC)  ;
     int getExt(IloIntArray & C) ; //returns alpha(E(S))
-	int getExt_(const IloIntArray & C, int c_size, IloIntArray & S, int & valS) ; //place l'extension dans S, et retourne alpha(S), met à jour valS
-	
+    int getExt_(const IloIntArray & C, int c_size, IloIntArray & S, int & valS) ; //place l'extension dans S, et retourne alpha(S), met à jour valS
+
     int getFacet(int alpha, int t, const IloIntArray & C, IloIntArray & S) ;//returns alpha(C)
     int no1contrib(IloIntArray & C) ;
     bool isFacet(IloIntArray & S, IloInt t) ;
@@ -171,25 +171,6 @@ public :
     void saveIndices() ;
     void copyIndices() ;
 
-    ////// Méthodes séparation exacte //////
-
-    double resoutPLCover(IloInt t, IloInt alpha, IloIntArray & C, IloInt & sommeC, IloInt & alphaC) ;
-
-    //Séparation exacte: rajoute les inégalités du PL de séparation qui sont telles que 'pour tout sous ensemble J de taille alpha..;'
-    void addSubsets(IloEnv envPL, IloBoolVarArray y, IloBoolVarArray z, IloExpr expr_i, IloModel model, IloInt N, IloInt alpha, int* v, IloBool i) ;
-    // alpha: nombre d'éléments à ajouter à la contrainte
-    // N : taille de l'ensemble d'unités considéré
-    // expr: expression partielle, dans laquelle il reste alpha termes à ajouter. Qd tous les termes sont ajoutés on ajoute la contrainte au modele.
-    //si i=1 : on ajoute la contrainte tenant compte de i (y+z)
-    //si i=0: on ajoute la contrainte ne tenant pas compte de i (y)
-    //appel initial: addSubsets(y,z, model, n, alpha, expr=somme(Pmax(1-y-z))-D, i); où D=Dl si i=0 et D=Dmax si i=1.
-
-    void addSubsetsTest(IloInt N, IloInt alpha, string subset) ;
-
-    double resoutPL(int alpha, IloInt t0, IloInt t1, IloInt l, IloIntArray & C, IloInt & i) ;
-    //résout le PL associé à la séparation en I=[t0, t1], alpha, (xx,uu), et l \in [1, lmax]
-    //précond: les valeurs coutW et coutZ sont à jour pour l'intervalle considéré et pour la solution (xx,uu)
-    //les résultats sont stockés dans C et i. la valeur de retour = 1 si le PL avait une solution, -1 sinon.
 
 public:
 
@@ -203,7 +184,6 @@ public:
     IloInt getPmax(IloInt i) ;
 
     int getLmax() ;
-
 
 
 

@@ -88,13 +88,13 @@ int main(int argc, char** argv)
     //////  PARAMETERS    /////
     ///////////////////////////
 
-    bool IP=0 ; // est-ce qu'on résout le master en variable entières ?
+    bool IP=1 ; // est-ce qu'on résout le master en variable entières ?
     bool ManageSubPbSym=0 ; // est-ce qu'on gère les symétries dans le sous problème ?
     bool Ramp=0 ; // est-ce qu'on considère les gradients ?
     bool TimeStepDec = 1 ;
     bool IntraSite = 0 ; // à implémenter
     bool DemandeResiduelle = 0 ;
-    bool Iup = 0 ;
+    bool Iup = 1 ;
     double eps = 0.0000001;
     bool heuristicInit = 0 ;
     bool DontPriceAllTimeSteps = 0;
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
     SCIPincludeHeurRootsoldiving(scip);
     SCIPincludeHeurRounding(scip);
 
-    //SCIPsetLongintParam(scip, "limits/nodes", 12);
+    SCIPsetLongintParam(scip, "limits/nodes", 1);
     SCIPsetRealParam(scip, "limits/time", 3600);
 
     SCIPincludeDispDefault(scip) ;

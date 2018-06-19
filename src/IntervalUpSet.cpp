@@ -193,11 +193,17 @@ IloInt Separation::getT() {
 }
 
 IloInt Separation::getL(IloInt i) {
-    return pb->getL(i) ;
+    if (i >= pb->getn()) {
+        cout << "i < n dans getL" << endl;
+    }
+    return pb->getL(pb->getTri(i)) ;
 }
 
 IloInt Separation::getl(IloInt i) {
-    return pb->getl(i) ;
+    if (i >= pb->getn()) {
+        cout << "i < n dans getl" << endl;
+    }
+    return pb->getl(pb->getTri(i)) ;
 }
 
 IloInt Separation::getExiste_i(IloInt t0, IloInt t1, IloInt l) {
@@ -209,7 +215,10 @@ int Separation::getLmax() {
 }
 
 IloInt Separation::getPmax(IloInt i) {
-    return pb->getPmax(i) ;
+    if (i >= pb->getn()) {
+        cout << "i < n dans getPmax" << endl;
+    }
+    return pb->getPmax(pb->getTri(i)) ;
 }
 
 IloInt Separation::getIndDmax(IloInt t0, IloInt t1) {
@@ -267,7 +276,7 @@ void Separation::copyIndices() {
 
 //Calcul l'indice à demande maximale dans l'intervalle [t0, t] pour tout t dans [t0+1, t0+t1+1] et stocke le résultat dans indiceDmax[t0][t-t0-1]
 //Si t0+t1+1 > T: ne fais rien
-void Separation::computeIndDmax(int t0, int t1) { 
+void Separation::computeIndDmax(int t0, int t1) {
     if (t0 + t1 + 1 >= T)  {
     }
     else if (t1 == 0) {
@@ -294,7 +303,7 @@ void Separation::computeIndDmax(int t0, int t1) {
     }
 }
 
-/// Calcule la suite (yj) sur l'intervalle [t0, t1] 
+/// Calcule la suite (yj) sur l'intervalle [t0, t1]
 IloInt Separation::yDefine(IloIntArray & Y, int t0, int t1, int l) {
     int size = 1 ;
     Y.add(t0);
@@ -318,17 +327,19 @@ void Separation::computeCosts(IloInt t0, IloInt t1, const IloNumArray & xx, cons
 
     //coutW
     for (IloInt j = 0 ; j < n ; j++) {
-        coutW[j] = xx[T*j + t0] ;
+        int unit = pb->getTri(j) ;
+        coutW[j] = xx[T*unit + t0] ;
         for (IloInt k = t0+1 ; k <= t1 ; k++) {
-            coutW[j] += uu[j*T + k] ;
+            coutW[j] += uu[unit*T + k] ;
         }
     }
 
     //coutZ
     for (IloInt j = 0 ; j < n ; j++) {
-        coutZ[j] = xx[T*j + t1] ;
+        int unit = pb->getTri(j) ;
+        coutZ[j] = xx[T*unit + t1] ;
         for (IloInt k = t0+1 ; k <= t1 ; k++) {
-            coutZ[j] -= uu[j*T + k] ;
+            coutZ[j] -= uu[unit*T + k] ;
         }
     }
 
@@ -342,9 +353,10 @@ void Separation::computeWeightedCosts(IloInt t0, IloInt t1, const IloNumArray & 
 
     //Calcul
     for (IloInt j = 0 ; j < n ; j++) {
-        WeightedCost[j] = xx[T*j + t0] ;
+        int unit = pb->getTri(j) ;
+        WeightedCost[j] = xx[T*unit + t0] ;
         for (IloInt k = t0+1 ; k <= t1 ; k++) {
-            WeightedCost[j] += uu[j*T + k] ;
+            WeightedCost[j] += uu[unit*T + k] ;
         }
         WeightedCost[j] = WeightedCost[j]/getPmax(j);
     }
@@ -354,7 +366,7 @@ void Separation::computeWeightedCosts(IloInt t0, IloInt t1, const IloNumArray & 
     quickSort(WeightedCost,indices, 0, n);
 
 
-}			
+}
 
 /////////////////////////////////////////////////////////////////
 
@@ -628,27 +640,40 @@ int Separation::getMinimalCover(IloIntArray & C, IloInt t, IloInt sommeC) {
 
     int stop=0;
 
+    cout << "ici" << endl;
     //On enlève les éléments de C dans l'ordre de leur contribution décroissante (indicesPureCost)
     while (!stop) {
         stop=1 ;
         for (int j = 0 ; (j < n) ; j++) {
 
+            cout << "j: " << j << endl;
+            cout << B[indicesPureCost[j]] << endl ;
+            cout << "indics: " << indicesPureCost << endl ;
+            cout << "B: " << B << endl ;
+            cout << "C: " << C << endl ;
+
             if (B[indicesPureCost[j]] > 0) {
 
+                cout << "C: " << C << endl ;
                 C.remove(B[indicesPureCost[j]] - 1) ;
+                cout << "C: " << C << endl ;
 
                 int Pj = getPmax(indicesPureCost[j]) ;
                 sommeCminus = sommeCminus - Pj ;
+                cout << "somme: " << sommeCminus << endl ;
 
                 alpha =  ComputeAlpha(t, C, sommeCminus) ;
+                cout << "alpha: " << alpha << endl ;
 
                 if (alpha==0) {
+                    cout << "indice: " << indicesPureCost[j] << endl;
                     insert(C, indicesPureCost[j]);
                     sommeCminus += Pj ;
+                    cout <<" C: " << C << endl ;
                 }
 
                 else {
-                    //cout << "on enlève : " << indicesPureCost[j] << endl ;
+                    cout << "on enlève : " << indicesPureCost[j] << endl ;
                     //mise à jour de l'ensemble B: si l'unité indicePureCost[k] a une Pmax plus petite que indicesPureCost[j] (indice plus grand)
                     // et indicesPureCost[k] est dans C, il faut décroître son indice dans C
                     B[indicesPureCost[j]] = 0 ;
@@ -659,9 +684,12 @@ int Separation::getMinimalCover(IloIntArray & C, IloInt t, IloInt sommeC) {
                     }
                     stop=0 ;
                 }
+                cout << "stop: " << stop << endl ;
+                cout << endl ;
             }
         }
     }
+    cout << "fin get" << endl;
     return sommeCminus;
 }
 
@@ -813,10 +841,16 @@ int Separation::getExt_(const IloIntArray & C, int c_size, IloIntArray & S, int 
 
 int Separation::getFacet(int alpha, int t, const IloIntArray & C, IloIntArray & S) {
     int sommeS = getS(alpha, C, S) ;
+
+    cout << "min cover:" << endl ;
     sommeS = getMinimalCover(S, t, sommeS) ;
+
+    cout << "get strong:" << endl ;
     getStrong(S, t, sommeS) ;
     //int isFac= isFacet(S,t);
     //cout << "S: " << S << endl ;
+
+     cout << "get ext:" << endl ;
     int alphaES = getExt(S);
     //cout << "E(S): " << S << endl ;
     //cout << endl ;
@@ -843,7 +877,7 @@ bool Separation::isFacet(IloIntArray & S, IloInt t) {
     }
     int alphaT = ComputeAlpha(t, T, sommeT) ;
     return (alphaT==0) ;
-}		
+}
 
 ///////////////////////////////////////////////////////////
 
@@ -1247,23 +1281,23 @@ void Separation::constructInequality(IloRange & cons, IloInt alpha, const IloInt
     }
     IloExpr expr(env) ;
 
-    expr += x[i*T + t1] ;
+    expr += x[pb->getTri(i)*T + t1] ;
     for (int j=0 ; j < c ; j++) {
         if (C[j] != i) {
-            expr += x[C[j]*T + t0] ;
+            expr += x[pb->getTri(C[j])*T + t0] ;
 
         }
         for (IloInt k=t0+1 ; k <= t1 ; k++)  {
             if (C[j] != i) {
-                expr += u[C[j]*T + k];
+                expr += u[pb->getTri(C[j])*T + k];
             }
             else {
-                expr -= (Betas[k-1-t0] + 1)*u[C[j]*T + k];
+                expr -= (Betas[k-1-t0] + 1)*u[pb->getTri(C[j])*T + k];
             }
         }
     }
     if (t0 < t1) {
-        expr += Betas[t1-t0]*x[i*T + t1] ;
+        expr += Betas[t1-t0]*x[pb->getTri(i)*T + t1] ;
     }
     cons.setExpr(expr);
     expr.end() ;
@@ -1302,496 +1336,6 @@ void Separation::Separe(IloRange & cons, IloInt i, IloInt t0, IloInt t1, IloInt 
 
 
 
-
-////////////////// Séparation exacte up-set ////////////////////
-
-double Separation::resoutPLCover(IloInt t, IloInt alpha, IloIntArray & C, IloInt & sommeC, IloInt & alphaC) {
-    //retourne -1 si pas de solution ou si la solution trouvée n'est pas violée
-
-    sommeC = 0 ;
-    alphaC = 0 ;
-    IloEnv envPL ;
-    IloBoolVarArray y(envPL, n) ;
-    IloBoolVarArray z(envPL, n) ;
-
-    IloModel model(envPL) ;
-
-    IloExpr obj(envPL) ;
-
-    for (IloInt j = 0 ; j < n ; j++) {
-        obj += coutW[j]*y[j];
-    }
-
-    model.add(IloMinimize(envPL, obj)) ;
-    obj.end();
-
-    IloExpr sumY(envPL);
-    for (IloInt j = 0 ; j < n ; j++) {
-        sumY+=y[j] ;
-    }
-    model.add(sumY >= alpha) ;
-
-
-    IloExpr expr0(envPL) ;
-
-    for (IloInt j = 0 ; j < n ; j++) {
-        expr0 += getPmax(j)*(1 - y[j]) ;
-    }
-    expr0+= -pb->getD(t) ;
-    model.add(expr0 < 0) ;
-
-    int* v= new int[n] ;
-    for (int j =0 ; j <n ; j++) {
-        v[j] = 0 ;
-    }
-    addSubsets(envPL, y, z, expr0, model, n, alpha-1, v, 0);
-
-
-    delete[] v;
-
-    model.add(expr0 < 0) ;
-    expr0.end() ;
-
-
-    IloCplex cplex(model) ;
-    cplex.setOut(env.getNullStream());
-
-    int solve = cplex.solve() ;
-
-    if (solve == 1)  {
-        double value = cplex.getObjValue() ;
-
-        IloNumArray Y(envPL, n) ;
-        cplex.getValues(Y, y) ;
-
-
-        for (IloInt j = 0 ; j < n ; j++) {
-            if (Y[j] > 0.99) {
-                C.add(j) ;
-                sommeC+= getPmax(j) ;
-            }
-        }
-
-        alphaC=ComputeAlpha(t,C,sommeC) ;
-
-        if (value >= alphaC-eps) { //vérifier si alpha n'est pas supérieur à 1 ?
-            value=-1;
-        }
-
-        envPL.end();
-        return value ;
-    }
-
-    else {
-        envPL.end();
-        return -1 ;
-    }
-}				
-
-
-
-
-
-
-
-
-/////////////////Séparation exacte Interval upset //////////////////////////
-//Séparation exacte
-
-/*void Separation::Separe(IloRange & cons, const IloNumArray & xx, const IloNumArray & uu, IloInt t0, IloInt t1)  {
-        computeCosts(t0,t1,xx,uu) ;
-
-        IloInt i ;
-        IloIntArray C(env, 0) ;
-
-        int alpha = separeExact(xx, uu, t0, t1, i, C) ;
-        if (alpha>0) {
-                constructInequality(cons, alpha, C, t0, t1, i) ;
-
-                }
-                }*/
-
-IloInt Separation::separeExact(IloInt t0, IloInt t1, IloInt & i, IloIntArray & C) {
-    /*  int alpha = 0 ;
-         int stop ;
-         int amax = 1 ;
-         for (int l = 1 ; l <= lmax ; l++) {
-                 cout << "---- l :" << l << "----" << endl ;
-                 stop = 0 ;
-                 if (getExiste_i(t0, t1, l)) {
-                         alpha = 1 ;
-                         while (!stop) {
-                                 cout << "----- alpha : " << alpha << "-----" << endl ;
-                                 double result = resoutPL(alpha, t0, t1, l, C, i) ;
-                                 int sizeC = C.getSize() ;
-                                 int sommeC = 0 ;
-                                 for (int j=0 ; j < sizeC ; j++) {
-                                         sommeC += getPmax(C[j]) ;
-}
-int alphaC = ComputeAlpha(getIndDmax(t0,t1), C, sommeC);
-cout << "Résultat :" << endl ;
-cout << "C : " << C << endl ;
-cout << "alpha_max(C) : " << alphaC << endl ;
-cout << "valeur : " << result << endl ;
-cout << endl ;
-if ((result > 0) && (ICviolee(C,i, alpha))) {
-        stop=1;
-}
-else {
-        C.end();
-        C = IloIntArray(env, 0) ;
-
-        alpha = fmax(alpha+1, ceil(result)) ;
-
-
-        if (alpha > amax) {
-                alpha=0 ;
-                stop=1 ;
-}
-}
-}
-}
-}
-return alpha ;*/
-    return 0 ;
-
-}
-
-
-
-void Separation::addSubsets(IloEnv envPL, IloBoolVarArray y, IloBoolVarArray z, IloExpr expr_i, IloModel model, IloInt N, IloInt alpha, int* v, IloBool i) {
-    if (alpha==0) {
-        IloExpr expr(envPL) ;
-        expr += expr_i ;
-        for (int j=0 ; j < n ; j++) {
-            if (i == 0) {
-                expr += v[j]*getPmax(j)*y[j] ;
-            }
-            else {
-                expr += v[j]*getPmax(j)*(y[j] + z[j]) ;
-            }
-
-        }
-        model.add(expr < 0) ;
-    }
-    else if (N<alpha) {
-    }
-    else {
-        addSubsets(envPL, y,z, expr_i, model,N-1, alpha, v, i) ;
-
-        v[N-1] = 1 ;
-        addSubsets(envPL, y, z,expr_i, model, N-1, alpha-1, v, i) ;
-        v[N-1] = 0 ;
-    }
-
-}
-
-
-
-
-double Separation::resoutPL(int alpha, IloInt t0, IloInt t1, IloInt l, IloIntArray & C, IloInt & i) {
-
-    IloEnv envPL ;
-    IloBoolVarArray y(envPL, n) ;
-    IloBoolVarArray z(envPL, n) ;
-
-    IloModel model(envPL) ;
-
-    IloExpr obj(envPL) ;
-
-    for (IloInt j = 0 ; j < n ; j++) {
-        obj += coutW[j]*y[j] + coutZ[j]*z[j];
-    }
-
-    model.add(IloMinimize(envPL, obj)) ;
-    obj.end();
-
-
-    for (IloInt j = 0 ; j < n ; j++) {
-        model.add(y[j] + z[j] <= 1) ;
-    }
-
-    IloExpr sumZ(envPL);
-    for (IloInt j = 0 ; j < n ; j++) {
-        if (t1 - t0 > getL(j)) {
-            model.add(z[j] == 0) ;
-        }
-        if ( l != getl(j) ) {
-            model.add(z[j] == 0) ;
-        }
-        sumZ+=z[j] ;
-    }
-    model.add(sumZ == 1) ;
-
-    IloExpr sumY(envPL);
-    for (IloInt j = 0 ; j < n ; j++) {
-        sumY+=y[j] ;
-    }
-    model.add(sumY >= alpha) ;
-
-    IloExpr expr0(envPL) ;
-    IloExpr expr1(envPL) ;
-    for (IloInt j = 0 ; j < n ; j++) {
-        expr0 += getPmax(j)*(1 - y[j] - z[j]) ;
-        expr1 += getPmax(j)*(1 - y[j] - z[j]) ;
-    }
-    expr0+= -pb->getD(getDl(t0,t1,l)) ;
-    expr1+= -getDmax(t0, t1) ;
-
-    cout << "Ajout des contraintes exponentielles..." << endl ;
-
-    /*int* v= new int[n] ;
-        for (int j =0 ; j <n ; j++) {
-                v[j] = 0 ;
-}
-addSubsets(envPL, y, z, expr0, model, n, alpha-1, v, 0);
-addSubsets(envPL, y, z, expr0, model, n, alpha-1, v, 1);
-
-delete[] v;*/
-
-    //Pour alpha<=4
-
-    if (alpha == 1) {
-        IloExpr cons0(envPL);
-        IloExpr cons1(envPL);
-        cons0 += expr0 ;
-        cons1 +=expr1 ;
-
-        model.add(cons0 < 0) ;
-        model.add(cons1 < 0) ;
-        cons0.end() ;
-        cons1.end();
-    }
-
-    else {
-        for (int i1 = 0 ; i1 < n ; i1++) {
-
-            if (alpha == 2) {
-                IloExpr cons0(envPL);
-                IloExpr cons1(envPL);
-                cons0 += expr0 ;
-                cons1 +=expr1 ;
-
-                cons0 += y[i1]*pb->getPmax(i1) ;
-                cons1 += (y[i1] + z[i1])*pb->getPmax(i1) ;
-
-                model.add(cons0 < 0) ;
-                model.add(cons1 < 0) ;
-                cons0.end() ;
-                cons1.end();
-            }
-
-            else {
-                for (int i2 = i1+1 ; i2 < n ; i2++) {
-
-                    if (alpha == 3) {
-                        IloExpr cons0(envPL);
-                        IloExpr cons1(envPL);
-                        cons0 += expr0 ;
-                        cons1 +=expr1 ;
-
-                        cons0 += y[i1]*pb->getPmax(i1) ;
-                        cons1 += (y[i1] + z[i1])*pb->getPmax(i1) ;
-
-                        cons0 += y[i2]*pb->getPmax(i2) ;
-                        cons1 += (y[i2] + z[i2])*pb->getPmax(i2) ;
-
-                        model.add(cons0 < 0) ;
-                        model.add(cons1 < 0) ;
-                        cons0.end() ;
-                        cons1.end();
-                    }
-
-                    else {
-                        for (int i3 = i2+1 ; i3 < n ; i3++) {
-
-                            if (alpha == 4) {
-                                IloExpr cons0(envPL);
-                                IloExpr cons1(envPL);
-                                cons0 += expr0 ;
-                                cons1 +=expr1 ;
-
-                                cons0 += y[i1]*pb->getPmax(i1) ;
-                                cons1 += (y[i1] + z[i1])*pb->getPmax(i1) ;
-
-                                cons0 += y[i2]*pb->getPmax(i2) ;
-                                cons1 += (y[i2] + z[i2])*pb->getPmax(i2) ;
-
-                                cons0 += y[i3]*pb->getPmax(i3) ;
-                                cons1 += (y[i3] + z[i3])*pb->getPmax(i3) ;
-
-                                model.add(cons0 < 0) ;
-                                model.add(cons1 < 0) ;
-                                cons0.end() ;
-                                cons1.end();
-                            }
-
-                            else {
-                                for (int i4 = i3+1 ; i4 < n ; i4++) {
-
-                                    if (alpha == 5) {
-                                        IloExpr cons0(envPL);
-                                        IloExpr cons1(envPL);
-                                        cons0 += expr0 ;
-                                        cons1 +=expr1 ;
-
-                                        cons0 += y[i1]*pb->getPmax(i1) ;
-                                        cons1 += (y[i1] + z[i1])*pb->getPmax(i1) ;
-
-                                        cons0 += y[i2]*pb->getPmax(i2) ;
-                                        cons1 += (y[i2] + z[i2])*pb->getPmax(i2) ;
-
-                                        cons0 += y[i3]*pb->getPmax(i3) ;
-                                        cons1 += (y[i3] + z[i3])*pb->getPmax(i3) ;
-
-                                        cons0 += y[i4]*pb->getPmax(i4) ;
-                                        cons1 += (y[i4] + z[i4])*pb->getPmax(i4) ;
-
-
-                                        model.add(cons0 < 0) ;
-                                        model.add(cons1 < 0) ;
-                                        cons0.end() ;
-                                        cons1.end();
-                                    }
-
-                                    else {
-
-                                        for (int i5 = i4+1 ; i5 < n ; i5++) {
-
-                                            if (alpha == 6) {
-                                                IloExpr cons0(envPL);
-                                                IloExpr cons1(envPL);
-                                                cons0 += expr0 ;
-                                                cons1 +=expr1 ;
-
-                                                cons0 += y[i1]*pb->getPmax(i1) ;
-                                                cons1 += (y[i1] + z[i1])*pb->getPmax(i1) ;
-
-                                                cons0 += y[i2]*pb->getPmax(i2) ;
-                                                cons1 += (y[i2] + z[i2])*pb->getPmax(i2) ;
-
-                                                cons0 += y[i3]*pb->getPmax(i3) ;
-                                                cons1 += (y[i3] + z[i3])*pb->getPmax(i3) ;
-
-                                                cons0 += y[i4]*pb->getPmax(i4) ;
-                                                cons1 += (y[i4] + z[i4])*pb->getPmax(i4) ;
-
-
-                                                cons0 += y[i5]*pb->getPmax(i5) ;
-                                                cons1 += (y[i5] + z[i5])*pb->getPmax(i5) ;
-
-                                                model.add(cons0 < 0) ;
-                                                model.add(cons1 < 0) ;
-                                                cons0.end() ;
-                                                cons1.end();
-                                            }
-
-                                            else {
-
-                                                for (int i6 = i5+1 ; i6 < n ; i6++) {
-
-                                                    if (alpha == 7) {
-                                                        IloExpr cons0(envPL);
-                                                        IloExpr cons1(envPL);
-                                                        cons0 += expr0 ;
-                                                        cons1 +=expr1 ;
-
-                                                        cons0 += y[i1]*pb->getPmax(i1) ;
-                                                        cons1 += (y[i1] + z[i1])*pb->getPmax(i1) ;
-
-                                                        cons0 += y[i2]*pb->getPmax(i2) ;
-                                                        cons1 += (y[i2] + z[i2])*pb->getPmax(i2) ;
-
-                                                        cons0 += y[i3]*pb->getPmax(i3) ;
-                                                        cons1 += (y[i3] + z[i3])*pb->getPmax(i3) ;
-
-                                                        cons0 += y[i4]*pb->getPmax(i4) ;
-                                                        cons1 += (y[i4] + z[i4])*pb->getPmax(i4) ;
-
-                                                        cons0 += y[i5]*pb->getPmax(i5) ;
-                                                        cons1 += (y[i5] + z[i5])*pb->getPmax(i5) ;
-
-                                                        cons0 += y[i6]*pb->getPmax(i6) ;
-                                                        cons1 += (y[i6] + z[i6])*pb->getPmax(i6) ;
-
-                                                        model.add(cons0 < 0) ;
-                                                        model.add(cons1 < 0) ;
-                                                        cons0.end() ;
-                                                        cons1.end();
-                                                    }
-
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                }
-            }
-
-        }
-    }
-
-
-
-    cout << "fin ajout" << endl;
-    //Pour alpha=2
-    /*for (IloInt j = 0 ; j < n ; j++) {
-                IloExpr expr0_j(envPL) ;
-                expr0_j += expr0 ;
-                expr0_j += getPmax(j)*y[j];
-                model.add(expr0_j < 0) ;
-                expr0_j.end() ;
-}
-
-for (IloInt j = 0 ; j < n ; j++) {
-        IloExpr expr1_j(envPL) ;
-        expr1_j += expr1 ;
-        expr1_j += getPmax(j)*(y[j] + z[j]);
-        model.add(expr1_j < 0) ;
-        expr1_j.end() ;
-}*/
-
-    IloCplex cplex(model) ;
-    cplex.setOut(env.getNullStream());
-
-    cout << "Résolution..." << endl ;
-    int solve = cplex.solve() ;
-    cout << "Résolu" << endl ;
-
-
-
-    if (solve == 1)  {
-        double value = cplex.getObjValue() ;
-
-        IloNumArray Y(envPL, n) ;
-        cplex.getValues(Y, y) ;
-
-        IloNumArray Z(envPL,n) ;
-        cplex.getValues(Z,z) ;
-
-
-        for (IloInt j = 0 ; j < n ; j++) {
-            if (Z[j] > 0.99) {
-                C.add(j) ;
-                i = j ;
-            }
-            if (Y[j] > 0.99) {
-                C.add(j) ;
-            }
-        }
-        envPL.end();
-        return value ;
-    }
-
-    else {
-        envPL.end();
-        return -1 ;
-    }
-}
 
 void Separation::quickSort(IloNumArray const & ordre, IloIntArray & indices, IloInt p, IloInt q) {
     IloInt r;

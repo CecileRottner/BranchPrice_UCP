@@ -35,7 +35,7 @@ public :
             "IUPHandler",                    // const char *  	name,
             "Handler For Interval Up Set inequalities",   // const char *  	desc,
             2000000, -2000000, -2000000,           // int sepapriority, int enfopriority, int checkpriority,
-            1, -1, 1, 0,                           // int sepafreq, int propfreq, int eagerfreq, int maxprerounds,
+            1, -1, 1, 10,                           // int sepafreq, int propfreq, int eagerfreq, int maxprerounds,
             FALSE, FALSE, FALSE,                   // delaysepa, delayprop, needscons,
             SCIP_PROPTIMING_BEFORELP,              // SCIP_PROPTIMING  	proptiming,
             SCIP_PRESOLTIMING_FAST                 // SCIP_PRESOLTIMING  	presoltiming

@@ -24,6 +24,7 @@ SCIP_RETCODE IUPHandler::scip_check(
     std::cout << " --------------------- Check handler ---------------  \n";
 #endif
 
+
     //cout << "solution du PMR:" << endl ;
     //SCIPprintSol(scip, NULL, NULL, FALSE);
 
@@ -151,7 +152,7 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
         SCIP_RESULT*       result) {
 
 #ifdef OUTPUT_HANDLER
-    std::cout << " --------------------- Sepalp handler ---------------  \n";
+    std::cout << " --------------------- Sepalp IUP handler ---------------  \n";
 #endif
 
 
