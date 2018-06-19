@@ -31,6 +31,7 @@ IUPHandler::IUPHandler(SCIP* scip, MasterTime_Model* M, InstanceUCP* i, const Pa
     u_frac = vector<double>(n*T, 0) ;
     Sep = new Separation(inst) ;
 
+    nbFound=0 ;
 }
 
 
@@ -99,41 +100,41 @@ SCIP_RETCODE IUPHandler::scip_enfolp(
 
 
 
-SCIP_RETCODE IUPHandler::scip_trans(
-        SCIP*              scip,               //**< SCIP data structure *
-        SCIP_CONSHDLR*     conshdlr,           //**< the constraint handler itself *
-        SCIP_CONS*         sourcecons,         //**< source constraint to transform *
-        SCIP_CONS**        targetcons          //**< pointer to store created target constraint *
-        ) {
+//SCIP_RETCODE IUPHandler::scip_trans(
+//        SCIP*              scip,               //**< SCIP data structure *
+//        SCIP_CONSHDLR*     conshdlr,           //**< the constraint handler itself *
+//        SCIP_CONS*         sourcecons,         //**< source constraint to transform *
+//        SCIP_CONS**        targetcons          //**< pointer to store created target constraint *
+//        ) {
 
-#ifdef OUTPUT_HANDLER
-    std::cout << " --------------------- Trans handler ---------------  \n";
-#endif
+//#ifdef OUTPUT_HANDLER
+//    std::cout << " --------------------- Trans handler ---------------  \n";
+//#endif
 
-    SCIP_CONSDATA* sourcedata;
-    SCIP_CONSDATA* targetdata;
+//    SCIP_CONSDATA* sourcedata;
+//    SCIP_CONSDATA* targetdata;
 
-//    sourcedata = SCIPconsGetData(sourcecons);
-//    targetdata = NULL;
+////    sourcedata = SCIPconsGetData(sourcecons);
+////    targetdata = NULL;
 
-//    targetdata= new SCIP_CONSDATA;
-//    targetdata->VarX = sourcedata->VarX;
-//    targetdata->bound = sourcedata->bound;
-//    targetdata->unit = sourcedata->unit;
-//    targetdata->time = sourcedata->time;
-//    targetdata->site = sourcedata->site;
-//    targetdata->BranchConstraint = sourcedata->BranchConstraint;
+////    targetdata= new SCIP_CONSDATA;
+////    targetdata->VarX = sourcedata->VarX;
+////    targetdata->bound = sourcedata->bound;
+////    targetdata->unit = sourcedata->unit;
+////    targetdata->time = sourcedata->time;
+////    targetdata->site = sourcedata->site;
+////    targetdata->BranchConstraint = sourcedata->BranchConstraint;
 
-    SCIPcreateCons(scip, targetcons, SCIPconsGetName(sourcecons), conshdlr, targetdata,
-                   SCIPconsIsInitial(sourcecons), SCIPconsIsSeparated(sourcecons), SCIPconsIsEnforced(sourcecons),
-                   SCIPconsIsChecked(sourcecons), SCIPconsIsPropagated(sourcecons),
-                   SCIPconsIsLocal(sourcecons), SCIPconsIsModifiable(sourcecons),
-                   SCIPconsIsDynamic(sourcecons), SCIPconsIsRemovable(sourcecons), SCIPconsIsStickingAtNode(sourcecons));
+//    SCIPcreateCons(scip, targetcons, SCIPconsGetName(sourcecons), conshdlr, targetdata,
+//                   SCIPconsIsInitial(sourcecons), SCIPconsIsSeparated(sourcecons), SCIPconsIsEnforced(sourcecons),
+//                   SCIPconsIsChecked(sourcecons), SCIPconsIsPropagated(sourcecons),
+//                   SCIPconsIsLocal(sourcecons), SCIPconsIsModifiable(sourcecons),
+//                   SCIPconsIsDynamic(sourcecons), SCIPconsIsRemovable(sourcecons), SCIPconsIsStickingAtNode(sourcecons));
 
 
 
-    return SCIP_OKAY;
-}
+//    return SCIP_OKAY;
+//}
 
 
 
@@ -237,7 +238,27 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
                 if (Sep->iOK(i0, t0, t1)) {
                     double alpha = Sep->SepareSCIP(C_list, i0, t0, t1) ;
                     if (alpha > 0) {
-                        cout << "inegalite trouvee" << endl ;
+                        int i =  inst->getTri(i0) ;
+                        SCIP_CONS* iup_ineq = NULL;
+                        char con_name_iup[255];
+                        (void) SCIPsnprintf(con_name_iup, 255, "iup(%d)", nbFound); // nom de la contrainte
+                        SCIPcreateConsLinear( scip, &iup_ineq, con_name_iup, 0, NULL, NULL,
+                                              0.0,   // lhs
+                                              SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
+                                              false,  /* initial */
+                                              true, /* separate */
+                                              false,  /* enforce */
+                                              false,  /* check */
+                                              true,  /* propagate */
+                                              false, /* local */
+                                              true,  /* modifiable */
+                                              false, /* dynamic */
+                                              false, /* removable */
+                                              false  /* stickingatnode */ );
+                        SCIPaddCons(scip, iup_ineq);
+
+
+                        nbFound++ ;
                     }
                 }
             }

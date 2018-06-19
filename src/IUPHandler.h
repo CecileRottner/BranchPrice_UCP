@@ -34,6 +34,7 @@ public :
     vector<double> x_frac ;
     vector<double> u_frac ;
     Separation* Sep ;
+    int nbFound ;
 
     IUPHandler(SCIP* scip, MasterTime_Model* M, InstanceUCP* i, const Parameters & Pa) ;
 
@@ -41,12 +42,12 @@ public :
     //////////////////////////
 
     /** transforms constraint data into data belonging to the transformed problem */
-    virtual SCIP_RETCODE scip_trans(
-            SCIP*              scip,               //**< SCIP data structure *
-            SCIP_CONSHDLR*     conshdlr,           //**< the constraint handler itself *
-            SCIP_CONS*         sourcecons,         //**< source constraint to transform *
-            SCIP_CONS**        targetcons          //**< pointer to store created target constraint *
-            );
+//    virtual SCIP_RETCODE scip_trans(
+//            SCIP*              scip,               //**< SCIP data structure *
+//            SCIP_CONSHDLR*     conshdlr,           //**< the constraint handler itself *
+//            SCIP_CONS*         sourcecons,         //**< source constraint to transform *
+//            SCIP_CONS**        targetcons          //**< pointer to store created target constraint *
+//            );
 
 
     virtual SCIP_RETCODE scip_check(
