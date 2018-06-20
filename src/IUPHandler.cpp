@@ -100,41 +100,41 @@ SCIP_RETCODE IUPHandler::scip_enfolp(
 
 
 
-//SCIP_RETCODE IUPHandler::scip_trans(
-//        SCIP*              scip,               //**< SCIP data structure *
-//        SCIP_CONSHDLR*     conshdlr,           //**< the constraint handler itself *
-//        SCIP_CONS*         sourcecons,         //**< source constraint to transform *
-//        SCIP_CONS**        targetcons          //**< pointer to store created target constraint *
-//        ) {
+SCIP_RETCODE IUPHandler::scip_trans(
+        SCIP*              scip,               //**< SCIP data structure *
+        SCIP_CONSHDLR*     conshdlr,           //**< the constraint handler itself *
+        SCIP_CONS*         sourcecons,         //**< source constraint to transform *
+        SCIP_CONS**        targetcons          //**< pointer to store created target constraint *
+        ) {
 
-//#ifdef OUTPUT_HANDLER
-//    std::cout << " --------------------- Trans handler ---------------  \n";
-//#endif
+#ifdef OUTPUT_HANDLER
+    std::cout << " --------------------- Trans handler ---------------  \n";
+#endif
 
-//    SCIP_CONSDATA* sourcedata;
-//    SCIP_CONSDATA* targetdata;
+    SCIP_CONSDATA* sourcedata;
+    SCIP_CONSDATA* targetdata;
 
-////    sourcedata = SCIPconsGetData(sourcecons);
-////    targetdata = NULL;
+//    sourcedata = SCIPconsGetData(sourcecons);
+//    targetdata = NULL;
 
-////    targetdata= new SCIP_CONSDATA;
-////    targetdata->VarX = sourcedata->VarX;
-////    targetdata->bound = sourcedata->bound;
-////    targetdata->unit = sourcedata->unit;
-////    targetdata->time = sourcedata->time;
-////    targetdata->site = sourcedata->site;
-////    targetdata->BranchConstraint = sourcedata->BranchConstraint;
+//    targetdata= new SCIP_CONSDATA;
+//    targetdata->VarX = sourcedata->VarX;
+//    targetdata->bound = sourcedata->bound;
+//    targetdata->unit = sourcedata->unit;
+//    targetdata->time = sourcedata->time;
+//    targetdata->site = sourcedata->site;
+//    targetdata->BranchConstraint = sourcedata->BranchConstraint;
 
-//    SCIPcreateCons(scip, targetcons, SCIPconsGetName(sourcecons), conshdlr, targetdata,
-//                   SCIPconsIsInitial(sourcecons), SCIPconsIsSeparated(sourcecons), SCIPconsIsEnforced(sourcecons),
-//                   SCIPconsIsChecked(sourcecons), SCIPconsIsPropagated(sourcecons),
-//                   SCIPconsIsLocal(sourcecons), SCIPconsIsModifiable(sourcecons),
-//                   SCIPconsIsDynamic(sourcecons), SCIPconsIsRemovable(sourcecons), SCIPconsIsStickingAtNode(sourcecons));
+    SCIPcreateCons(scip, targetcons, SCIPconsGetName(sourcecons), conshdlr, targetdata,
+                   SCIPconsIsInitial(sourcecons), SCIPconsIsSeparated(sourcecons), SCIPconsIsEnforced(sourcecons),
+                   SCIPconsIsChecked(sourcecons), SCIPconsIsPropagated(sourcecons),
+                   SCIPconsIsLocal(sourcecons), SCIPconsIsModifiable(sourcecons),
+                   SCIPconsIsDynamic(sourcecons), SCIPconsIsRemovable(sourcecons), SCIPconsIsStickingAtNode(sourcecons));
 
 
 
-//    return SCIP_OKAY;
-//}
+    return SCIP_OKAY;
+}
 
 
 
@@ -192,6 +192,8 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
         //u_frac[ind]=0 ;
     }
 
+    *result = SCIP_DIDNOTRUN;
+
     /// récupération solution fractionnaire ////
     list<MasterTime_Variable*>::const_iterator itv;
     SCIP_Real frac_value;
@@ -203,7 +205,7 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
         int time = (*itv)->time ;
         for (int i=0 ; i < n ; i++) {
 
-            if ((*itv)->UpDown_plan[i] > Param.Epsilon) {
+            if ((*itv)->UpDown_plan[i] > 1 - Param.Epsilon) {
                 x_frac[i*T+time] += frac_value ;
             }
         }
@@ -214,14 +216,14 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
             u_frac[i*T+t] = fmax(0, x_frac[i*T+t] - x_frac[i*T+t-1]) ;
         }
     }
-    cout << "solution x frac: " << endl;
+//    cout << "solution x frac: " << endl;
 
-    for (int t=0 ; t < T ; t++) {
-        for (int i=0 ; i <n ; i++) {
-            cout << x_frac[i*T+t] << " " ;
-        }
-        cout << endl ;
-    }
+//    for (int t=0 ; t < T ; t++) {
+//        for (int i=0 ; i <n ; i++) {
+//            cout << x_frac[i*T+t] << " " ;
+//        }
+//        cout << endl ;
+//    }
     //// Separation ////
 
     for (int t0=0 ; (t0 < T) ; t0++) {
@@ -232,40 +234,23 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
             Sep->computeWeightedCosts(t0, t1, x_frac, u_frac) ;
 
             for (int i0 = 0 ; (i0 < n) ; i0++) {
-                list<int> C_list ;
-                C_list.clear() ;
-
+                list<int>* C_list = new list<int> ;
+                C_list->clear() ;
                 if (Sep->iOK(i0, t0, t1)) {
                     double alpha = Sep->SepareSCIP(C_list, i0, t0, t1) ;
                     if (alpha > 0) {
                         int i =  inst->getTri(i0) ;
-                        SCIP_CONS* iup_ineq = NULL;
-                        char con_name_iup[255];
-                        (void) SCIPsnprintf(con_name_iup, 255, "iup(%d)", nbFound); // nom de la contrainte
-                        SCIPcreateConsLinear( scip, &iup_ineq, con_name_iup, 0, NULL, NULL,
-                                              0.0,   // lhs
-                                              SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
-                                              false,  /* initial */
-                                              true, /* separate */
-                                              false,  /* enforce */
-                                              false,  /* check */
-                                              true,  /* propagate */
-                                              false, /* local */
-                                              true,  /* modifiable */
-                                              false, /* dynamic */
-                                              false, /* removable */
-                                              false  /* stickingatnode */ );
-                        SCIPaddCons(scip, iup_ineq);
 
+                        IneqIntUpSet* ineq = new IneqIntUpSet(scip, nbFound, alpha, C_list, i, t0, t1) ;
+                        Master->addIntUpSet(scip,ineq);
 
+                        *result = SCIP_CONSADDED;
                         nbFound++ ;
                     }
                 }
             }
         }
     }
-
-    *result = SCIP_DIDNOTRUN;
     return SCIP_OKAY;
 }
 

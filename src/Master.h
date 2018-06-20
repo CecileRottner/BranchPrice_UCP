@@ -20,6 +20,27 @@
 using namespace std;
 using namespace scip;
 
+/////////////////////////////////////
+////////// INTERVAL UP SET //////////
+/////////////////////////////////////
+
+
+class IneqIntUpSet {
+public:
+    list<int>* C ;
+    int i ;
+    int t0 ;
+    int t1 ;
+
+    SCIP_CONS* ineq ;
+    double dual ;
+
+    IneqIntUpSet(SCIP* scip, int num, int alpha, list<int>* C_ptr, int i, int t0, int t1) ;
+};
+
+//////////////////////////////////////////////
+////////// DECOMPOSITION PAR UNITES //////////
+//////////////////////////////////////////////
 
 
 class Master_Variable{
@@ -51,6 +72,7 @@ public:
     const Parameters Param ;
 
     IloEnv env;
+
 
     // Keep a pointer on every constraint of the Master program
     vector<SCIP_CONS*> demand_cstr;
@@ -108,11 +130,19 @@ public:
 
     IloEnv env;
 
+    //Variables u
+    vector<SCIP_VAR*> u_var ;
+
     // Keep a pointer on every constraint of the MasterTime program (except intrasite constraints which do not depend on lambda variables)
     vector<SCIP_CONS*> logical;
     vector<SCIP_CONS*> min_up;
     vector<SCIP_CONS*> min_down;
     vector<SCIP_CONS*> convexity_cstr;
+
+    //Interval up set inequalities
+    int nbIntUpSet ;
+    vector< list<IneqIntUpSet*> > IUP_t0 ; // IUP_t0[t] : liste des interval-up-set telles que t0=t
+    vector< list<IneqIntUpSet*> > IUP_t1 ; // IUP_t1[t] : liste des interval-up-set telles que t1=t. Redondant mais plus efficace
 
     // Keep informations on every variables of the Master program
     //NB: le fait d'utiliser une liste ne permet pas de supprimer des variables
@@ -126,6 +156,8 @@ public:
     void initMasterTimeVariable(SCIP* scip, MasterTime_Variable* lambda) ;
 
     void createColumns(SCIP* scip, IloNumArray x, IloNumArray p) ;
+
+    void addIntUpSet(SCIP* scip, IneqIntUpSet* Iup) ;// ajoute les coef necessaires dans l'inégalité, ajoute l'inégalité à SCIP, met à jour les vecteurs IUP_t0 et IUP_t1
 
 
 };

@@ -190,7 +190,7 @@ public:
 
     IloInt partition(IloNumArray const & ordre, IloIntArray & indices, IloInt p, IloInt q) ;
 
-    int SepareSCIP(list<int> & C_list, IloInt i, IloInt t0, IloInt t1) ;
+    int SepareSCIP(list<int>* C_list, IloInt i, IloInt t0, IloInt t1) ;
 };
 
 

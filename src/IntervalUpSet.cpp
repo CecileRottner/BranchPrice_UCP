@@ -1238,7 +1238,7 @@ IloInt Separation::separeLetchford(IloInt t, IloIntArray & C) {
 
 
 
-int Separation::SepareSCIP(list<int> & C_list, IloInt i, IloInt t0, IloInt t1)  {
+int Separation::SepareSCIP(list<int>* C_list, IloInt i, IloInt t0, IloInt t1)  {
     IloIntArray C(env, 0) ;
 
     int alpha = separeGlouton(t0, t1, i, C) ;
@@ -1249,7 +1249,7 @@ int Separation::SepareSCIP(list<int> & C_list, IloInt i, IloInt t0, IloInt t1)  
         cout << "alpha: " << alpha << endl ;
         cout << "C: " << C << endl ;
         for (int i=0 ; i < C.getSize() ; i++) {
-            C_list.push_back(pb->getTri(C[i])) ;
+            C_list->push_back(pb->getTri(C[i])) ;
         }
         return alpha ;
     }

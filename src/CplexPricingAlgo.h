@@ -94,6 +94,7 @@ class DynProgPricingAlgoTime { // codé dans le cas Pmin=Pmax pour voir si c'est
  public:
 
   Parameters Param ;
+  MasterTime_Model* Master;
   int time ;
   IloEnv   env;
 
@@ -104,7 +105,7 @@ class DynProgPricingAlgoTime { // codé dans le cas Pmin=Pmax pour voir si c'est
   vector<double> ObjCoefX ;
   vector<double> Table ;
 
-  DynProgPricingAlgoTime(InstanceUCP* inst, const Parameters & par, int t); // initialise les vecteurs, et W
+  DynProgPricingAlgoTime(InstanceUCP* inst, MasterTime_Model* Master, const Parameters & par, int t); // initialise les vecteurs, et W
 
   void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas);
 

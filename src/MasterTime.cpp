@@ -4,6 +4,78 @@
 using namespace std;
 using namespace scip;
 
+IneqIntUpSet::IneqIntUpSet(SCIP* scip, int num, int alpha, list<int> *C_ptr, int ii, int tt0, int tt1) :
+    i(ii),
+    t0(tt0),
+    t1(tt1)
+{
+    C = C_ptr;
+    dual=0 ;
+    ineq = NULL;
+    char con_name_iup[255];
+    (void) SCIPsnprintf(con_name_iup, 255, "iup(%d)", num); // nom de la contrainte
+    SCIPcreateConsLinear( scip, &ineq, con_name_iup, 0, NULL, NULL,
+                          alpha,   // lhs
+                          SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
+                          true,  /* initial */
+                          true, /* separate */
+                          false,  /* enforce */
+                          false,  /* check */
+                          true,  /* propagate */
+                          true, /* local */
+                          true,  /* modifiable */
+                          true, /* dynamic */
+                          false, /* removable */
+                          false  /* stickingatnode */ );
+}
+
+
+void MasterTime_Model::addIntUpSet(SCIP* scip, IneqIntUpSet* Iup) {
+    SCIPaddCons(scip, Iup->ineq);
+    cout << "iup added" << endl;
+    nbIntUpSet++ ;
+
+    int t0 = Iup->t0 ;
+    int t1 = Iup->t1 ;
+    int i = Iup->i ;
+
+    (IUP_t0.at(t0)).push_back(Iup) ;
+    (IUP_t1.at(t1)).push_back(Iup) ;
+
+    //Initialisation (coefs des variables u)
+    for (int t=t0+1 ; t <= t1 ; t++) {
+        SCIPaddCoefLinear(scip, Iup->ineq, u_var.at(i*T+t), -1.0) ;
+
+        list<int>::const_iterator j;
+        for (j=Iup->C->begin() ; j != Iup->C->end() ; j++) {
+            SCIPaddCoefLinear(scip, Iup->ineq, u_var.at((*j)*T+t), 1.0) ;
+        }
+    }
+
+    //Ajout des coefs des lambda
+    list<MasterTime_Variable*>::const_iterator itv;
+    for (itv = L_var.begin(); itv!=L_var.end(); itv++) {
+
+        int time = (*itv)->time ;
+        if (time == t1) {
+            if ((*itv)->UpDown_plan[i] > 1 - Param.Epsilon) {
+                SCIPaddCoefLinear(scip, Iup->ineq, (*itv)->ptr, 1.0) ;
+            }
+        }
+
+        if (time == t0) {
+
+            list<int>::const_iterator j;
+            for (j=Iup->C->begin() ; j != Iup->C->end() ; j++) {
+
+                if ((*itv)->UpDown_plan[(*j)] > 1 - Param.Epsilon) {
+                    SCIPaddCoefLinear(scip, Iup->ineq, (*itv)->ptr, 1.0) ;
+                }
+            }
+        }
+    }
+}
+
 MasterTime_Variable::MasterTime_Variable(int t, IloNumArray UpDown, double costFromSubPb) {
     ptr = NULL ;
     time = t ;
@@ -43,6 +115,35 @@ void MasterTime_Model::addCoefsToConstraints(SCIP* scip, MasterTime_Variable* la
 
     /* add coefficient to the convexity constraint for site s */
     SCIPaddCoefLinear(scip, convexity_cstr.at(t), lambda->ptr, 1.0) ;
+
+
+    //// Interval up set inequalities ////
+
+    if (nbIntUpSet>0) {
+
+        list<IneqIntUpSet*>::const_iterator iup;
+
+        // Int-up-set telles que t1=time
+        for (iup = IUP_t1[t].begin(); iup!= IUP_t1[t].end() ; iup++) {
+            int i = (*iup)->i ;
+            if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
+                SCIPaddCoefLinear(scip, (*iup)->ineq, lambda->ptr, 1.0) ;
+            }
+        }
+
+        // Int-up-set telles que t0=time
+        for (iup = IUP_t0[t].begin(); iup!= IUP_t0[t].end() ; iup++) {
+            list<int>* C = (*iup)->C ;
+
+            list<int>::const_iterator j;
+            for (j=C->begin() ; j != C->end() ; j++) {
+
+                if (lambda->UpDown_plan[(*j)] > 1 - Param.Epsilon) {
+                    SCIPaddCoefLinear(scip, (*iup)->ineq, lambda->ptr, 1.0) ;
+                }
+            }
+        }
+    }
 }
 
 
@@ -90,13 +191,14 @@ MasterTime_Model::MasterTime_Model(InstanceUCP* instance, const Parameters & Par
 
     inst=instance;
 
+
     n = inst->getn() ;
     T = inst->getT() ;
     S = inst->getS() ;
 
-
-
     cumul_resolution_pricing= 0 ;
+
+    u_var.resize(n*T, (SCIP_VAR*) NULL) ;
 
     logical.resize(n*T, (SCIP_CONS*) NULL) ;
     min_up.resize(n*T, (SCIP_CONS*) NULL) ;
@@ -104,6 +206,14 @@ MasterTime_Model::MasterTime_Model(InstanceUCP* instance, const Parameters & Par
 
     convexity_cstr.resize(T, (SCIP_CONS*) NULL) ;
 
+    nbIntUpSet=0 ;
+    IUP_t0.resize(T) ;
+    IUP_t1.resize(T) ;
+
+    for (int t=0 ; t < T ; t++) {
+        (IUP_t0.at(t)).clear() ;
+        (IUP_t1.at(t)).clear() ;
+    }
 }
 
 void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
@@ -250,6 +360,7 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
                           type, // variable type
                           true, false, NULL, NULL, NULL, NULL, NULL);
 
+            u_var.at(i*T+t) = var ;
 
             /* add new variable to scip */
             SCIPaddVar(scip, var);

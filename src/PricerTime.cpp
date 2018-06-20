@@ -5,7 +5,7 @@
 #include <iostream>
 
 
-//#define OUTPUT_PRICER
+#define OUTPUT_PRICER
 // à décommenter pour l'affichage de debug
 
 using namespace std;
@@ -39,7 +39,7 @@ ObjPricerTimeUCP::ObjPricerTimeUCP(
     }
     else {
         for (int t=0 ; t < T ; t++) {
-            AlgoDynProg[t] = new DynProgPricingAlgoTime(inst, param, t) ;
+            AlgoDynProg[t] = new DynProgPricingAlgoTime(inst, M, param, t) ;
         }
     }
 
@@ -215,6 +215,22 @@ void ObjPricerTimeUCP::updateDualCosts(SCIP* scip, DualCostsTime & dual_cost, bo
         }
         if (print)
             cout << "sigma(" << t <<") = " << dual_cost.Sigma[t] <<endl;
+    }
+
+
+    // Couts duaux "interval up set"
+    list<IneqIntUpSet*>::const_iterator iup;
+    for (int t = 0 ; t < T ; t++) {
+        for (iup = Master->IUP_t0[t].begin(); iup!= Master->IUP_t0[t].end() ; iup++) {
+            if (!Farkas) {
+                (*iup)->dual = SCIPgetDualsolLinear(scip, (*iup)->ineq);
+            }
+            else {
+                (*iup)->dual = SCIPgetDualfarkasLinear(scip, (*iup)->ineq);
+            }
+            cout << "farkas: " << Farkas << endl ;
+            cout << "dual: " << (*iup)->dual << endl ;
+        }
     }
 
     if (print) cout << endl ;

@@ -170,7 +170,7 @@ int main(int argc, char** argv)
     SCIPincludeHeurRootsoldiving(scip);
     SCIPincludeHeurRounding(scip);
 
-    SCIPsetLongintParam(scip, "limits/nodes", 1);
+    SCIPsetLongintParam(scip, "limits/nodes", 2);
     SCIPsetRealParam(scip, "limits/time", 3600);
 
     SCIPincludeDispDefault(scip) ;
@@ -247,8 +247,10 @@ int main(int argc, char** argv)
     //////////////////////////////////
 
     if (param.IntervalUpSet && param.TimeStepDec) {
+
         IUPHandler* iupHandler = new IUPHandler(scip, &MasterTime, inst, param);
         SCIPincludeObjConshdlr(scip, iupHandler, TRUE);
+
     }
 
     /////////////////////////
@@ -267,8 +269,9 @@ int main(int argc, char** argv)
     //////  SOLVE    /////
     //////////////////////
 
+    cout << "resolution..." << endl ;
     SCIPsolve(scip);
-
+    cout << "fin resolution" << endl ;
     double temps_scip = ( clock() - start ) / (double) CLOCKS_PER_SEC;
     /// Solution en x
 

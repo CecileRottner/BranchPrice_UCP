@@ -5,9 +5,10 @@
 using namespace std;
 
 
-DynProgPricingAlgoTime::DynProgPricingAlgoTime(InstanceUCP* inst, const Parameters & par, int t) : Param(par) {
+DynProgPricingAlgoTime::DynProgPricingAlgoTime(InstanceUCP* inst, MasterTime_Model* M, const Parameters & par, int t) : Param(par) {
     //env=IloEnv() ;
 
+    Master=M ;
     time=t;
 
     int n = inst->getn() ;
@@ -35,33 +36,52 @@ void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Para
 
     for (int i=0 ; i<n ; i++) {
 
+        ObjCoefX.at(i) = 0 ;
+
+        //// Couts primaux de x[i]
+        if (!Farkas) {
+            ObjCoefX.at(i) += BaseObjCoefX.at(i) ;
+        }
+
         int L= inst->getL(i);
         int l= inst->getl(i);
 
         //// Calcul du cout réduit de x
-        double dual_coef = 0 ;
         if (time>0) {
-            dual_coef += - Dual.Mu.at(i*T + time) ;
+            ObjCoefX.at(i) += - Dual.Mu.at(i*T + time) ;
         }
         if (time< T-1) {
-            dual_coef += Dual.Mu.at(i*T + time+1) ;
+            ObjCoefX.at(i) += Dual.Mu.at(i*T + time+1) ;
         }
         if (time>=L) {
-            dual_coef+= - Dual.Nu.at(i*T+ time) ;
+            ObjCoefX.at(i) += - Dual.Nu.at(i*T+ time) ;
         }
 
         if (time<=T-l-1) {
-            dual_coef += - Dual.Xi.at(i*T + time + l) ;
+            ObjCoefX.at(i) += - Dual.Xi.at(i*T + time + l) ;
         }
+    }
 
-        /// Mise à jour des couts
-        if (!Farkas) {
-            ObjCoefX.at(i) = BaseObjCoefX.at(i)  + dual_coef ;
-        }
-        else {
-            ObjCoefX.at(i) = dual_coef ;
-        }
+    //// ajouts des couts duaux des interval up-set ////
 
+    if (Master->nbIntUpSet>0) {
+    list<IneqIntUpSet*>::const_iterator iup;
+
+    //parcours des interval up set telles que t1=time
+    for (iup = Master->IUP_t1[time].begin(); iup!= Master->IUP_t1[time].end() ; iup++) {
+        int i = (*iup)->i ;
+        ObjCoefX.at(i) -= (*iup)->dual ;
+    }
+
+    //parcours des interval up set telles que t0=time
+    for (iup = Master->IUP_t0[time].begin(); iup!= Master->IUP_t0[time].end() ; iup++) {
+        list<int>* C = (*iup)->C ;
+
+        list<int>::const_iterator j;
+        for (j=C->begin() ; j != C->end() ; j++) {
+            ObjCoefX.at((*j)) -= (*iup)->dual ;
+        }
+    }
     }
 }
 
