@@ -15,7 +15,7 @@ IUPHandler::IUPHandler(SCIP* scip, MasterTime_Model* M, InstanceUCP* i, const Pa
         "IUPHandler",                    // const char *  	name,
         "Handler For Interval Up Set inequalities",   // const char *  	desc,
         2000000, -2000000, -2000000,           // int sepapriority, int enfopriority, int checkpriority,
-        1, -1, 1, 10,                           // int sepafreq, int propfreq, int eagerfreq, int maxprerounds,
+        1, -1, 1, 0,                           // int sepafreq, int propfreq, int eagerfreq, int maxprerounds,
         FALSE, FALSE, FALSE,                   // delaysepa, delayprop, needscons,
         SCIP_PROPTIMING_BEFORELP,              // SCIP_PROPTIMING  	proptiming,
         SCIP_PRESOLTIMING_FAST                 // SCIP_PRESOLTIMING  	presoltiming
@@ -29,11 +29,10 @@ IUPHandler::IUPHandler(SCIP* scip, MasterTime_Model* M, InstanceUCP* i, const Pa
     int T = inst->getT() ;
     x_frac = vector<double>(n*T, 0) ;
     u_frac = vector<double>(n*T, 0) ;
-    Sep = new Separation(inst) ;
+    Sep = new Separation(inst, Param.Epsilon) ;
 
     nbFound=0 ;
 }
-
 
 
 
@@ -51,7 +50,7 @@ SCIP_RETCODE IUPHandler::scip_check(
         SCIP_RESULT*       result) {
 
 #ifdef OUTPUT_HANDLER
-    std::cout << " --------------------- Check handler ---------------  \n";
+    std::cout << " --------------------- Check IUP handler ---------------  \n";
 #endif
 
 
@@ -73,7 +72,6 @@ SCIP_RETCODE IUPHandler::scip_check(
 //        frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
 
 //    }
-
     *result = SCIP_FEASIBLE;
     return SCIP_OKAY;
 
@@ -166,7 +164,7 @@ SCIP_RETCODE IUPHandler::scip_lock(
         int                nlocksneg) {
 
 #ifdef OUTPUT_HANDLER
-    std::cout << " --------------------- Lock handler ---------------  \n";
+    std::cout << " --------------------- Lock IUP handler ---------------  \n";
 #endif
 
 
@@ -184,6 +182,10 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
 #ifdef OUTPUT_HANDLER
     std::cout << " --------------------- Sepalp IUP handler ---------------  \n";
 #endif
+
+    if (Master->Relax_withoutIUP == 0) {
+        Master->Relax_withoutIUP = SCIPgetDualbound(scip);
+    }
 
     int n = inst->getn() ;
     int T = inst->getT() ;
@@ -213,7 +215,7 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
 
     for (int t=1 ; t < T ; t++) {
         for (int i=0 ; i <n ; i++) {
-            u_frac[i*T+t] = fmax(0, x_frac[i*T+t] - x_frac[i*T+t-1]) ;
+            u_frac[i*T+t] = fabs(SCIPgetVarSol(scip,Master->u_var[i*T+t]));
         }
     }
 //    cout << "solution x frac: " << endl;
@@ -240,6 +242,17 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
                     double alpha = Sep->SepareSCIP(C_list, i0, t0, t1) ;
                     if (alpha > 0) {
                         int i =  inst->getTri(i0) ;
+
+//                        // Check it is violated
+//                        double violation = - alpha ;
+
+
+//                        for (int t=t0+1 ; t <= t1 ; t++) {
+//                            violation -= fabs(SCIPgetVarSol(scip,Master->u_var[i*T+t]));
+//                            list<int>::const_iterator j;
+
+
+//                        }
 
                         IneqIntUpSet* ineq = new IneqIntUpSet(scip, nbFound, alpha, C_list, i, t0, t1) ;
                         Master->addIntUpSet(scip,ineq);

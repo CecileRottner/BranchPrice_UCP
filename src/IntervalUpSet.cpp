@@ -7,8 +7,9 @@
 
 using namespace std ;
 
-Separation::Separation(InstanceUCP* inst) :
-    pb (inst)
+Separation::Separation(InstanceUCP* inst, double epsilon) :
+    pb (inst),
+    eps(epsilon)
     {
     n = pb->getn();
     T = pb->getT();
@@ -1248,8 +1249,10 @@ int Separation::SepareSCIP(list<int>* C_list, IloInt i, IloInt t0, IloInt t1)  {
         cout << "interval: " << t0 << ", " << t1 << endl ;
         cout << "alpha: " << alpha << endl ;
         cout << "C: " << C << endl ;
-        for (int i=0 ; i < C.getSize() ; i++) {
-            C_list->push_back(pb->getTri(C[i])) ;
+        for (int j=0 ; j < C.getSize() ; j++) {
+            if (C[j] != i) {
+            C_list->push_back(pb->getTri(C[j])) ;
+            }
         }
         return alpha ;
     }

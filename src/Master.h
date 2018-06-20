@@ -28,6 +28,7 @@ using namespace scip;
 class IneqIntUpSet {
 public:
     list<int>* C ;
+    int alpha ;
     int i ;
     int t0 ;
     int t1 ;
@@ -124,9 +125,11 @@ public:
     int S ;
 
     InstanceUCP* inst ;
+    double Relax_withoutIUP ;
 
     double cumul_resolution_pricing ;
     const Parameters Param ;
+
 
     IloEnv env;
 

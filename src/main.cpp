@@ -170,7 +170,7 @@ int main(int argc, char** argv)
     SCIPincludeHeurRootsoldiving(scip);
     SCIPincludeHeurRounding(scip);
 
-    SCIPsetLongintParam(scip, "limits/nodes", 2);
+    SCIPsetLongintParam(scip, "limits/nodes", 1);
     SCIPsetRealParam(scip, "limits/time", 3600);
 
     SCIPincludeDispDefault(scip) ;
@@ -347,6 +347,8 @@ int main(int argc, char** argv)
     //////////////////////
     //////   STATS   /////
     //////////////////////
+    ///
+    fichier.precision(7);
 
     SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
 
@@ -362,7 +364,8 @@ int main(int argc, char** argv)
     //fichier << " & " << temps_scip  ;
     fichier << " &  " << SCIPgetNLPIterations(scip) ;
     fichier << " &  " << SCIPgetGap(scip);
-    fichier << " &  " << SCIPgetPrimalbound(scip);
+    fichier << " & " << MasterTime.nbIntUpSet ;
+    //fichier << " &  " << MasterTime.Relax_withoutIUP;
     fichier << " &  " << SCIPgetDualbound(scip);
 
     cout << "ici" << endl ;

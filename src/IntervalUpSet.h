@@ -169,7 +169,7 @@ public :
 
 public:
 
-    Separation(InstanceUCP* inst) ;
+    Separation(InstanceUCP* inst, double epsilon) ;
     ~Separation() ;
 
     IloInt getn() ;

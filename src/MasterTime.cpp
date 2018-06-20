@@ -4,7 +4,8 @@
 using namespace std;
 using namespace scip;
 
-IneqIntUpSet::IneqIntUpSet(SCIP* scip, int num, int alpha, list<int> *C_ptr, int ii, int tt0, int tt1) :
+IneqIntUpSet::IneqIntUpSet(SCIP* scip, int num, int al, list<int> *C_ptr, int ii, int tt0, int tt1) :
+    alpha(al),
     i(ii),
     t0(tt0),
     t1(tt1)
@@ -19,18 +20,19 @@ IneqIntUpSet::IneqIntUpSet(SCIP* scip, int num, int alpha, list<int> *C_ptr, int
                           SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
                           true,  /* initial */
                           true, /* separate */
-                          false,  /* enforce */
-                          false,  /* check */
+                          true,  /* enforce */
+                          true,  /* check */
                           true,  /* propagate */
-                          true, /* local */
+                          false, /* local */
                           true,  /* modifiable */
-                          true, /* dynamic */
+                          false, /* dynamic */
                           false, /* removable */
                           false  /* stickingatnode */ );
 }
 
 
 void MasterTime_Model::addIntUpSet(SCIP* scip, IneqIntUpSet* Iup) {
+
     SCIPaddCons(scip, Iup->ineq);
     cout << "iup added" << endl;
     nbIntUpSet++ ;
@@ -42,13 +44,16 @@ void MasterTime_Model::addIntUpSet(SCIP* scip, IneqIntUpSet* Iup) {
     (IUP_t0.at(t0)).push_back(Iup) ;
     (IUP_t1.at(t1)).push_back(Iup) ;
 
+    double violation = -Iup->alpha ;
     //Initialisation (coefs des variables u)
     for (int t=t0+1 ; t <= t1 ; t++) {
         SCIPaddCoefLinear(scip, Iup->ineq, u_var.at(i*T+t), -1.0) ;
+        violation -= fabs(SCIPgetVarSol(scip,u_var[i*T+t])) ;
 
         list<int>::const_iterator j;
         for (j=Iup->C->begin() ; j != Iup->C->end() ; j++) {
             SCIPaddCoefLinear(scip, Iup->ineq, u_var.at((*j)*T+t), 1.0) ;
+            violation += fabs(SCIPgetVarSol(scip,u_var[(*j)*T+t])) ;
         }
     }
 
@@ -60,6 +65,7 @@ void MasterTime_Model::addIntUpSet(SCIP* scip, IneqIntUpSet* Iup) {
         if (time == t1) {
             if ((*itv)->UpDown_plan[i] > 1 - Param.Epsilon) {
                 SCIPaddCoefLinear(scip, Iup->ineq, (*itv)->ptr, 1.0) ;
+                violation += fabs(SCIPgetVarSol(scip,(*itv)->ptr)) ;
             }
         }
 
@@ -70,10 +76,12 @@ void MasterTime_Model::addIntUpSet(SCIP* scip, IneqIntUpSet* Iup) {
 
                 if ((*itv)->UpDown_plan[(*j)] > 1 - Param.Epsilon) {
                     SCIPaddCoefLinear(scip, Iup->ineq, (*itv)->ptr, 1.0) ;
+                    violation += fabs(SCIPgetVarSol(scip,(*itv)->ptr)) ;
                 }
             }
         }
     }
+    cout << "violation: " << violation << endl ;
 }
 
 MasterTime_Variable::MasterTime_Variable(int t, IloNumArray UpDown, double costFromSubPb) {
@@ -197,6 +205,7 @@ MasterTime_Model::MasterTime_Model(InstanceUCP* instance, const Parameters & Par
     S = inst->getS() ;
 
     cumul_resolution_pricing= 0 ;
+    Relax_withoutIUP = 0 ;
 
     u_var.resize(n*T, (SCIP_VAR*) NULL) ;
 

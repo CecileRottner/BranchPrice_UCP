@@ -63,6 +63,7 @@ ObjPricerTimeUCP::~ObjPricerTimeUCP()
  */
 SCIP_DECL_PRICERINIT(ObjPricerTimeUCP::scip_init)
 {
+
     int T = inst->getT() ;
     int n = inst->getn();
 
@@ -246,16 +247,18 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
 
     int print = 0 ;
 
+  // SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
+    //SCIPprintSol(scip, NULL, NULL, FALSE);
     if (print) {
 
-        /// PMR courant et sa solution
-        SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
+//        /// PMR courant et sa solution
+//        SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
 
-        // cout << "solution du PMR:" << endl ;
-        SCIPprintSol(scip, NULL, NULL, FALSE);
+//        // cout << "solution du PMR:" << endl ;
+//        SCIPprintSol(scip, NULL, NULL, FALSE);
 
-        //cout << "solution réalisable:" << endl ;
-        SCIPprintBestSol(scip, NULL, FALSE);
+//        //cout << "solution réalisable:" << endl ;
+//        SCIPprintBestSol(scip, NULL, FALSE);
     }
 
     //// Cout duaux
