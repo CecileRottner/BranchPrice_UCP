@@ -22,14 +22,14 @@ public:
     InstanceUCP* inst ;
     const Parameters Param ;
 
-    Master_Model* Master ;
+    MasterSite_Model* Master ;
     vector<CplexPricingAlgo*> AlgoCplex;
 
    /** Constructs the pricer object with the data needed */
    ObjPricerUCP(
       SCIP*                               scip,        /**< SCIP pointer */
       const char*                         p_name,       /**< name of pricer */
-      Master_Model*                       M,
+      MasterSite_Model*                       M,
       InstanceUCP*                        inst,
       const Parameters &                  param
       );

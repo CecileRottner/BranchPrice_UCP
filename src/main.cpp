@@ -94,7 +94,7 @@ int main(int argc, char** argv)
     bool TimeStepDec = 1 ;
     bool IntraSite = 0 ; // à implémenter
     bool DemandeResiduelle = 0 ;
-    bool Iup = 1 ;
+    bool Iup = 0 ;
     double eps = 0.0000001;
     bool heuristicInit = 0 ;
     bool DontPriceAllTimeSteps = 0;
@@ -194,7 +194,7 @@ int main(int argc, char** argv)
     CplexChecker checker = CplexChecker(inst, param) ;
 
     //Master problem
-    Master_Model Master(inst, param) ;
+    MasterSite_Model Master(inst, param) ;
     MasterTime_Model MasterTime(inst, param) ;
 
 
@@ -344,10 +344,11 @@ int main(int argc, char** argv)
 
 
 
+    cout << "ici" << endl ;
     //////////////////////
     //////   STATS   /////
     //////////////////////
-    ///
+
     fichier.precision(7);
 
     SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
@@ -365,10 +366,8 @@ int main(int argc, char** argv)
     fichier << " &  " << SCIPgetNLPIterations(scip) ;
     fichier << " &  " << SCIPgetGap(scip);
     fichier << " & " << MasterTime.nbIntUpSet ;
-    //fichier << " &  " << MasterTime.Relax_withoutIUP;
     fichier << " &  " << SCIPgetDualbound(scip);
 
-    cout << "ici" << endl ;
 
     //////////////////////
     //////  CHECK    /////

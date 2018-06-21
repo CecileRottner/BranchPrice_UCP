@@ -19,7 +19,7 @@ public:
 
     InstanceUCP* inst ;
     Master_Model* master ;
-    ObjPricerUCP* pricer ;
+    ObjPricerUCP* pricer ; // NULL dans le cas de la décomposition par pas de temps avec pricing résolu par prog dyn
 
 
     BranchingRule(SCIP* scip, InstanceUCP* i, Master_Model* m, ObjPricerUCP* p ) : scip::ObjBranchrule(scip, "BranchingOn(x,u)", "", 2000000, -1, 1.0) // properties of the branching rule (see doc)

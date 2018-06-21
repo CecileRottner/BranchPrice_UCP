@@ -195,18 +195,9 @@ void MasterTime_Model::initMasterTimeVariable(SCIP* scip, MasterTime_Variable* v
 //    }
 }
 
-MasterTime_Model::MasterTime_Model(InstanceUCP* instance, const Parameters & Parametres) : Param(Parametres) {
-
-    inst=instance;
-
-
-    n = inst->getn() ;
-    T = inst->getT() ;
-    S = inst->getS() ;
+MasterTime_Model::MasterTime_Model(InstanceUCP* instance, const Parameters & Parametres) : Master_Model(Parametres, instance) {
 
     cumul_resolution_pricing= 0 ;
-    Relax_withoutIUP = 0 ;
-
     u_var.resize(n*T, (SCIP_VAR*) NULL) ;
 
     logical.resize(n*T, (SCIP_CONS*) NULL) ;
@@ -476,5 +467,25 @@ void MasterTime_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p) {
         SCIPaddVar(scip, lambda->ptr);
 
         addCoefsToConstraints(scip, lambda) ;
+    }
+}
+
+void MasterTime_Model::computeFracSol(SCIP* scip) {
+    list<MasterTime_Variable*>::const_iterator itv;
+    SCIP_Real frac_value;
+    for (int ind=0 ; ind < n*T ; ind++) {
+        x_frac[ind]=0;
+    }
+
+    for (itv = L_var.begin(); itv!=L_var.end(); itv++) {
+
+        frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
+
+        int time = (*itv)->time ;
+        for (int i=0 ; i < n ; i++) {
+            if ((*itv)->UpDown_plan[i] > 1 - Param.Epsilon) {
+                x_frac[i*T+time] += frac_value ;
+            }
+        }
     }
 }

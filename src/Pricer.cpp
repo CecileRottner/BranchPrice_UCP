@@ -19,7 +19,7 @@ using namespace scip;
 ObjPricerUCP::ObjPricerUCP(
         SCIP*                                scip,          /**< SCIP pointer */
         const char*                         pp_name,      /**< name of pricer */
-        Master_Model*                        M,
+        MasterSite_Model*                        M,
         InstanceUCP*                        instance,
         const Parameters &                  param
         ):

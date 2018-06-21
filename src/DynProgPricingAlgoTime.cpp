@@ -16,6 +16,7 @@ DynProgPricingAlgoTime::DynProgPricingAlgoTime(InstanceUCP* inst, MasterTime_Mod
     W = inst->getSommePmax() - inst->getD(time) ;
 
 
+    init.resize(n,-1) ;
     Table.resize((n+1)*(W+1), 0) ;
 
     //Initialisation des coefficients objectifs (primaux) de x
@@ -86,6 +87,7 @@ void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Para
 }
 
 
+
 bool DynProgPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) {
     //returns True if an improving Up/Down plan has been found
 
@@ -93,7 +95,7 @@ bool DynProgPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const Dual
     for (int i =1 ; i <=n ; i++) {
         for (int c=0 ; c <= W ; c++) {
             int pi = inst->getPmin(i-1) ;
-            if (c >= pi) {
+            if (c >= pi && (init.at(i-1) == -1) ) {
                 Table.at(i*(W+1)+c) = fmax(Table.at((i-1)*(W+1)+c), Table.at((i-1)*(W+1)+c-pi) + ObjCoefX.at(i-1));
             }
             else {

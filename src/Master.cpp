@@ -44,7 +44,7 @@ void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
 
 
 
-void Master_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) {
+void MasterSite_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) {
 
     int s = lambda->Site ;
     int first = inst->firstUnit(s) ;
@@ -94,8 +94,7 @@ void Master_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, In
 }
 
 
-void Master_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Variable* var) {
-
+void MasterSite_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Variable* var) {
     char var_name[255];
     SCIPsnprintf(var_name, 255, "V_%d",L_var.size());
     SCIPdebugMsg(scip, "new variable <%s>\n", var_name);
@@ -135,9 +134,7 @@ void Master_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Var
 //    }
 }
 
-Master_Model::Master_Model(InstanceUCP* inst, const Parameters & Parametres) : Param(Parametres) {
-
-
+MasterSite_Model::MasterSite_Model(InstanceUCP* inst, const Parameters & Parametres) : Master_Model(Parametres, inst) {
     n = inst->getn() ;
     T = inst->getT() ;
     S = inst->getS() ;
@@ -147,11 +144,9 @@ Master_Model::Master_Model(InstanceUCP* inst, const Parameters & Parametres) : P
     ramp_up.resize(n*T, (SCIP_CONS*) NULL) ;
     ramp_down.resize(n*T, (SCIP_CONS*) NULL) ;
     convexity_cstr.resize(S, (SCIP_CONS*) NULL) ;
-
-
 }
 
-void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
+void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
     ////////////////////////////////////////////////////////////////
     /////////////   MASTER CONSTRAINT INITIALIZATION   /////////////
@@ -448,4 +443,30 @@ void  Master_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
 //    addCoefsToConstraints(scip, lambda, inst) ;
 
+}
+
+
+void MasterSite_Model::computeFracSol(SCIP* scip) {
+    list<Master_Variable*>::const_iterator itv;
+    SCIP_Real frac_value;
+    for (int ind=0 ; ind < n*T ; ind++) {
+        x_frac[ind]=0;
+    }
+
+    for (itv = L_var.begin(); itv!=L_var.end(); itv++) {
+
+        frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
+
+        int site = (*itv)->Site ;
+        int first = inst->firstUnit(site) ;
+        for (int i=0 ; i < inst->nbUnits(site) ; i++) {
+            //int group = inst->getGroup(first+i)  ;
+            for (int t=0 ; t < T ; t++) {
+                if ((*itv)->UpDown_plan[i*T+t] > Param.Epsilon) {
+                    //group_frac[group*T + t] += frac_value ;
+                    x_frac[(first+i)*T+t] += frac_value ;
+                }
+            }
+        }
+    }
 }

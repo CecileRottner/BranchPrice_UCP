@@ -27,7 +27,7 @@ using namespace scip;
 
 class IneqIntUpSet {
 public:
-    list<int>* C ;
+    list<int>* C ; // liste des éléments de C privés de i (liste renvoyée par les fonctions de séparation dans IntervalUpSet.cpp)
     int alpha ;
     int i ;
     int t0 ;
@@ -37,6 +37,28 @@ public:
     double dual ;
 
     IneqIntUpSet(SCIP* scip, int num, int alpha, list<int>* C_ptr, int i, int t0, int t1) ;
+};
+
+////////////////////////////////////////////
+////////// MASTER MODEL (virtual) //////////
+////////////////////////////////////////////
+
+class Master_Model {
+public:
+    int n ;
+    int T ;
+
+    const Parameters Param ;
+    InstanceUCP* inst ;
+
+    vector<double> x_frac ;
+
+    Master_Model(const Parameters & Par, InstanceUCP* i) : Param(Par), inst(i) {
+        n= inst->getn();
+        T= inst->getT() ;
+        x_frac.resize(n*T,0);
+    }
+    virtual void computeFracSol(SCIP* scip) = 0;  // = 0 signifie "virtuelle pure"
 };
 
 //////////////////////////////////////////////
@@ -63,17 +85,11 @@ public:
 
 };
 
-class Master_Model{
+class MasterSite_Model : public Master_Model {
 public:
-    int n ;
-    int T ;
+
     int S ;
-
-
-    const Parameters Param ;
-
     IloEnv env;
-
 
     // Keep a pointer on every constraint of the Master program
     vector<SCIP_CONS*> demand_cstr;
@@ -86,12 +102,13 @@ public:
     //NB: le fait d'utiliser une liste ne permet pas de supprimer des variables
     list<Master_Variable*> L_var;
 
-    Master_Model(InstanceUCP* inst, const Parameters & Param) ;
+    MasterSite_Model(InstanceUCP* inst, const Parameters & Param) ;
 
     void addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) ;
     void  InitScipMasterModel(SCIP* scip, InstanceUCP* inst);
     void initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Variable* lambda) ;
 
+    void computeFracSol(SCIP* scip) ;
 };
 
 
@@ -118,23 +135,13 @@ public:
 };
 
 
-class MasterTime_Model{
+class MasterTime_Model : public Master_Model {
 public:
-    int n ;
-    int T ;
-    int S ;
-
-    InstanceUCP* inst ;
-    double Relax_withoutIUP ;
 
     double cumul_resolution_pricing ;
-    const Parameters Param ;
-
 
     IloEnv env;
 
-    //Variables u
-    vector<SCIP_VAR*> u_var ;
 
     // Keep a pointer on every constraint of the MasterTime program (except intrasite constraints which do not depend on lambda variables)
     vector<SCIP_CONS*> logical;
@@ -151,6 +158,9 @@ public:
     //NB: le fait d'utiliser une liste ne permet pas de supprimer des variables
     list<MasterTime_Variable*> L_var;
 
+    //Variables u
+    vector<SCIP_VAR*> u_var ;
+
     MasterTime_Model(InstanceUCP* inst, const Parameters & Param) ;
 
     void addCoefsToConstraints(SCIP* scip, MasterTime_Variable* lambda) ;
@@ -161,7 +171,7 @@ public:
     void createColumns(SCIP* scip, IloNumArray x, IloNumArray p) ;
 
     void addIntUpSet(SCIP* scip, IneqIntUpSet* Iup) ;// ajoute les coef necessaires dans l'inégalité, ajoute l'inégalité à SCIP, met à jour les vecteurs IUP_t0 et IUP_t1
-
+    void computeFracSol(SCIP* scip) ;
 
 };
 #endif /* MASTER INCLUDED */

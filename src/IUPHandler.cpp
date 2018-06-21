@@ -183,9 +183,6 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
     std::cout << " --------------------- Sepalp IUP handler ---------------  \n";
 #endif
 
-    if (Master->Relax_withoutIUP == 0) {
-        Master->Relax_withoutIUP = SCIPgetDualbound(scip);
-    }
 
     int n = inst->getn() ;
     int T = inst->getT() ;
