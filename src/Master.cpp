@@ -148,6 +148,8 @@ MasterSite_Model::MasterSite_Model(InstanceUCP* inst, const Parameters & Paramet
 
 void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
+    cout << "init" << endl ;
+
     ////////////////////////////////////////////////////////////////
     /////////////   MASTER CONSTRAINT INITIALIZATION   /////////////
     ////////////////////////////////////////////////////////////////

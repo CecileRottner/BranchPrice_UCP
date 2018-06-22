@@ -41,6 +41,15 @@ SCIP_RETCODE BranchingRule::scip_execlp(SCIP* scip, SCIP_BRANCHRULE* branchrule,
     // Search for the "most fractional" unit
     master->computeFracSol(scip);
 
+//    cout << "solution x frac: " << endl;
+
+//    for (int t=0 ; t < T ; t++) {
+//        for (int i=0 ; i <master->n ; i++) {
+//            cout << master->x_frac[i*T+t] << " " ;
+//        }
+//        cout << endl ;
+//    }
+
     SCIP_Real bestfrac = 1;
     SCIP_Real tmp;
     int unit ;
