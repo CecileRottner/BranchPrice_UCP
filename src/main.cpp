@@ -91,8 +91,8 @@ int main(int argc, char** argv)
     bool IP=1 ; // est-ce qu'on résout le master en variable entières ?
     bool ManageSubPbSym=0 ; // est-ce qu'on gère les symétries dans le sous problème ?
     bool Ramp=0 ; // est-ce qu'on considère les gradients ?
-    bool TimeStepDec = 1 ;
-    bool IntraSite = 0 ; // à implémenter
+    bool TimeStepDec = 0 ;
+    bool IntraSite = 1 ; // à implémenter
     bool DemandeResiduelle = 0 ;
     bool Iup = 0 ;
     double eps = 0.0000001;
@@ -101,7 +101,8 @@ int main(int argc, char** argv)
     bool DontGetPValue = 0 ;
     bool OneTimeStepPerIter = 0;
     bool addColumnToOtherTimeSteps = 0 ;
-    bool DynProgTime = 1 ;
+    bool DynProgTime = 0 ;
+
 
     cout << "met: " << met << endl ;
     if (met==1) {
@@ -170,7 +171,7 @@ int main(int argc, char** argv)
     SCIPincludeHeurRootsoldiving(scip);
     SCIPincludeHeurRounding(scip);
 
-    SCIPsetLongintParam(scip, "limits/nodes", 1);
+    //SCIPsetLongintParam(scip, "limits/nodes", 1);
     SCIPsetRealParam(scip, "limits/time", 3600);
 
     SCIPincludeDispDefault(scip) ;

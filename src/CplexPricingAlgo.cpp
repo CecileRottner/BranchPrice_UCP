@@ -154,14 +154,14 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int 
 
     //Contraintes intra-site
     if (Param.IntraSite) {
-    for (int t=1 ; t < T ; t++) {
-        IloExpr sum(env) ;
-        for (int i=0 ; i <ns ; i++) {
-            sum+=u[i*T+t] ;
+        for (int t=1 ; t < T ; t++) {
+            IloExpr sum(env) ;
+            for (int i=0 ; i <ns ; i++) {
+                sum+=u[i*T+t] ;
+            }
+            model.add(sum <= 1);
+            sum.end() ;
         }
-        model.add(sum <= 1);
-        sum.end() ;
-    }
     }
 
     if (Param.DemandeResiduelle) {
