@@ -4,14 +4,14 @@
 #include "Master.h"
 
 #define eps 1e-6
-#define OUTPUT_HANDLER
+//#define OUTPUT_BRANCH_HANDLER
 
 //////////////////////////////////////////////
 //////////////////////////////////////////////
 void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, int site, ObjPricerUCP* pricer, SCIP_CONS** cons) {
 
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_BRANCH_HANDLER
     cout << " ------ CREATE A CONSTRAINT ASSOCIATED TO A NODE   ---------------  \n";
 #endif
 
@@ -20,7 +20,7 @@ void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, int s
     SCIP_ConsData* consdata = new SCIP_ConsData;
     SCIP_CONSHDLR* conshdlr = SCIPfindConshdlr(scip, "BranchConsHandler");
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_BRANCH_HANDLER
     if (conshdlr==NULL) cout<<"CONSTRAINT HANDLER NOT FOUND -> CHECK SCIP_DEBUG TO SEE ITS PARAMETERS"<<endl;
 #endif
 
@@ -30,7 +30,6 @@ void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, int s
     consdata->unit = unit ;
     consdata->time = time ;
     consdata->site = site ;
-
 
     if (!pricer->Param.TimeStepDec) { // CAS D'UNE DECOMPOSITION PAR SITE: on a besoin de créer les contraintes de branchement (de type cplex) dans consdata
         ObjPricerSite* PricerSite ;
@@ -63,7 +62,7 @@ void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, int s
 
 
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_BRANCH_HANDLER
     cout << " ------ END CREATION  ---------------  \n";
 #endif
 
@@ -73,13 +72,13 @@ void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, int s
 ////////////////////////////////////////////// DECOMPOSITION PAR SITES
 //////////////////////////////////////////////
 SCIP_RETCODE BranchConsHandler::scip_active(SCIP * scip, SCIP_CONSHDLR * conshdlr, SCIP_CONS * cons) {
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_BRANCH_HANDLER
     cout << " --------------------- Active branch cons handler ---------------  \n";
 #endif
 
     SCIP_ConsData *consdata = SCIPconsGetData(cons);
 
-    cout << "Active node: unit " << consdata->unit << ", time " << consdata->time << " at bound " << consdata->bound<< endl;
+    //cout << "Active node: unit " << consdata->unit << ", time " << consdata->time << " at bound " << consdata->bound<< endl;
 
     //////On ajoute la contrainte dans cons au modèle Cplex du sous problème correspondant
     //pricer_ptr->AlgoCplex[consdata->site]->model.add(consdata->BranchConstraint) ;
@@ -91,8 +90,8 @@ SCIP_RETCODE BranchConsHandler::scip_active(SCIP * scip, SCIP_CONSHDLR * conshdl
 
 
 
-#ifdef OUTPUT_HANDLER
-    cout << " --------------------- Fin Active handler ---------------  \n";
+#ifdef OUTPUT_BRANCH_HANDLER
+   cout << " --------------------- Fin Active handler ---------------  \n";
 #endif
 
 
@@ -102,14 +101,16 @@ SCIP_RETCODE BranchConsHandler::scip_active(SCIP * scip, SCIP_CONSHDLR * conshdl
 //////////////////////////////////////////////
 //////////////////////////////////////////////
 SCIP_RETCODE BranchConsHandler::scip_deactive(SCIP* scip, SCIP_CONSHDLR* conshdlr, SCIP_CONS*cons){
-#ifdef OUTPUT_HANDLER
-    cout << " --------------------- Desactive branch cons handler ---------------  \n";
+#ifdef OUTPUT_BRANCH_HANDLER
+   cout << " --------------------- Desactive branch cons handler ---------------  \n";
 #endif
 
 
     SCIP_ConsData *consdata = SCIPconsGetData(cons);
 
-    cout << "Deactive node: unit " << consdata->unit << ", time " << consdata->time << " at bound " << consdata->bound<< endl;
+
+    //cout << "Deactive node: unit " << consdata->unit << ", time " << consdata->time << " at bound " << consdata->bound<< endl;
+
     /////On retire la contrainte dans cons au modèle Cplex du sous problème correspondant
     Pricer->removeVarBound(consdata);
     //pricer_ptr->AlgoCplex[consdata->site]->model.remove(consdata->BranchConstraint) ;
@@ -143,7 +144,7 @@ SCIP_RETCODE BranchConsHandler::scip_trans(
         SCIP_CONS**        targetcons          //**< pointer to store created target constraint *
         ) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_BRANCH_HANDLER
     std::cout << " --------------------- Trans branch cons handler ---------------  \n";
 #endif
 
@@ -186,7 +187,7 @@ SCIP_RETCODE BranchConsHandler::scip_check(
         SCIP_Bool          completely,         /**< should all violations be checked? */
         SCIP_RESULT*       result) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_BRANCH_HANDLER
     std::cout << " --------------------- Check branch cons handler ---------------  \n";
 #endif
 
@@ -223,7 +224,7 @@ SCIP_RETCODE BranchConsHandler::scip_enfolp(
         SCIP_Bool          solinfeasible,      /**< was the solution already declared infeasible by a constraint handler? */
         SCIP_RESULT*       result) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_BRANCH_HANDLER
     std::cout << " --------------------- Enfolp branch cons handler ---------------  \n";
 #endif
 
@@ -242,7 +243,7 @@ SCIP_RETCODE BranchConsHandler::scip_enfops(
         SCIP_Bool          objinfeasible,      /**< is the solution infeasible anyway due to violating lower objective bound? */
         SCIP_RESULT*       result) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_BRANCH_HANDLER
     std::cout << " --------------------- Enfops branch cons handler ---------------  \n";
 #endif
 
@@ -259,7 +260,7 @@ SCIP_RETCODE BranchConsHandler::scip_lock(
         int                nlockspos,          /**< no. of times, the roundings should be locked for the constraint */
         int                nlocksneg) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_BRANCH_HANDLER
     std::cout << " --------------------- Lock branch cons handler ---------------  \n";
 #endif
 
@@ -275,7 +276,7 @@ SCIP_RETCODE BranchConsHandler::scip_sepalp(
         int                nusefulconss,       /**< number of useful (non-obsolete) constraints to process */
         SCIP_RESULT*       result) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_BRANCH_HANDLER
     std::cout << " --------------------- Sepalp branch cons  handler ---------------  \n";
 #endif
 
@@ -287,7 +288,7 @@ SCIP_RETCODE BranchConsHandler::scip_sepalp(
 SCIP_RETCODE BranchConsHandler::scip_sepasol(SCIP* scip, SCIP_CONSHDLR* conshdlr, SCIP_CONS** conss,
                                              int nconss, int nusefulconss, SCIP_SOL* sol, SCIP_RESULT* result){
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_BRANCH_HANDLER
     std::cout << " --------------------- Sepasol branch cons handler ---------------  \n";
 #endif
 

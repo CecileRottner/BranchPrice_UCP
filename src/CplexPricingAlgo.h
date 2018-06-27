@@ -102,7 +102,7 @@ class DynProgPricingAlgoTime { // codé dans le cas Pmin=Pmax pour voir si c'est
   int W ;
   double totalBaseCost ;
 
-  vector<int> init ; // init[i]=0 si i pas pris dans le sac à dos, init[i]=1 si i pris dans le sac à dos, si ça reste à déterminer: -1
+  vector<int> init ; // init[i]==0 si i pas pris dans le sac à dos, init[i]=1 si i pris dans le sac à dos, si ça reste à déterminer: -1
 
   vector<double> BaseObjCoefX ;
   vector<double> ObjCoefX ;

@@ -70,11 +70,15 @@ public:
     const Parameters Param ;
     InstanceUCP* inst ;
 
+
+    int nbIntUpSet ;
+
     vector<double> x_frac ;
 
     Master_Model(const Parameters & Par, InstanceUCP* i) : Param(Par), inst(i) {
         n= inst->getn();
         T= inst->getT() ;
+        nbIntUpSet = 0 ;
         x_frac.resize(n*T,0);
     }
     virtual void computeFracSol(SCIP* scip) = 0;  // = 0 signifie "virtuelle pure"
@@ -184,7 +188,6 @@ public:
     vector<SCIP_CONS*> convexity_cstr;
 
     //Interval up set inequalities
-    int nbIntUpSet ;
     vector< list<IneqIntUpSet*> > IUP_t0 ; // IUP_t0[t] : liste des interval-up-set telles que t0=t
     vector< list<IneqIntUpSet*> > IUP_t1 ; // IUP_t1[t] : liste des interval-up-set telles que t1=t. Redondant mais plus efficace
 

@@ -1,7 +1,7 @@
 #include "BranchingRule.h"
 #include "BranchConsHandler.h"
 
-#define OUTPUT_BRANCHRULE
+//#define OUTPUT_BRANCHRULE
 
 
 using namespace std;
@@ -69,10 +69,12 @@ SCIP_RETCODE BranchingRule::scip_execlp(SCIP* scip, SCIP_BRANCHRULE* branchrule,
 
         int VarX=1 ;
         int Site = inst->getSiteOf(unit);
+        int unit_on_site= unit - inst->firstUnit(Site) ;
         if (master->Param.TimeStepDec) {
             Site=0 ;
+            unit_on_site = unit ;
         }
-        int unit_on_site= unit - inst->firstUnit(Site) ;
+
 
 #ifdef OUTPUT_BRANCHRULE
         cout<<"Branch on var x(" << unit <<", " << time << ") ";

@@ -66,23 +66,23 @@ void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Para
     //// ajouts des couts duaux des interval up-set ////
 
     if (Master->nbIntUpSet>0) {
-    list<IneqIntUpSet*>::const_iterator iup;
+        list<IneqIntUpSet*>::const_iterator iup;
 
-    //parcours des interval up set telles que t1=time
-    for (iup = Master->IUP_t1[time].begin(); iup!= Master->IUP_t1[time].end() ; iup++) {
-        int i = (*iup)->i ;
-        ObjCoefX.at(i) -= (*iup)->dual ;
-    }
-
-    //parcours des interval up set telles que t0=time
-    for (iup = Master->IUP_t0[time].begin(); iup!= Master->IUP_t0[time].end() ; iup++) {
-        list<int>* C = (*iup)->C ;
-
-        list<int>::const_iterator j;
-        for (j=C->begin() ; j != C->end() ; j++) {
-            ObjCoefX.at((*j)) -= (*iup)->dual ;
+        //parcours des interval up set telles que t1=time
+        for (iup = Master->IUP_t1[time].begin(); iup!= Master->IUP_t1[time].end() ; iup++) {
+            int i = (*iup)->i ;
+            ObjCoefX.at(i) -= (*iup)->dual ;
         }
-    }
+
+        //parcours des interval up set telles que t0=time
+        for (iup = Master->IUP_t0[time].begin(); iup!= Master->IUP_t0[time].end() ; iup++) {
+            list<int>* C = (*iup)->C ;
+
+            list<int>::const_iterator j;
+            for (j=C->begin() ; j != C->end() ; j++) {
+                ObjCoefX.at((*j)) -= (*iup)->dual ;
+            }
+        }
     }
 }
 
@@ -92,6 +92,10 @@ bool DynProgPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const Dual
     //returns True if an improving Up/Down plan has been found
 
     int n = inst->getn();
+
+    for (int c=0 ; c <= W ; c++) {
+        Table.at(c) = 0 ;
+    }
     for (int i =1 ; i <=n ; i++) {
         for (int c=0 ; c <= W ; c++) {
             int pi = inst->getPmin(i-1) ;
@@ -104,11 +108,18 @@ bool DynProgPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const Dual
         }
     }
 
+    double extraKPCost = 0 ;
+    for (int i = 0 ; i <n ; i++) {
+        if (init[i] == 0) {
+            extraKPCost += ObjCoefX.at(i) ;
+        }
+    }
+
     double SumCosts = 0 ;
     for (int i=0 ; i <n ; i++) {
         SumCosts += ObjCoefX.at(i) ;
     }
-    objvalue = SumCosts - Table.at(n*(W+1)+W) - Dual.Sigma[time] ;
+    objvalue = SumCosts - Table.at(n*(W+1)+W) - extraKPCost - Dual.Sigma[time] ;
     if (objvalue < - Param.Epsilon) {
         return true ;
     }
@@ -129,7 +140,6 @@ void DynProgPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTim
     int c=W ;
     int i=n;
     while (c>0 && i>0) {
-
         if (  fabs( Table.at(i*(W+1)+c) - Table.at((i-1)*(W+1)+c) ) > Param.Epsilon ) {
             UpDownPlan[i-1] = 0 ;
             c= c - inst->getPmin(i-1) ;
@@ -137,6 +147,17 @@ void DynProgPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTim
             totalProd -= inst->getPmin(i-1) ;
         }
         i-- ;
+    }
+
+
+    //// il faut retirer i si init[i]==0
+    for (int i = 0 ; i <n ; i++) {
+        /// UpDownPlan[i] est forcément à 1
+        if (init[i] == 0) {
+            UpDownPlan[i] = 0 ;
+            realCost -= BaseObjCoefX.at(i) ;
+            totalProd -= inst->getPmin(i) ;
+        }
     }
 
 }

@@ -229,8 +229,6 @@ void ObjPricerTimeUCP::updateDualCosts(SCIP* scip, DualCostsTime & dual_cost, bo
             else {
                 (*iup)->dual = SCIPgetDualfarkasLinear(scip, (*iup)->ineq);
             }
-            cout << "farkas: " << Farkas << endl ;
-            cout << "dual: " << (*iup)->dual << endl ;
         }
     }
 
@@ -241,7 +239,7 @@ void ObjPricerTimeUCP::updateDualCosts(SCIP* scip, DualCostsTime & dual_cost, bo
 void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas             /**< SCIP data structure */)
 {
 #ifdef OUTPUT_PRICER
-    cout<<"**************PRICER************ " << endl ;
+  //  cout<<"**************PRICER************ " << endl ;
     // SCIPprintBestSol(scip, NULL, FALSE);
 #endif
 
@@ -342,19 +340,20 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
                         (AlgoDynProg.at(t))->getUpDownPlan(inst, dual_cost, upDownPlan, realCost, totalProd, Farkas) ;
                     }
 
+                     //
 
                     //cout << "total prod: " << totalProd << endl ;
 
-                    if (print) cout << "Minimum reduced cost plan: "<< objvalue << endl ;
+                     if (print) {
+                         cout << "Minimum reduced cost plan: "<< objvalue << "for time " << t << endl ;
+                         for (int i=0 ; i < n ; i++) {
+                             cout << fabs(upDownPlan[i]) << " " ;
+                         }
+                         cout << endl ;
+                     }
 
-                    if (print) {
 
-                        for (int i=0 ; i < n ; i++) {
-                            cout << fabs(upDownPlan[i]) << " " ;
-                        }
-                        cout << endl ;
 
-                    }
 
                     int kmax = t ;
                     int kmin=t ;
@@ -375,6 +374,8 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
                     for (int k=kmin ; k <= kmax; k++) {
 
                         if (inst->getD(k) <= totalProd) {
+
+                          //  cout << "ajout maitre" << endl;
 
                         /// AJOUT VARIABLE DANS LE MAITRE ////
 
@@ -406,7 +407,7 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
 
 #ifdef OUTPUT_PRICER
     SCIPwriteTransProblem(scip, "ucp.lp", "lp", FALSE);
-    cout<<"************END PRICER******************"<<endl;
+  //  cout<<"************END PRICER******************"<<endl;
 #endif
 
 }
@@ -431,6 +432,20 @@ void ObjPricerTimeUCP::addVarBound(SCIP_ConsData* consdata) {
 }
 
 void ObjPricerTimeUCP::removeVarBound(SCIP_ConsData* consdata) {
+
+    int t = consdata->time ;
+    int i = consdata->unit ;
+
+    if (AlgoDynProg.at(t) != NULL) {
+        if (consdata->bound == 0) {
+            (AlgoDynProg.at(t))->W += inst->getPmax(i) ;
+        }
+
+        (AlgoDynProg.at(t))->init.at(i) = -1 ;
+    }
+    else {
+        cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
+    }
 }
 
 

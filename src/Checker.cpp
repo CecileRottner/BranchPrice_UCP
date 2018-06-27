@@ -117,10 +117,18 @@ double CplexChecker::getIntegerObjValue() {
     IntegerModel.add(model) ;
 
     IloCplex IntegerObjCplex = IloCplex(IntegerModel) ; // ou juste valeur opt entière
-    IntegerObjCplex.setParam(IloCplex::EpGap, 0) ;
+    IntegerObjCplex.setParam(IloCplex::EpGap, Param.Epsilon) ;
+    IntegerObjCplex.setParam(IloCplex::Param::ClockType, 1); //1 : CPU TIME
+    IntegerObjCplex.setParam(IloCplex::Param::TimeLimit, 3600) ;
+
+
     IntegerObjCplex.solve() ;
 
-    IntegerObj = IntegerObjCplex.getBestObjValue() ;
+    DualBound = IntegerObjCplex.getBestObjValue() ;
+    PrimalBound = IntegerObjCplex.getObjValue() ;
+    nbNodes = IntegerObjCplex.getNnodes() ;
+    cpuTime = IntegerObjCplex.getCplexTime();
+    gap = IntegerObjCplex.getMIPRelativeGap() ;
 
     int n = inst->getn();
     int T= inst->getT() ;
@@ -140,7 +148,7 @@ double CplexChecker::getIntegerObjValue() {
         cout << endl ;
     }
 
-    return IntegerObj;
+    return PrimalBound;
 }
 
 double CplexChecker::getLRValue() {

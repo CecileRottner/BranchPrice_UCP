@@ -4,6 +4,12 @@
 using namespace std;
 using namespace scip;
 
+
+/////////////////////////////////////
+////////// INTERVAL UP SET //////////
+/////////////////////////////////////
+
+
 IneqIntUpSet::IneqIntUpSet(SCIP* scip, int num, int al, list<int> *C_ptr, int ii, int tt0, int tt1) :
     alpha(al),
     i(ii),
@@ -84,6 +90,13 @@ void MasterTime_Model::addIntUpSet(SCIP* scip, IneqIntUpSet* Iup) {
     cout << "violation: " << violation << endl ;
 }
 
+
+///////////////////////////////
+////////// VARIABLES //////////
+///////////////////////////////
+
+
+////// Constructeur //////
 MasterTime_Variable::MasterTime_Variable(int t, IloNumArray UpDown, double costFromSubPb) {
     ptr = NULL ;
     time = t ;
@@ -91,6 +104,8 @@ MasterTime_Variable::MasterTime_Variable(int t, IloNumArray UpDown, double costF
     cost= costFromSubPb ;
 }
 
+
+/////// ajout des coefficients dans chaque contrainte pour variable lambda //////////
 void MasterTime_Model::addCoefsToConstraints(SCIP* scip, MasterTime_Variable* lambda) {
 
     int t = lambda->time ;
@@ -127,7 +142,7 @@ void MasterTime_Model::addCoefsToConstraints(SCIP* scip, MasterTime_Variable* la
 
     //// Interval up set inequalities ////
 
-    if (nbIntUpSet>0) {
+    if (Param.IntervalUpSet && nbIntUpSet>0) {
 
         list<IneqIntUpSet*>::const_iterator iup;
 
@@ -155,6 +170,7 @@ void MasterTime_Model::addCoefsToConstraints(SCIP* scip, MasterTime_Variable* la
 }
 
 
+//////// Initialisation d'une variable lambda /////////////
 void MasterTime_Model::initMasterTimeVariable(SCIP* scip, MasterTime_Variable* var) {
 
     char var_name[255];
@@ -195,6 +211,42 @@ void MasterTime_Model::initMasterTimeVariable(SCIP* scip, MasterTime_Variable* v
 //    }
 }
 
+//////// Créé des variables lambda à partir d'une solution (x,p) ///////////
+void MasterTime_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p) {
+
+    int n = inst->getn() ;
+    int T = inst->getT() ;
+
+    for (int t = 0 ; t < T ; t++) {
+
+        IloNumArray plan = IloNumArray(env, n) ;
+        for (int i=0 ; i < n ; i++) {
+            if (x[i*T + t] > 1 - Param.Epsilon) {
+            plan[i]=1 ;
+            }
+            if (x[i*T + t] < Param.Epsilon) {
+            plan[i]=0 ;
+            }
+        }
+
+        double cost = 0 ;
+        for (int i=0 ; i <n ; i++) {
+            cost += inst->getcf(i)*plan[i] + (inst->getPmin(i)*plan[i] + p[i*T+t])*inst->getcp(i) ;
+        }
+
+        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan, cost) ;
+        initMasterTimeVariable(scip, lambda);
+
+        SCIPaddVar(scip, lambda->ptr);
+
+        addCoefsToConstraints(scip, lambda) ;
+    }
+}
+
+///////////////////////////////////////////
+////////// INITIALISATION MASTER //////////
+///////////////////////////////////////////
+
 MasterTime_Model::MasterTime_Model(InstanceUCP* instance, const Parameters & Parametres) : Master_Model(Parametres, instance) {
 
     cumul_resolution_pricing= 0 ;
@@ -206,7 +258,6 @@ MasterTime_Model::MasterTime_Model(InstanceUCP* instance, const Parameters & Par
 
     convexity_cstr.resize(T, (SCIP_CONS*) NULL) ;
 
-    nbIntUpSet=0 ;
     IUP_t0.resize(T) ;
     IUP_t1.resize(T) ;
 
@@ -439,36 +490,10 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
 }
 
 
-void MasterTime_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p) {
 
-    int n = inst->getn() ;
-    int T = inst->getT() ;
-
-    for (int t = 0 ; t < T ; t++) {
-
-        IloNumArray plan = IloNumArray(env, n) ;
-        for (int i=0 ; i < n ; i++) {
-            if (x[i*T + t] > 1 - Param.Epsilon) {
-            plan[i]=1 ;
-            }
-            if (x[i*T + t] < Param.Epsilon) {
-            plan[i]=0 ;
-            }
-        }
-
-        double cost = 0 ;
-        for (int i=0 ; i <n ; i++) {
-            cost += inst->getcf(i)*plan[i] + (inst->getPmin(i)*plan[i] + p[i*T+t])*inst->getcp(i) ;
-        }
-
-        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan, cost) ;
-        initMasterTimeVariable(scip, lambda);
-
-        SCIPaddVar(scip, lambda->ptr);
-
-        addCoefsToConstraints(scip, lambda) ;
-    }
-}
+//////////////////////////////////////
+////////// METHODES VIRTUELLES ///////
+//////////////////////////////////////
 
 void MasterTime_Model::computeFracSol(SCIP* scip) {
     list<MasterTime_Variable*>::const_iterator itv;
@@ -501,7 +526,7 @@ void MasterTime_Model::discardVar(SCIP* scip, SCIP_ConsData* consdata) {
 
      for (itv = L_var.begin(); itv!=L_var.end(); itv++) {
          if ((*itv)->time == consdata->time) {
-             if ((*itv)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
+             if ((*itv)->UpDown_plan[consdata->unit] != consdata->bound ) {
 
                  SCIP_Real old_bound =  SCIPgetVarUbAtIndex(scip, (*itv)->ptr, NULL, 0) ;
 
@@ -525,5 +550,4 @@ void MasterTime_Model::restoreVar(SCIP* scip, SCIP_ConsData* consdata) {
         SCIPchgVarUbNode(scip, NULL, (*itv), SCIPinfinity(scip)) ;
     }
     consdata->L_var_bound.clear() ;
-
 }

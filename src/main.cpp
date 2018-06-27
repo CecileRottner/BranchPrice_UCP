@@ -91,17 +91,17 @@ int main(int argc, char** argv)
     bool IP=1 ; // est-ce qu'on résout le master en variable entières ?
     bool ManageSubPbSym=0 ; // est-ce qu'on gère les symétries dans le sous problème ?
     bool Ramp=0 ; // est-ce qu'on considère les gradients ?
-    bool TimeStepDec = 0 ;
+    bool TimeStepDec = 1 ;
+    bool DynProgTime =1 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
     bool IntraSite = 1 ; // à implémenter
     bool DemandeResiduelle = 0 ;
-    bool Iup = 0 ;
+    bool Iup = 1 ;
     double eps = 0.0000001;
     bool heuristicInit = 0 ;
     bool DontPriceAllTimeSteps = 0;
     bool DontGetPValue = 0 ;
     bool OneTimeStepPerIter = 0;
     bool addColumnToOtherTimeSteps = 0 ;
-    bool DynProgTime =0 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
 
 
     cout << "met: " << met << endl ;
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
     SCIPincludeHeurRootsoldiving(scip);
     SCIPincludeHeurRounding(scip);
 
-   // SCIPsetLongintParam(scip, "limits/nodes", 1);
+    //SCIPsetLongintParam(scip, "limits/nodes", 1);
     SCIPsetRealParam(scip, "limits/time", 3600);
 
     SCIPincludeDispDefault(scip) ;
@@ -210,6 +210,20 @@ int main(int argc, char** argv)
             SCIPincludeObjPricer(scip, Pricer, true);
             SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
         }
+
+        //// HEURISTIC INITIALIZATION OF MASTER'S COLUMNS
+        if (param.heuristicInit) {
+            IloNumArray x(env, n*T) ;
+            IloNumArray p(env, n*T) ;
+            checker.CplexPrimalHeuristic(x,p);
+            MT->createColumns(scip, x,p);
+        }
+
+        //// INTERVAL UP SET ////
+        if (param.IntervalUpSet) {
+            IUPHandler* iupHandler = new IUPHandler(scip, MT, inst, param);
+            SCIPincludeObjConshdlr(scip, iupHandler, TRUE);
+        }
     }
 
     else { //// Décomposition par sites
@@ -230,12 +244,7 @@ int main(int argc, char** argv)
          }
     }
 
-    //    if (param.heuristicInit) {
-    //        IloNumArray x(env, n*T) ;
-    //        IloNumArray p(env, n*T) ;
-    //        checker.CplexPrimalHeuristic(x,p);
-    //        MasterTime.createColumns(scip, x,p);
-    //    }
+
 
 
     cout<<"Write init pl"<<endl;
@@ -245,12 +254,7 @@ int main(int argc, char** argv)
     /////  VALID INEQUALITIES    /////
     //////////////////////////////////
 
-//    if (param.IntervalUpSet && param.TimeStepDec) {
 
-//        IUPHandler* iupHandler = new IUPHandler(scip, Master_ptr, inst, param);
-//        SCIPincludeObjConshdlr(scip, iupHandler, TRUE);
-
-//    }
 
     /////////////////////////
     /////  BRANCHING    /////
@@ -279,80 +283,22 @@ int main(int argc, char** argv)
     }
 
     cout << "resolution..." << endl ;
-
     SCIPsolve(scip);
     cout << "fin resolution" << endl ;
-   // double temps_scip = ( clock() - start ) / (double) CLOCKS_PER_SEC;
-    /// Solution en x
 
+    /// Solution en x
     n=inst->getn();
     T=inst->getT();
 
-//    vector<double> x_frac = vector<double>(n*T, 0) ;
-
-//    if (param.TimeStepDec) {
-//        list<MasterTime_Variable*>::const_iterator itv;
-//        SCIP_Real frac_value;
-
-
-//        for (itv = MasterTime.L_var.begin(); itv!=MasterTime.L_var.end(); itv++) {
-
-//            frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
-
-//            int time = (*itv)->time ;
-//            for (int i=0 ; i < n ; i++) {
-
-//                    if ((*itv)->UpDown_plan[i] > param.Epsilon) {
-
-//                        x_frac[i*T+time] += frac_value ;
-//                    }
-
-//            }
-//        }
 //        cout << "solution x frac: " << endl;
 
 //        for (int t=0 ; t < T ; t++) {
 //            for (int i=0 ; i <n ; i++) {
-//                cout << x_frac[i*T+t] << " " ;
+//                cout << Master_ptr->x_frac[i*T+t] << " " ;
 //            }
 //            cout << endl ;
 //        }
-//    }
 
-
-//    else {
-//        list<Master_Variable*>::const_iterator itv;
-//        SCIP_Real frac_value;
-
-//        for (itv = Master.L_var.begin(); itv!=Master.L_var.end(); itv++) {
-
-//            frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
-
-//            int site = (*itv)->Site ;
-//            int first = inst->firstUnit(site) ;
-//            for (int i=0 ; i < inst->nbUnits(site) ; i++) {
-//                for (int t=0 ; t < T ; t++) {
-
-//                    if ((*itv)->UpDown_plan[i*T+t] > eps) {
-
-//                        x_frac[(first+i)*T+t] += frac_value ;
-//                    }
-//                }
-//            }
-//        }
-
-
-//        cout << "solution x frac: " << endl;
-
-//        for (int t=0 ; t < T ; t++) {
-//            for (int i=0 ; i <n ; i++) {
-//                cout << x_frac[i*T+t] << " " ;
-//            }
-//            cout << endl ;
-//        }
-//    }
-
-    cout << "ici" << endl;
 
     //////////////////////
     //////   STATS   /////
@@ -364,18 +310,22 @@ int main(int argc, char** argv)
 
     fichier << n << " & " << T << " & " << id ;
     fichier << " &  " << SCIPgetNNodes(scip) ;
+    fichier << " & " << Master_ptr->nbIntUpSet ;
+    fichier << " &  " << SCIPgetNLPIterations(scip) ;
     fichier << " & " << SCIPgetNPricevarsFound(scip) ;
     //fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
 //    if (param.TimeStepDec && !param.DynProgTime) {
 //        fichier << " & " << pricerTime->nbCallsToCplex ;
 //        fichier << " & " << MasterTime.cumul_resolution_pricing ;
 //    }
+
     fichier << " &  " << SCIPgetSolvingTime(scip) ;
     //fichier << " & " << temps_scip  ;
-    fichier << " &  " << SCIPgetNLPIterations(scip) ;
     fichier << " &  " << SCIPgetGap(scip);
-    //fichier << " & " << MasterTime.nbIntUpSet ;
-    fichier << " &  " << SCIPgetDualbound(scip);
+    fichier << " &  " << SCIPgetDualboundRoot(scip) ;
+    fichier << " &  " << SCIPgetDualbound(scip) ;
+    fichier << " &  " << SCIPgetPrimalbound(scip) ;
+    fichier <<" \\\\ " << endl ;
 
 
     //////////////////////
@@ -389,10 +339,21 @@ int main(int argc, char** argv)
     //        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
     //    }
 
-    fichier << "& " << checker.getLRValue() ; // RL
+    checker.getIntegerObjValue();
+
+    fichier << n << " & " << T << " & " << id ;
+    fichier << " & " << checker.nbNodes ;
+    fichier << " & - " ;
+    fichier << " & - " ;
+    fichier << " & - " ;
+    fichier << " & " << checker.cpuTime ;
+    fichier << " & " << checker.gap ;
+   // fichier << "& " << checker.getLRValue() ; // RL
     fichier << "& " << checker.getLRCplex() ; // RL CPLEX
-    //fichier << " & " << checker.getIntegerObjValue(); // OPT
+    fichier << " & " << checker.DualBound ;
+    fichier << " & " << checker.PrimalBound ; // OPT
     fichier <<" \\\\ " << endl ;
+    fichier << endl;
 
 
     //    cout << "check x_frac: " << endl ;

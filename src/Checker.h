@@ -25,7 +25,13 @@ class CplexChecker {
   IloBoolVarArray u;
   IloNumVarArray pp ;
 
-  double IntegerObj;
+  double PrimalBound;
+  double DualBound ;
+  double nbNodes;
+  double cpuTime ;
+  double gap ;
+
+
   double LRValue ;
   double LRCplexVal ;
 

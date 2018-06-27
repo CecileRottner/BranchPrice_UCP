@@ -48,7 +48,7 @@ ObjPricerSite::~ObjPricerSite()
  */
 SCIP_DECL_PRICERINIT(ObjPricerSite::scip_init)
 {
-    cout<<"**************PRICER INIT************ "<<endl;
+    //cout<<"**************PRICER INIT************ "<<endl;
 
     int T = inst->getT() ;
     // demand constraints
@@ -211,7 +211,7 @@ void ObjPricerSite::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Fark
 void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas             /**< SCIP data structure */)
 {
 #ifdef OUTPUT_PRICER
-    cout<<"**************PRICER************ "<< endl ;
+   // cout<<"**************PRICER************ "<< endl ;
     // SCIPprintBestSol(scip, NULL, FALSE);
 #endif
 
@@ -290,7 +290,7 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
 
 #ifdef OUTPUT_PRICER
     SCIPwriteTransProblem(scip, "ucp.lp", "lp", FALSE);
-    cout<<"************END PRICER******************"<<endl;
+    //cout<<"************END PRICER******************"<<endl;
 #endif
 
 }
