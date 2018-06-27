@@ -19,17 +19,6 @@ using namespace std;
 
 #define SCIP_DEBUG
 
-// Data associated to an constraint (each artificial constraint represents one branching constraint)
-struct SCIP_ConsData {
-    int VarX ; // =1 si la variable branchée est un x. Si branchement sur u: VarX=0
-    int bound ; // variable fixée à 1 ou à 0
-    int unit; // which unit of the site
-    int time ;
-    int site ;
-    IloRange BranchConstraint ;
-    list<Master_Variable*> L_var_bound;
-};
-
 
 
 
@@ -46,11 +35,11 @@ class BranchConsHandler : public scip::ObjConshdlr {
 
 public :
 
-    ObjPricerUCP *pricer_ptr;
-    MasterSite_Model* Master ;
+    ObjPricerUCP *Pricer;
+    Master_Model* Master ;
     InstanceUCP* inst ;
 
-    BranchConsHandler(SCIP* scip, ObjPricerUCP* ppricer_ptr) :
+    BranchConsHandler(SCIP* scip, Master_Model* m,  ObjPricerUCP* p) :
         scip::ObjConshdlr(
             scip,
             "BranchConsHandler",                    // const char *  	name,
@@ -63,9 +52,9 @@ public :
             )
 
     {
-        pricer_ptr=ppricer_ptr;
-        Master = pricer_ptr->Master ;
-        inst = pricer_ptr->inst ;
+        Pricer = p ;
+        Master = m ;
+        inst = p->inst ;
     }
 
 

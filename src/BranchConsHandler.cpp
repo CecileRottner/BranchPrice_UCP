@@ -31,14 +31,20 @@ void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, int s
     consdata->time = time ;
     consdata->site = site ;
 
-    if (pricer != NULL) {
-        if (!pricer->Param.TimeStepDec) {
-            int T = pricer->inst->getT() ;
-            if (VarX) {
-                consdata->BranchConstraint = ((pricer->AlgoCplex[site])->x[unit*T+time] == bound) ;
-            }
-            else {
-                consdata->BranchConstraint = ((pricer->AlgoCplex[site])->u[unit*T+time] == bound) ;
+
+    if (!pricer->Param.TimeStepDec) { // CAS D'UNE DECOMPOSITION PAR SITE: on a besoin de créer les contraintes de branchement (de type cplex) dans consdata
+        ObjPricerSite* PricerSite ;
+        PricerSite = dynamic_cast<ObjPricerSite*> (pricer) ;
+
+        if (PricerSite != NULL) {
+            if (!pricer->Param.TimeStepDec) {
+                int T = pricer->inst->getT() ;
+                if (VarX) {
+                    consdata->BranchConstraint = ((PricerSite->AlgoCplex[site])->x[unit*T+time] == bound) ;
+                }
+                else {
+                    consdata->BranchConstraint = ((PricerSite->AlgoCplex[site])->u[unit*T+time] == bound) ;
+                }
             }
         }
     }
@@ -68,36 +74,21 @@ void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, int s
 //////////////////////////////////////////////
 SCIP_RETCODE BranchConsHandler::scip_active(SCIP * scip, SCIP_CONSHDLR * conshdlr, SCIP_CONS * cons) {
 #ifdef OUTPUT_HANDLER
-    cout << " --------------------- Active handler ---------------  \n";
+    cout << " --------------------- Active branch cons handler ---------------  \n";
 #endif
-
-    int T = inst->getT() ;
 
     SCIP_ConsData *consdata = SCIPconsGetData(cons);
 
     cout << "Active node: unit " << consdata->unit << ", time " << consdata->time << " at bound " << consdata->bound<< endl;
 
-    //On ajoute la contrainte dans cons au modèle Cplex du sous problème correspondant
-    pricer_ptr->AlgoCplex[consdata->site]->model.add(consdata->BranchConstraint) ;
+    //////On ajoute la contrainte dans cons au modèle Cplex du sous problème correspondant
+    //pricer_ptr->AlgoCplex[consdata->site]->model.add(consdata->BranchConstraint) ;
+    Pricer->addVarBound(consdata) ;
 
-    //On met à 0 les lambda incompatibles avec la contrainte
-    consdata->L_var_bound.clear() ; // L_var_bound stocke les variables dont la borne a été effectivement changée (ie elle n'était pas déjà à 0)
 
-    list<Master_Variable*>::const_iterator itv;
+    /////On met à 0 les lambda incompatibles avec la contrainte
+    Master->discardVar(scip, consdata) ;
 
-    for (itv = Master->L_var.begin(); itv!=Master->L_var.end(); itv++) {
-        if ((*itv)->Site == consdata->site) {
-            if ((*itv)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
-
-                SCIP_Real old_bound =  SCIPgetVarUbAtIndex(scip, (*itv)->ptr, NULL, 0) ;
-               // cout << "variable " << SCIPvarGetName((*itv)->ptr) << ", old bound: " << old_bound << endl ;
-                if (!SCIPisZero(scip,old_bound)) {
-                    SCIPchgVarUbNode(scip, NULL, (*itv)->ptr, 0) ;
-                    consdata->L_var_bound.push_back((*itv)) ;
-                }
-            }
-        }
-    }
 
 
 #ifdef OUTPUT_HANDLER
@@ -112,30 +103,32 @@ SCIP_RETCODE BranchConsHandler::scip_active(SCIP * scip, SCIP_CONSHDLR * conshdl
 //////////////////////////////////////////////
 SCIP_RETCODE BranchConsHandler::scip_deactive(SCIP* scip, SCIP_CONSHDLR* conshdlr, SCIP_CONS*cons){
 #ifdef OUTPUT_HANDLER
-    cout << " --------------------- Desactive handler ---------------  \n";
+    cout << " --------------------- Desactive branch cons handler ---------------  \n";
 #endif
 
 
     SCIP_ConsData *consdata = SCIPconsGetData(cons);
 
     cout << "Deactive node: unit " << consdata->unit << ", time " << consdata->time << " at bound " << consdata->bound<< endl;
-    //On retire la contrainte dans cons au modèle Cplex du sous problème correspondant
-    pricer_ptr->AlgoCplex[consdata->site]->model.remove(consdata->BranchConstraint) ;
+    /////On retire la contrainte dans cons au modèle Cplex du sous problème correspondant
+    Pricer->removeVarBound(consdata);
+    //pricer_ptr->AlgoCplex[consdata->site]->model.remove(consdata->BranchConstraint) ;
 
 
-    //On remet à +inf les lambda qui étaient incompatibles avec la contrainte de branchement
-    int T = inst->getT() ;
-    list<Master_Variable*>::const_iterator itv;
+    ////On remet à +inf les lambda qui étaient incompatibles avec la contrainte de branchement
+    Master->restoreVar(scip, consdata);
+//    int T = inst->getT() ;
+//    list<Master_Variable*>::const_iterator itv;
 
-    for (itv = consdata->L_var_bound.begin(); itv!=consdata->L_var_bound.end(); itv++) {
-        if ((*itv)->Site == consdata->site) {
-            if ((*itv)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
-                //cout << "variable " << SCIPvarGetName((*itv)->ptr) << ": bound a l'infini" << endl ;
-                SCIPchgVarUbNode(scip, NULL, (*itv)->ptr, SCIPinfinity(scip)) ;
-            }
-        }
-    }
-    consdata->L_var_bound.clear() ;
+//    for (itv = consdata->L_var_bound.begin(); itv!=consdata->L_var_bound.end(); itv++) {
+//        if ((*itv)->Site == consdata->site) {
+//            if ((*itv)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
+//                //cout << "variable " << SCIPvarGetName((*itv)->ptr) << ": bound a l'infini" << endl ;
+//                SCIPchgVarUbNode(scip, NULL, (*itv)->ptr, SCIPinfinity(scip)) ;
+//            }
+//        }
+//    }
+//    consdata->L_var_bound.clear() ;
 
     return SCIP_OKAY;
 }
@@ -151,7 +144,7 @@ SCIP_RETCODE BranchConsHandler::scip_trans(
         ) {
 
 #ifdef OUTPUT_HANDLER
-    std::cout << " --------------------- Trans handler ---------------  \n";
+    std::cout << " --------------------- Trans branch cons handler ---------------  \n";
 #endif
 
     SCIP_CONSDATA* sourcedata;
@@ -194,47 +187,21 @@ SCIP_RETCODE BranchConsHandler::scip_check(
         SCIP_RESULT*       result) {
 
 #ifdef OUTPUT_HANDLER
-    std::cout << " --------------------- Check handler ---------------  \n";
+    std::cout << " --------------------- Check branch cons handler ---------------  \n";
 #endif
 
     //cout << "solution du PMR:" << endl ;
     //SCIPprintSol(scip, NULL, NULL, FALSE);
 
-    // Search for fractional x variables
+    ////// Search for fractional x variables
 
-    int T = pricer_ptr->inst->getT() ;
-    int n = pricer_ptr->inst->getn() ;
-
-    vector<double> x_frac = vector<double>(n*T, 0) ;
-
-    list<Master_Variable*>::const_iterator itv;
-    SCIP_Real frac_value;
-
-    for (itv = Master->L_var.begin(); itv!=Master->L_var.end(); itv++) {
-
-        frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
-
-        int site = (*itv)->Site ;
-        int first = pricer_ptr->inst->firstUnit(site) ;
-        for (int i=0 ; i < pricer_ptr->inst->nbUnits(site) ; i++) {
-            for (int t=0 ; t < T ; t++) {
-                if ((*itv)->UpDown_plan[i*T+t] > eps) {
-                    x_frac[(first+i)*T+t] += frac_value ;
-                }
-            }
-        }
-    }
-
-//    for (int t=0 ; t < T ; t++) {
-//        for (int i=0 ; i <n ; i++) {
-//            cout << x_frac[i*T+t] << " " ;
-//        }
-//        cout << endl ;
-//    }
+    int T = inst->getT() ;
+    int n = inst->getn() ;
+    Master->computeFracSol(scip) ;
 
     for (int i=0 ; i < n ; i++) {
         for (int t=0 ; t < T ; t++) {
-            if ( (x_frac[i*T+t] < 1-eps) && (x_frac[i*T+t] > eps) ) {
+            if ( (Master->x_frac[i*T+t] < 1-eps) && (Master->x_frac[i*T+t] > eps) ) {
                 cout << "solution fractionnaire" << endl;
                 *result=SCIP_INFEASIBLE;
                 return SCIP_OKAY;
@@ -257,7 +224,7 @@ SCIP_RETCODE BranchConsHandler::scip_enfolp(
         SCIP_RESULT*       result) {
 
 #ifdef OUTPUT_HANDLER
-    std::cout << " --------------------- Enfolp handler ---------------  \n";
+    std::cout << " --------------------- Enfolp branch cons handler ---------------  \n";
 #endif
 
 
@@ -276,7 +243,7 @@ SCIP_RETCODE BranchConsHandler::scip_enfops(
         SCIP_RESULT*       result) {
 
 #ifdef OUTPUT_HANDLER
-    std::cout << " --------------------- Enfops handler ---------------  \n";
+    std::cout << " --------------------- Enfops branch cons handler ---------------  \n";
 #endif
 
 
@@ -293,7 +260,7 @@ SCIP_RETCODE BranchConsHandler::scip_lock(
         int                nlocksneg) {
 
 #ifdef OUTPUT_HANDLER
-    std::cout << " --------------------- Lock handler ---------------  \n";
+    std::cout << " --------------------- Lock branch cons handler ---------------  \n";
 #endif
 
 
@@ -309,7 +276,7 @@ SCIP_RETCODE BranchConsHandler::scip_sepalp(
         SCIP_RESULT*       result) {
 
 #ifdef OUTPUT_HANDLER
-    std::cout << " --------------------- Sepalp handler ---------------  \n";
+    std::cout << " --------------------- Sepalp branch cons  handler ---------------  \n";
 #endif
 
 
@@ -321,7 +288,7 @@ SCIP_RETCODE BranchConsHandler::scip_sepasol(SCIP* scip, SCIP_CONSHDLR* conshdlr
                                              int nconss, int nusefulconss, SCIP_SOL* sol, SCIP_RESULT* result){
 
 #ifdef OUTPUT_HANDLER
-    std::cout << " --------------------- Sepasol handler ---------------  \n";
+    std::cout << " --------------------- Sepasol branch cons handler ---------------  \n";
 #endif
 
     *result = SCIP_DIDNOTRUN;

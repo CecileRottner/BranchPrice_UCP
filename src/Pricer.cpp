@@ -16,18 +16,16 @@ using namespace scip;
  *
  *  An alternative is to have a problem data class which allows to access the data.
  */
-ObjPricerUCP::ObjPricerUCP(
+ObjPricerSite::ObjPricerSite(
         SCIP*                                scip,          /**< SCIP pointer */
         const char*                         pp_name,      /**< name of pricer */
         MasterSite_Model*                        M,
         InstanceUCP*                        instance,
         const Parameters &                  param
         ):
-    ObjPricer(scip, pp_name, "Find production plans with negative reduced costs for each site.", 0, TRUE), Param(param)
+    ObjPricerUCP(scip, pp_name, instance, param)
 {
-    inst=instance ;
-    Master=M;
-
+    Master=M ;
     AlgoCplex = vector<CplexPricingAlgo*>(inst->getS(), NULL) ;
 
     for (int s=0 ; s < inst->getS() ; s++) {
@@ -37,7 +35,7 @@ ObjPricerUCP::ObjPricerUCP(
 
 
 /** Destructs the pricer object. */
-ObjPricerUCP::~ObjPricerUCP()
+ObjPricerSite::~ObjPricerSite()
 {
     cout<<"Destructeur du pricer"<<endl;
 }
@@ -48,12 +46,14 @@ ObjPricerUCP::~ObjPricerUCP()
  *  the variables and constraints in the transformed problem from the references in the original
  *  problem.
  */
-SCIP_DECL_PRICERINIT(ObjPricerUCP::scip_init)
+SCIP_DECL_PRICERINIT(ObjPricerSite::scip_init)
 {
+    cout<<"**************PRICER INIT************ "<<endl;
+
     int T = inst->getT() ;
     // demand constraints
     for (int t = 0 ; t < T ; t++) {
-        SCIPgetTransformedCons(scip, Master->demand_cstr[t], &(Master->demand_cstr[t]));
+        SCIPgetTransformedCons(scip, Master->demand_cstr.at(t), &(Master->demand_cstr.at(t)));
     }
 
     //power limits
@@ -78,7 +78,7 @@ SCIP_DECL_PRICERINIT(ObjPricerUCP::scip_init)
         }
     }
 
-
+    cout<<"**************FIN PRICER INIT************ "<<endl ;
     //variables ?
 
 
@@ -99,7 +99,7 @@ SCIP_DECL_PRICERINIT(ObjPricerUCP::scip_init)
  *  - SCIP_SUCCESS    : at least one improving variable was found, or it is ensured that no such variable exists
  *  - SCIP_DIDNOTRUN  : the pricing process was aborted by the pricer, there is no guarantee that the current LP solution is optimal
  */
-//SCIP_DECL_PRICERREDCOST(ObjPricerUCP::scip_redcost)
+//SCIP_DECL_PRICERREDCOST(ObjPricerSite::scip_redcost)
 //{
 //    SCIPdebugMsg(scip, "call scip_redcost ...\n");
 //    /* set result pointer, see above */
@@ -109,7 +109,7 @@ SCIP_DECL_PRICERINIT(ObjPricerUCP::scip_init)
 //    return SCIP_OKAY;
 //}
 
-SCIP_RETCODE ObjPricerUCP::scip_redcost(SCIP* scip, SCIP_PRICER* pricer, SCIP_Real* lowerbound, SCIP_Bool* stopearly, SCIP_RESULT* result)
+SCIP_RETCODE ObjPricerSite::scip_redcost(SCIP* scip, SCIP_PRICER* pricer, SCIP_Real* lowerbound, SCIP_Bool* stopearly, SCIP_RESULT* result)
 {
 
     SCIPdebugMsg(scip, "call scip_redcost ...\n");
@@ -124,7 +124,7 @@ SCIP_RETCODE ObjPricerUCP::scip_redcost(SCIP* scip, SCIP_PRICER* pricer, SCIP_Re
 
 }
 
-SCIP_RETCODE ObjPricerUCP::scip_farkas( SCIP* scip, SCIP_PRICER* pricer, SCIP_RESULT* result ){
+SCIP_RETCODE ObjPricerSite::scip_farkas( SCIP* scip, SCIP_PRICER* pricer, SCIP_RESULT* result ){
 
     SCIPdebugMsg(scip, "call scip_farkas ...\n");
 
@@ -140,7 +140,7 @@ SCIP_RETCODE ObjPricerUCP::scip_farkas( SCIP* scip, SCIP_PRICER* pricer, SCIP_RE
 
 
 
-void ObjPricerUCP::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Farkas) {
+void ObjPricerSite::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Farkas) {
     ///// RECUPERATION DES COUTS DUAUX
 
     int print = 0 ;
@@ -208,10 +208,10 @@ void ObjPricerUCP::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Farka
 
 }
 
-void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas             /**< SCIP data structure */)
+void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas             /**< SCIP data structure */)
 {
 #ifdef OUTPUT_PRICER
-    cout<<"**************PRICER************ ";
+    cout<<"**************PRICER************ "<< endl ;
     // SCIPprintBestSol(scip, NULL, FALSE);
 #endif
 
@@ -293,6 +293,14 @@ void ObjPricerUCP::pricingUCP( SCIP*              scip  , bool Farkas           
     cout<<"************END PRICER******************"<<endl;
 #endif
 
+}
+
+void ObjPricerSite::addVarBound(SCIP_ConsData* consdata) {
+    AlgoCplex[consdata->site]->model.add(consdata->BranchConstraint) ;
+}
+
+void ObjPricerSite::removeVarBound(SCIP_ConsData* consdata) {
+    AlgoCplex[consdata->site]->model.remove(consdata->BranchConstraint) ;
 }
 
 

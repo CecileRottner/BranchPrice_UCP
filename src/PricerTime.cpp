@@ -23,9 +23,8 @@ ObjPricerTimeUCP::ObjPricerTimeUCP(
         InstanceUCP*                        instance,
         const Parameters &                  param
         ):
-    ObjPricer(scip, pp_name, "Find production plans with negative reduced costs for time step.", 0, TRUE), Param(param)
+    ObjPricerUCP(scip, pp_name, instance, param)
 {
-    inst=instance ;
     Master=M;
 
     int T= inst->getT() ;
@@ -64,6 +63,7 @@ ObjPricerTimeUCP::~ObjPricerTimeUCP()
 SCIP_DECL_PRICERINIT(ObjPricerTimeUCP::scip_init)
 {
 
+    cout<<"**************PRICER INIT************ "<<endl;
     int T = inst->getT() ;
     int n = inst->getn();
 
@@ -93,7 +93,7 @@ SCIP_DECL_PRICERINIT(ObjPricerTimeUCP::scip_init)
         SCIPgetTransformedCons( scip, Master->convexity_cstr.at(t), &(Master->convexity_cstr.at(t)) );
     }
 
-
+    cout<<"**************FIN PRICER INIT************ "<<endl;
     //variables ?
     //pour l'instant on n'a pas besoin de les manipuler a priori
 
@@ -409,6 +409,28 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
     cout<<"************END PRICER******************"<<endl;
 #endif
 
+}
+
+void ObjPricerTimeUCP::addVarBound(SCIP_ConsData* consdata) {
+
+    int t = consdata->time ;
+    int i = consdata->unit ;
+
+    if (AlgoDynProg.at(t) != NULL) {
+        if (consdata->bound == 0) {
+            (AlgoDynProg.at(t))->W -= inst->getPmax(i) ;
+            (AlgoDynProg.at(t))->init.at(i) = 0 ;
+        }
+        else {
+            (AlgoDynProg.at(t))->init.at(i) = 1 ;
+        }
+    }
+    else {
+        cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
+    }
+}
+
+void ObjPricerTimeUCP::removeVarBound(SCIP_ConsData* consdata) {
 }
 
 

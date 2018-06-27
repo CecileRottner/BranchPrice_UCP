@@ -20,10 +20,29 @@
 using namespace std;
 using namespace scip;
 
+
+
+/////////////////////////////////////
+////////// BRANCHING CONS DATA //////
+/////////////////////////////////////
+
+
+// Data associated to a constraint (each artificial constraint represents one branching constraint)
+struct SCIP_ConsData {
+    int VarX ; // =1 si la variable branchée est un x. Si branchement sur u: VarX=0
+    int bound ; // variable fixée à 1 ou à 0
+    int unit; // which unit of the site
+    int time ;
+    int site ;
+    IloRange BranchConstraint ;
+    list<SCIP_VAR*> L_var_bound;
+};
+
+
+
 /////////////////////////////////////
 ////////// INTERVAL UP SET //////////
 /////////////////////////////////////
-
 
 class IneqIntUpSet {
 public:
@@ -59,11 +78,16 @@ public:
         x_frac.resize(n*T,0);
     }
     virtual void computeFracSol(SCIP* scip) = 0;  // = 0 signifie "virtuelle pure"
+
+    virtual void discardVar(SCIP* scip, SCIP_ConsData* consdata) = 0;
+    virtual void restoreVar(SCIP* scip, SCIP_ConsData* consdata) = 0;
+
+    virtual ~Master_Model() {}
 };
 
-//////////////////////////////////////////////
-////////// DECOMPOSITION PAR UNITES //////////
-//////////////////////////////////////////////
+///////////////////////////////
+////////// VARIABLES //////////
+///////////////////////////////
 
 
 class Master_Variable{
@@ -84,6 +108,32 @@ public:
     void computeCost(InstanceUCP* inst, const Parameters & Param) ;
 
 };
+
+
+
+class MasterTime_Variable{
+public:
+
+    /// Keep a pointer on every variable of the Master program
+    SCIP_VAR* ptr;
+
+    /// time period corresponding to variable ptr
+    int time ;
+
+    //// up/down plan corresponding to ptr
+    IloNumArray UpDown_plan ;
+
+    double cost ;
+
+    MasterTime_Variable(int site, IloNumArray UpDown, double costFromSubPb) ;
+
+};
+
+
+////////////////////////////////////////////////////
+////////// MASTER -- DECOMPOSITION PAR SITES ///////
+////////////////////////////////////////////////////
+
 
 class MasterSite_Model : public Master_Model {
 public:
@@ -109,30 +159,15 @@ public:
     void initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Variable* lambda) ;
 
     void computeFracSol(SCIP* scip) ;
+
+    void discardVar(SCIP* scip, SCIP_ConsData* consdata) ;
+    void restoreVar(SCIP* scip, SCIP_ConsData* consdata) ;
 };
 
 
 ////////////////////////////////////////////////////
 ////////// DECOMPOSITION PAR PAS DE TEMPS //////////
 ////////////////////////////////////////////////////
-
-class MasterTime_Variable{
-public:
-
-    /// Keep a pointer on every variable of the Master program
-    SCIP_VAR* ptr;
-
-    /// time period corresponding to variable ptr
-    int time ;
-
-    //// up/down plan corresponding to ptr
-    IloNumArray UpDown_plan ;
-
-    double cost ;
-
-    MasterTime_Variable(int site, IloNumArray UpDown, double costFromSubPb) ;
-
-};
 
 
 class MasterTime_Model : public Master_Model {
@@ -141,7 +176,6 @@ public:
     double cumul_resolution_pricing ;
 
     IloEnv env;
-
 
     // Keep a pointer on every constraint of the MasterTime program (except intrasite constraints which do not depend on lambda variables)
     vector<SCIP_CONS*> logical;
@@ -171,7 +205,11 @@ public:
     void createColumns(SCIP* scip, IloNumArray x, IloNumArray p) ;
 
     void addIntUpSet(SCIP* scip, IneqIntUpSet* Iup) ;// ajoute les coef necessaires dans l'inégalité, ajoute l'inégalité à SCIP, met à jour les vecteurs IUP_t0 et IUP_t1
+
     void computeFracSol(SCIP* scip) ;
+
+    void discardVar(SCIP* scip, SCIP_ConsData* consdata) ;
+    void restoreVar(SCIP* scip, SCIP_ConsData* consdata) ;
 
 };
 #endif /* MASTER INCLUDED */

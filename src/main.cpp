@@ -118,8 +118,8 @@ int main(int argc, char** argv)
     //////  SCIP INITIALIZATION    /////
     ////////////////////////////////////
 
-    clock_t start;
-    start = clock();
+//    clock_t start;
+//    start = clock();
 
     // problem initialization
     SCIP *scip=NULL;
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
     SCIPincludeHeurRootsoldiving(scip);
     SCIPincludeHeurRounding(scip);
 
-    //SCIPsetLongintParam(scip, "limits/nodes", 1);
+   // SCIPsetLongintParam(scip, "limits/nodes", 1);
     SCIPsetRealParam(scip, "limits/time", 3600);
 
     SCIPincludeDispDefault(scip) ;
@@ -184,77 +184,62 @@ int main(int argc, char** argv)
     /* create empty problem */
     SCIPcreateProb(scip, "UCP", 0, 0, 0, 0, 0, 0, 0);
 
+    ////////////////////////////////////////////////////////
+    //////  MASTER & PRICER PROBLEMS INITIALIZATION    /////
+    ////////////////////////////////////////////////////////
 
-
-    //////////////////////////////////////////////
-    //////  MASTER PROBLEM INITIALIZATION    /////
-    //////////////////////////////////////////////
-
-
-    // Initialisation du checker
     CplexChecker checker = CplexChecker(inst, param) ;
 
-    //Master problem
-
     Master_Model* Master_ptr;
-//    MasterSite_Model Master(inst, param) ;
-//    MasterTime_Model MasterTime(inst, param) ;
-
-    if (param.TimeStepDec) { // décomposition par pas de temps
-       // Master.initScipMasterTimeModel(scip);
-        Master_ptr = new MasterTime_Model(inst, param) ;
-        Master_ptr->initScipMasterTimeModel(scip);
-    }
-
-    else { // décomposition classique
-        cout << "ici" << endl ;
-        Master_ptr = new MasterSite_Model(inst, param) ;
-        Master_ptr->InitScipMasterModel(scip, inst) ;
-    }
-
-
-//    if (param.heuristicInit) {
-//        IloNumArray x(env, n*T) ;
-//        IloNumArray p(env, n*T) ;
-//        checker.CplexPrimalHeuristic(x,p);
-//        MasterTime.createColumns(scip, x,p);
-//    }
-
-    ////////////////////////////////
-    //////  PRICING PROBLEM    /////
-    ////////////////////////////////
+    ObjPricerUCP* Pricer = NULL ;
 
     static const char* PRICER_NAME = "Pricer_UCP";
 
-    // include UCP pricer
+    if (param.TimeStepDec) { //// Décomposition par pas de temps
+        Master_ptr = new MasterTime_Model(inst, param) ;
 
-    ObjPricerTimeUCP* pricerTime ;
-    ObjPricerUCP* pricer ;
-
-    if (param.TimeStepDec) {
         MasterTime_Model* MT ;
         MT = dynamic_cast<MasterTime_Model*> (Master_ptr) ;
         if (MT != NULL) {
-            pricerTime = new ObjPricerTimeUCP(scip, PRICER_NAME, MT, inst, param);
-            SCIPincludeObjPricer(scip, pricerTime, true);
-            SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
-        }
 
-    }
-    else {
-        MasterSite_Model* MS ;
-        MS = dynamic_cast<MasterSite_Model*> (Master_ptr) ;
-        if (MS != NULL) {
-            pricer = new ObjPricerUCP(scip, PRICER_NAME, MS, inst, param);
-            SCIPincludeObjPricer(scip, pricer, true);
+            ///Initialisation du master
+            MT->initScipMasterTimeModel(scip);
+
+            /// Initialisation du pricer
+            Pricer = new ObjPricerTimeUCP(scip, PRICER_NAME, MT, inst, param);
+            SCIPincludeObjPricer(scip, Pricer, true);
             SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
         }
     }
+
+    else { //// Décomposition par sites
+         Master_ptr = new MasterSite_Model(inst, param) ;
+
+         MasterSite_Model* MS ;
+         MS = dynamic_cast<MasterSite_Model*> (Master_ptr) ;
+         if (MS != NULL) {
+
+             cout << "MS non NULL" << endl ;
+             ///Initialisation du master
+             MS->InitScipMasterModel(scip, inst) ;
+
+             /// Initialisation du pricer
+             Pricer = new ObjPricerSite(scip, PRICER_NAME, MS, inst, param);
+             SCIPincludeObjPricer(scip, Pricer, true);
+             SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
+         }
+    }
+
+    //    if (param.heuristicInit) {
+    //        IloNumArray x(env, n*T) ;
+    //        IloNumArray p(env, n*T) ;
+    //        checker.CplexPrimalHeuristic(x,p);
+    //        MasterTime.createColumns(scip, x,p);
+    //    }
+
 
     cout<<"Write init pl"<<endl;
     SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
-
-
 
     //////////////////////////////////
     /////  VALID INEQUALITIES    /////
@@ -272,8 +257,8 @@ int main(int argc, char** argv)
     /////////////////////////
 
     if (param.IP) {
-        BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, pricer);
-        BranchingRule* branchRule = new BranchingRule(scip, inst,  Master_ptr, pricer);
+        BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, Master_ptr, Pricer);
+        BranchingRule* branchRule = new BranchingRule(scip, inst,  Master_ptr, Pricer);
 
         SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
         SCIPincludeObjBranchrule(scip, branchRule, TRUE);
@@ -283,7 +268,18 @@ int main(int argc, char** argv)
     //////  SOLVE    /////
     //////////////////////
 
+    cout << "Pricer: " << Pricer->inst->getn() << endl ;
+    cout << "Master: " << Master_ptr->inst->getn() << endl;
+
+    MasterSite_Model* MS ;
+    MS = dynamic_cast<MasterSite_Model*> (Master_ptr) ;
+    if (MS != NULL) {
+        cout << MS->demand_cstr.size() << endl;
+        cout << MS->convexity_cstr.size() << endl ;
+    }
+
     cout << "resolution..." << endl ;
+
     SCIPsolve(scip);
     cout << "fin resolution" << endl ;
    // double temps_scip = ( clock() - start ) / (double) CLOCKS_PER_SEC;
@@ -364,12 +360,12 @@ int main(int argc, char** argv)
 
     fichier.precision(7);
 
-    SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
+   // SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
 
     fichier << n << " & " << T << " & " << id ;
     fichier << " &  " << SCIPgetNNodes(scip) ;
     fichier << " & " << SCIPgetNPricevarsFound(scip) ;
-    fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
+    //fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
 //    if (param.TimeStepDec && !param.DynProgTime) {
 //        fichier << " & " << pricerTime->nbCallsToCplex ;
 //        fichier << " & " << MasterTime.cumul_resolution_pricing ;

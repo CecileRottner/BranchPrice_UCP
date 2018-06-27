@@ -13,26 +13,23 @@ SCIP_RETCODE BranchingRule::scip_execlp(SCIP* scip, SCIP_BRANCHRULE* branchrule,
     cout << "Nombre de noeuds actuel : " << SCIPgetNNodes(scip) << std::endl;
 #endif
 
-    SCIP_ConsData *consdata;
 
-    SCIP_NODE* node = SCIPgetCurrentNode(scip);
-
-
-    if (node->conssetchg!=NULL) {
-        consdata=SCIPconsGetData(node->conssetchg->addedconss[0]);
-        //SCIP_CONSSETCHG* SCIP_Node::conssetchg --> constraint set changes at this node or NULL
-        //typedef struct SCIP_ConsSetChg SCIP_CONSSETCHG --> tracks additions and removals of the set of active constraints
-#ifdef OUTPUT_BRANCHRULE
-        cout<<"Consdata non null"<<endl;
-#endif
-    }
-    else {
-        consdata=NULL;
-#ifdef OUTPUT_BRANCHRULE
-        cout<<"Consdata null"<<endl;
-#endif
-
-    }
+//    SCIP_NODE* node = SCIPgetCurrentNode(scip);
+//    SCIP_ConsData *consdata;
+//    if (node->conssetchg!=NULL) {
+//        consdata=SCIPconsGetData(node->conssetchg->addedconss[0]);
+//        //SCIP_CONSSETCHG* SCIP_Node::conssetchg --> constraint set changes at this node or NULL
+//        //typedef struct SCIP_ConsSetChg SCIP_CONSSETCHG --> tracks additions and removals of the set of active constraints
+//#ifdef OUTPUT_BRANCHRULE
+//        cout<<"Consdata non null"<<endl;
+//#endif
+//    }
+//    else {
+//        consdata=NULL;
+//#ifdef OUTPUT_BRANCHRULE
+//        cout<<"Consdata null"<<endl;
+//#endif
+//    }
 
     int T = master->T ;
 
@@ -52,8 +49,8 @@ SCIP_RETCODE BranchingRule::scip_execlp(SCIP* scip, SCIP_BRANCHRULE* branchrule,
 
     SCIP_Real bestfrac = 1;
     SCIP_Real tmp;
-    int unit ;
-    int time ;
+    int unit = -1 ;
+    int time = -1 ;
 
     for (int i=0 ; i < master->n ; i++) {
         for (int t=0 ; t < T ; t++) {

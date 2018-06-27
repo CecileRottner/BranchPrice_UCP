@@ -43,7 +43,6 @@ void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
 }
 
 
-
 void MasterSite_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) {
 
     int s = lambda->Site ;
@@ -471,4 +470,42 @@ void MasterSite_Model::computeFracSol(SCIP* scip) {
             }
         }
     }
+}
+
+
+void MasterSite_Model::discardVar(SCIP* scip, SCIP_ConsData* consdata) {
+
+    /////On met à 0 les lambda incompatibles avec la contrainte
+
+     consdata->L_var_bound.clear() ; // L_var_bound stocke les variables scip dont la borne a été effectivement changée (ie elle n'était pas déjà à 0)
+
+     list<Master_Variable*>::const_iterator itv;
+
+     for (itv = L_var.begin(); itv!=L_var.end(); itv++) {
+         if ((*itv)->Site == consdata->site) {
+             if ((*itv)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
+
+                 SCIP_Real old_bound =  SCIPgetVarUbAtIndex(scip, (*itv)->ptr, NULL, 0) ;
+
+                 ///  L_var_bound est mis à jour
+                 if (!SCIPisZero(scip,old_bound)) {
+                     SCIPchgVarUbNode(scip, NULL, (*itv)->ptr, 0) ;
+                     consdata->L_var_bound.push_back((*itv)->ptr) ;
+                 }
+             }
+         }
+     }
+}
+
+void MasterSite_Model::restoreVar(SCIP* scip, SCIP_ConsData* consdata) {
+
+    ////On remet à +inf les lambda qui étaient incompatibles avec la contrainte de branchement
+
+    list<SCIP_VAR*>::const_iterator itv;
+
+    for (itv = consdata->L_var_bound.begin(); itv!=consdata->L_var_bound.end(); itv++) {
+        SCIPchgVarUbNode(scip, NULL, (*itv), SCIPinfinity(scip)) ;
+    }
+    consdata->L_var_bound.clear() ;
+
 }
