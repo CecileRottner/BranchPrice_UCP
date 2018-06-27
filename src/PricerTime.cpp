@@ -127,6 +127,12 @@ SCIP_RETCODE ObjPricerTimeUCP::scip_redcost(SCIP* scip, SCIP_PRICER* pricer, SCI
 
     SCIPdebugMsg(scip, "call scip_redcost ...\n");
 
+//    if( SCIPgetDepth(scip) != 0 )
+//    {
+//        *result = SCIP_SUCCESS;
+//        return SCIP_OKAY;
+//    }
+
     /* set result pointer, see above */
     *result = SCIP_SUCCESS;
 
@@ -140,6 +146,13 @@ SCIP_RETCODE ObjPricerTimeUCP::scip_redcost(SCIP* scip, SCIP_PRICER* pricer, SCI
 SCIP_RETCODE ObjPricerTimeUCP::scip_farkas( SCIP* scip, SCIP_PRICER* pricer, SCIP_RESULT* result ){
 
     SCIPdebugMsg(scip, "call scip_farkas ...\n");
+
+//    if( SCIPgetDepth(scip) != 0 )
+//    {
+//        *result = SCIP_SUCCESS;
+//        return SCIP_OKAY;
+//    }
+
 
     /* set result pointer, see above */
     *result = SCIP_SUCCESS;
@@ -244,6 +257,8 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
 #endif
 
     int print = 0 ;
+
+
 
   // SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
     //SCIPprintSol(scip, NULL, NULL, FALSE);

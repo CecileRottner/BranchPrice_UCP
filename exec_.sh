@@ -11,8 +11,8 @@ cat01=0
 intra=1
 
 
-n=10
-T=24
+n=20
+T=48
 sym=0
 demand_type=3
 cat01=1

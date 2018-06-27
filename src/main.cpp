@@ -95,7 +95,7 @@ int main(int argc, char** argv)
     bool DynProgTime =1 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
     bool IntraSite = 1 ; // à implémenter
     bool DemandeResiduelle = 0 ;
-    bool Iup = 1 ;
+    bool IntervalUpSet = 0 ;
     double eps = 0.0000001;
     bool heuristicInit = 0 ;
     bool DontPriceAllTimeSteps = 0;
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
     }
 
 
-    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, Iup, eps, DontPriceAllTimeSteps,
+    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime);
 
 
@@ -245,15 +245,8 @@ int main(int argc, char** argv)
     }
 
 
-
-
     cout<<"Write init pl"<<endl;
     SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
-
-    //////////////////////////////////
-    /////  VALID INEQUALITIES    /////
-    //////////////////////////////////
-
 
 
     /////////////////////////
@@ -271,9 +264,6 @@ int main(int argc, char** argv)
     //////////////////////
     //////  SOLVE    /////
     //////////////////////
-
-    cout << "Pricer: " << Pricer->inst->getn() << endl ;
-    cout << "Master: " << Master_ptr->inst->getn() << endl;
 
     MasterSite_Model* MS ;
     MS = dynamic_cast<MasterSite_Model*> (Master_ptr) ;
@@ -322,10 +312,10 @@ int main(int argc, char** argv)
     fichier << " &  " << SCIPgetSolvingTime(scip) ;
     //fichier << " & " << temps_scip  ;
     fichier << " &  " << SCIPgetGap(scip);
-    fichier << " &  " << SCIPgetDualboundRoot(scip) ;
+//    fichier << " &  " << SCIPgetDualboundRoot(scip) ;
     fichier << " &  " << SCIPgetDualbound(scip) ;
-    fichier << " &  " << SCIPgetPrimalbound(scip) ;
-    fichier <<" \\\\ " << endl ;
+ /*   fichier << " &  " << SCIPgetPrimalbound(scip) ;
+    fichier <<" \\\\ " << endl ;*/
 
 
     //////////////////////
@@ -341,16 +331,16 @@ int main(int argc, char** argv)
 
     checker.getIntegerObjValue();
 
-    fichier << n << " & " << T << " & " << id ;
+ /*   fichier << n << " & " << T << " & " << id ;
     fichier << " & " << checker.nbNodes ;
     fichier << " & - " ;
     fichier << " & - " ;
     fichier << " & - " ;
     fichier << " & " << checker.cpuTime ;
     fichier << " & " << checker.gap ;
-   // fichier << "& " << checker.getLRValue() ; // RL
+   // fichier << "& " << checker.getLRValue() ; // RL*/
     fichier << "& " << checker.getLRCplex() ; // RL CPLEX
-    fichier << " & " << checker.DualBound ;
+  //  fichier << " & " << checker.DualBound ;
     fichier << " & " << checker.PrimalBound ; // OPT
     fichier <<" \\\\ " << endl ;
     fichier << endl;
