@@ -6,7 +6,7 @@
 #include "Process.h"
 
 #define eps 1e-6
-#define OUTPUT_HANDLER
+//#define OUTPUT_IUP_HANDLER
 
 
 IUPHandler::IUPHandler(SCIP* scip, MasterTime_Model* M, InstanceUCP* i, const Parameters & Pa) :
@@ -49,7 +49,7 @@ SCIP_RETCODE IUPHandler::scip_check(
         SCIP_Bool          completely,         /**< should all violations be checked? */
         SCIP_RESULT*       result) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_IUP_HANDLER
     std::cout << " --------------------- Check IUP handler ---------------  \n";
 #endif
 
@@ -86,7 +86,7 @@ SCIP_RETCODE IUPHandler::scip_enfolp(
         SCIP_Bool          solinfeasible,      /**< was the solution already declared infeasible by a constraint handler? */
         SCIP_RESULT*       result) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_IUP_HANDLER
     std::cout << " --------------------- Enfolp handler ---------------  \n";
 #endif
 
@@ -105,12 +105,12 @@ SCIP_RETCODE IUPHandler::scip_trans(
         SCIP_CONS**        targetcons          //**< pointer to store created target constraint *
         ) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_IUP_HANDLER
     std::cout << " --------------------- Trans handler ---------------  \n";
 #endif
 
-    SCIP_CONSDATA* sourcedata;
-    SCIP_CONSDATA* targetdata;
+//    SCIP_CONSDATA* sourcedata;
+//    SCIP_CONSDATA* targetdata;
 
 //    sourcedata = SCIPconsGetData(sourcecons);
 //    targetdata = NULL;
@@ -123,11 +123,11 @@ SCIP_RETCODE IUPHandler::scip_trans(
 //    targetdata->site = sourcedata->site;
 //    targetdata->BranchConstraint = sourcedata->BranchConstraint;
 
-    SCIPcreateCons(scip, targetcons, SCIPconsGetName(sourcecons), conshdlr, targetdata,
-                   SCIPconsIsInitial(sourcecons), SCIPconsIsSeparated(sourcecons), SCIPconsIsEnforced(sourcecons),
-                   SCIPconsIsChecked(sourcecons), SCIPconsIsPropagated(sourcecons),
-                   SCIPconsIsLocal(sourcecons), SCIPconsIsModifiable(sourcecons),
-                   SCIPconsIsDynamic(sourcecons), SCIPconsIsRemovable(sourcecons), SCIPconsIsStickingAtNode(sourcecons));
+//    SCIPcreateCons(scip, targetcons, SCIPconsGetName(sourcecons), conshdlr, targetdata,
+//                   SCIPconsIsInitial(sourcecons), SCIPconsIsSeparated(sourcecons), SCIPconsIsEnforced(sourcecons),
+//                   SCIPconsIsChecked(sourcecons), SCIPconsIsPropagated(sourcecons),
+//                   SCIPconsIsLocal(sourcecons), SCIPconsIsModifiable(sourcecons),
+//                   SCIPconsIsDynamic(sourcecons), SCIPconsIsRemovable(sourcecons), SCIPconsIsStickingAtNode(sourcecons));
 
 
 
@@ -146,7 +146,7 @@ SCIP_RETCODE IUPHandler::scip_enfops(
         SCIP_Bool          objinfeasible,      /**< is the solution infeasible anyway due to violating lower objective bound? */
         SCIP_RESULT*       result) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_IUP_HANDLER
     std::cout << " --------------------- Enfops handler ---------------  \n";
 #endif
 
@@ -163,7 +163,7 @@ SCIP_RETCODE IUPHandler::scip_lock(
         int                nlockspos,          /**< no. of times, the roundings should be locked for the constraint */
         int                nlocksneg) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_IUP_HANDLER
     std::cout << " --------------------- Lock IUP handler ---------------  \n";
 #endif
 
@@ -179,7 +179,7 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
         int                nusefulconss,       /**< number of useful (non-obsolete) constraints to process */
         SCIP_RESULT*       result) {
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_IUP_HANDLER
     std::cout << " --------------------- Sepalp IUP handler ---------------  \n";
 #endif
 
@@ -251,7 +251,7 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
 
 //                        }
 
-                        IneqIntUpSet* ineq = new IneqIntUpSet(scip, nbFound, alpha, C_list, i, t0, t1) ;
+                        IneqIntUpSet* ineq = new IneqIntUpSet(scip, Param, nbFound, alpha, C_list, i, t0, t1) ;
                         Master->addIntUpSet(scip,ineq);
 
                         *result = SCIP_CONSADDED;
@@ -267,7 +267,7 @@ SCIP_RETCODE IUPHandler::scip_sepalp(
 SCIP_RETCODE IUPHandler::scip_sepasol(SCIP* scip, SCIP_CONSHDLR* conshdlr, SCIP_CONS** conss,
                                              int nconss, int nusefulconss, SCIP_SOL* sol, SCIP_RESULT* result){
 
-#ifdef OUTPUT_HANDLER
+#ifdef OUTPUT_IUP_HANDLER
     std::cout << " --------------------- Sepasol handler ---------------  \n";
 #endif
 

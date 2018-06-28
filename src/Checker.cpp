@@ -11,6 +11,8 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
     int T = inst->getT() ;
     int n = inst->getn();
 
+    valHeuristicCplex = -1 ;
+
     x = IloBoolVarArray(env, n*T) ;
     u = IloBoolVarArray(env, n*T) ;
 
@@ -113,6 +115,11 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
 double CplexChecker::getIntegerObjValue() {
 
     int print=0 ;
+
+
+    clock_t start;
+    start = clock();
+
     IloModel IntegerModel(env) ;
     IntegerModel.add(model) ;
 
@@ -129,6 +136,9 @@ double CplexChecker::getIntegerObjValue() {
     nbNodes = IntegerObjCplex.getNnodes() ;
     cpuTime = IntegerObjCplex.getCplexTime();
     gap = IntegerObjCplex.getMIPRelativeGap() ;
+
+    cpuTime =  ( clock() - start ) / (double) CLOCKS_PER_SEC;
+
 
     int n = inst->getn();
     int T= inst->getT() ;
@@ -184,7 +194,6 @@ double CplexChecker::getLRCplex() {
     return LRCplexVal ;
 }
 
-
 void CplexChecker::CplexPrimalHeuristic(IloNumArray solution, IloNumArray solution_p) {
 
     //Modèle
@@ -197,8 +206,10 @@ void CplexChecker::CplexPrimalHeuristic(IloNumArray solution, IloNumArray soluti
     LRCplex.setParam(IloCplex::Param::MIP::Limits::Nodes, 1) ;
     LRCplex.solve() ;
 
+    valHeuristicCplex  = LRCplex.getObjValue() ;
     LRCplex.getValues(solution, x) ;
     LRCplex.getValues(solution_p, pp) ;
+
 }
 
 //double CplexChecker::printSolution() {

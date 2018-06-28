@@ -55,7 +55,7 @@ public:
     SCIP_CONS* ineq ;
     double dual ;
 
-    IneqIntUpSet(SCIP* scip, int num, int alpha, list<int>* C_ptr, int i, int t0, int t1) ;
+    IneqIntUpSet(SCIP* scip, const Parameters & Parametres, int num, int alpha, list<int>* C_ptr, int i, int t0, int t1) ;
 };
 
 ////////////////////////////////////////////

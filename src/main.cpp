@@ -88,38 +88,47 @@ int main(int argc, char** argv)
     //////  PARAMETERS    /////
     ///////////////////////////
 
-    bool IP=1 ; // est-ce qu'on résout le master en variable entières ?
-    bool ManageSubPbSym=0 ; // est-ce qu'on gère les symétries dans le sous problème ?
-    bool Ramp=0 ; // est-ce qu'on considère les gradients ?
-    bool TimeStepDec = 1 ;
-    bool DynProgTime =1 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
-    bool IntraSite = 1 ; // à implémenter
-    bool DemandeResiduelle = 0 ;
-    bool IntervalUpSet = 0 ;
     double eps = 0.0000001;
-    bool heuristicInit = 0 ;
+
+    bool IP=1 ; // est-ce qu'on résout le master en variable entières ?
+    bool PriceAndBranch = 1;
+
+    bool ManageSubPbSym = 0 ; // est-ce qu'on gère les symétries dans le sous problème ?
+
+    bool Ramp = 0 ; // est-ce qu'on considère les gradients ?
+    bool IntraSite = 0 ; // à implémenter
+
+    bool TimeStepDec = 1 ;
+    bool DynProgTime = 1 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
+
+    bool DemandeResiduelle = 0 ;
+
+    bool IntervalUpSet = 0 ;
+
+    bool heuristicInit = 1 ;
+
     bool DontPriceAllTimeSteps = 0;
     bool DontGetPValue = 0 ;
     bool OneTimeStepPerIter = 0;
     bool addColumnToOtherTimeSteps = 0 ;
 
+    bool Solve = true ;
 
-    cout << "met: " << met << endl ;
-    if (met==1) {
-        addColumnToOtherTimeSteps=true ;
+    if (met==-1) {
+        Solve = false ;
     }
 
 
     Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
-                           heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime);
+                           heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, PriceAndBranch);
 
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
     ////////////////////////////////////
 
-//    clock_t start;
-//    start = clock();
+    clock_t start;
+    start = clock();
 
     // problem initialization
     SCIP *scip=NULL;
@@ -273,8 +282,12 @@ int main(int argc, char** argv)
     }
 
     cout << "resolution..." << endl ;
+    if (Solve) {
     SCIPsolve(scip);
+    }
     cout << "fin resolution" << endl ;
+
+    double temps_scip =  ( clock() - start ) / (double) CLOCKS_PER_SEC;
 
     /// Solution en x
     n=inst->getn();
@@ -298,7 +311,10 @@ int main(int argc, char** argv)
 
    // SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
 
-    fichier << n << " & " << T << " & " << id ;
+    fichier << "met & n & T & id & nodes & IUP & Iter & Var & CPU & gap & RL & low & up & cplex heur \\\\ " << endl;
+    fichier << met << " & " << n << " & " << T << " & " << id ;
+
+    if (Solve) {
     fichier << " &  " << SCIPgetNNodes(scip) ;
     fichier << " & " << Master_ptr->nbIntUpSet ;
     fichier << " &  " << SCIPgetNLPIterations(scip) ;
@@ -309,14 +325,18 @@ int main(int argc, char** argv)
 //        fichier << " & " << MasterTime.cumul_resolution_pricing ;
 //    }
 
-    fichier << " &  " << SCIPgetSolvingTime(scip) ;
-    //fichier << " & " << temps_scip  ;
+    //fichier << " &  " << SCIPgetSolvingTime(scip) ;
+    fichier << " & " << temps_scip  ;
     fichier << " &  " << SCIPgetGap(scip);
-//    fichier << " &  " << SCIPgetDualboundRoot(scip) ;
+    fichier << " &  " << SCIPgetDualboundRoot(scip) ;
     fichier << " &  " << SCIPgetDualbound(scip) ;
- /*   fichier << " &  " << SCIPgetPrimalbound(scip) ;
-    fichier <<" \\\\ " << endl ;*/
+    fichier << " &  " << SCIPgetPrimalbound(scip) ;
+    fichier << " & " << checker.valHeuristicCplex ; // OPT
+    fichier <<" \\\\ " << endl ;
 
+    }
+
+    else {
 
     //////////////////////
     //////  CHECK    /////
@@ -331,7 +351,6 @@ int main(int argc, char** argv)
 
     checker.getIntegerObjValue();
 
- /*   fichier << n << " & " << T << " & " << id ;
     fichier << " & " << checker.nbNodes ;
     fichier << " & - " ;
     fichier << " & - " ;
@@ -340,10 +359,11 @@ int main(int argc, char** argv)
     fichier << " & " << checker.gap ;
    // fichier << "& " << checker.getLRValue() ; // RL*/
     fichier << "& " << checker.getLRCplex() ; // RL CPLEX
-  //  fichier << " & " << checker.DualBound ;
+    fichier << " & " << checker.DualBound ;
     fichier << " & " << checker.PrimalBound ; // OPT
+    fichier << " & - " ;
     fichier <<" \\\\ " << endl ;
-    fichier << endl;
+    }
 
 
     //    cout << "check x_frac: " << endl ;

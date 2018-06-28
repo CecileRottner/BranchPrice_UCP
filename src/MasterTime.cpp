@@ -10,7 +10,7 @@ using namespace scip;
 /////////////////////////////////////
 
 
-IneqIntUpSet::IneqIntUpSet(SCIP* scip, int num, int al, list<int> *C_ptr, int ii, int tt0, int tt1) :
+IneqIntUpSet::IneqIntUpSet(SCIP* scip, const Parameters & Param, int num, int al, list<int> *C_ptr, int ii, int tt0, int tt1) :
     alpha(al),
     i(ii),
     t0(tt0),
@@ -21,6 +21,9 @@ IneqIntUpSet::IneqIntUpSet(SCIP* scip, int num, int al, list<int> *C_ptr, int ii
     ineq = NULL;
     char con_name_iup[255];
     (void) SCIPsnprintf(con_name_iup, 255, "iup(%d)", num); // nom de la contrainte
+
+    bool modifiable = true ;
+
     SCIPcreateConsLinear( scip, &ineq, con_name_iup, 0, NULL, NULL,
                           alpha,   // lhs
                           SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
@@ -30,7 +33,7 @@ IneqIntUpSet::IneqIntUpSet(SCIP* scip, int num, int al, list<int> *C_ptr, int ii
                           true,  /* check */
                           true,  /* propagate */
                           false, /* local */
-                          true,  /* modifiable */
+                          modifiable,  /* modifiable */
                           false, /* dynamic */
                           false, /* removable */
                           false  /* stickingatnode */ );

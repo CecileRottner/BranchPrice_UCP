@@ -29,8 +29,9 @@ struct Parameters
     bool OneTimeStepPerIter ;
     bool AddColumnToOtherTimeSteps ;
     bool DynProgTime ;
+    bool PriceAndBranch ;
 
-    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue, bool one, bool addColumn, bool dptime) :
+    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue, bool one, bool addColumn, bool dptime, bool pandb) :
         IP(ip),
         ManageSubPbSym(managesubpbsym),
         Ramp(ramp),
@@ -44,7 +45,8 @@ struct Parameters
         DontGetPValue(dontgetpvalue),
         OneTimeStepPerIter(one),
         AddColumnToOtherTimeSteps(addColumn),
-        DynProgTime(dptime)
+        DynProgTime(dptime),
+        PriceAndBranch(pandb)
     {}
 };
 

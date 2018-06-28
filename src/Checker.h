@@ -34,6 +34,7 @@ class CplexChecker {
 
   double LRValue ;
   double LRCplexVal ;
+  double valHeuristicCplex ;
 
   CplexChecker(InstanceUCP* inst, const Parameters & param) ;
   double getIntegerObjValue() ;
