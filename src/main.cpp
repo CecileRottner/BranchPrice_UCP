@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     double eps = 0.0000001;
 
     bool IP=1 ; // est-ce qu'on résout le master en variable entières ?
-    bool PriceAndBranch = 1;
+    bool PriceAndBranch = 0;
 
     bool ManageSubPbSym = 0 ; // est-ce qu'on gère les symétries dans le sous problème ?
 
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
 
     bool IntervalUpSet = 0 ;
 
-    bool heuristicInit = 1 ;
+    bool heuristicInit = 0 ;
 
     bool DontPriceAllTimeSteps = 0;
     bool DontGetPValue = 0 ;
@@ -118,6 +118,13 @@ int main(int argc, char** argv)
         Solve = false ;
     }
 
+    if (met==1) {
+        heuristicInit=1 ;
+    }
+    if (met==2) {
+        PriceAndBranch=1;
+        heuristicInit=1;
+    }
 
     Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, PriceAndBranch);
@@ -236,21 +243,21 @@ int main(int argc, char** argv)
     }
 
     else { //// Décomposition par sites
-         Master_ptr = new MasterSite_Model(inst, param) ;
+        Master_ptr = new MasterSite_Model(inst, param) ;
 
-         MasterSite_Model* MS ;
-         MS = dynamic_cast<MasterSite_Model*> (Master_ptr) ;
-         if (MS != NULL) {
+        MasterSite_Model* MS ;
+        MS = dynamic_cast<MasterSite_Model*> (Master_ptr) ;
+        if (MS != NULL) {
 
-             cout << "MS non NULL" << endl ;
-             ///Initialisation du master
-             MS->InitScipMasterModel(scip, inst) ;
+            cout << "MS non NULL" << endl ;
+            ///Initialisation du master
+            MS->InitScipMasterModel(scip, inst) ;
 
-             /// Initialisation du pricer
-             Pricer = new ObjPricerSite(scip, PRICER_NAME, MS, inst, param);
-             SCIPincludeObjPricer(scip, Pricer, true);
-             SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
-         }
+            /// Initialisation du pricer
+            Pricer = new ObjPricerSite(scip, PRICER_NAME, MS, inst, param);
+            SCIPincludeObjPricer(scip, Pricer, true);
+            SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
+        }
     }
 
 
@@ -283,7 +290,7 @@ int main(int argc, char** argv)
 
     cout << "resolution..." << endl ;
     if (Solve) {
-    SCIPsolve(scip);
+        SCIPsolve(scip);
     }
     cout << "fin resolution" << endl ;
 
@@ -293,14 +300,14 @@ int main(int argc, char** argv)
     n=inst->getn();
     T=inst->getT();
 
-//        cout << "solution x frac: " << endl;
+    //        cout << "solution x frac: " << endl;
 
-//        for (int t=0 ; t < T ; t++) {
-//            for (int i=0 ; i <n ; i++) {
-//                cout << Master_ptr->x_frac[i*T+t] << " " ;
-//            }
-//            cout << endl ;
-//        }
+    //        for (int t=0 ; t < T ; t++) {
+    //            for (int i=0 ; i <n ; i++) {
+    //                cout << Master_ptr->x_frac[i*T+t] << " " ;
+    //            }
+    //            cout << endl ;
+    //        }
 
 
     //////////////////////
@@ -309,65 +316,65 @@ int main(int argc, char** argv)
 
     fichier.precision(7);
 
-   // SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
+    // SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
 
-    fichier << "met & n & T & id & nodes & IUP & Iter & Var & CPU & gap & RL & low & up & cplex heur \\\\ " << endl;
+    //fichier << "met & n & T & id & nodes & IUP & Iter & Var & CPU & gap & RL & low & up & cplex heur \\\\ " << endl;
     fichier << met << " & " << n << " & " << T << " & " << id ;
 
     if (Solve) {
-    fichier << " &  " << SCIPgetNNodes(scip) ;
-    fichier << " & " << Master_ptr->nbIntUpSet ;
-    fichier << " &  " << SCIPgetNLPIterations(scip) ;
-    fichier << " & " << SCIPgetNPricevarsFound(scip) ;
-    //fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
-//    if (param.TimeStepDec && !param.DynProgTime) {
-//        fichier << " & " << pricerTime->nbCallsToCplex ;
-//        fichier << " & " << MasterTime.cumul_resolution_pricing ;
-//    }
+        fichier << " &  " << SCIPgetNNodes(scip) ;
+        fichier << " & " << Master_ptr->nbIntUpSet ;
+        fichier << " &  " << SCIPgetNLPIterations(scip) ;
+        fichier << " & " << SCIPgetNPricevarsFound(scip) ;
+        //fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
+        //    if (param.TimeStepDec && !param.DynProgTime) {
+        //        fichier << " & " << pricerTime->nbCallsToCplex ;
+        //        fichier << " & " << MasterTime.cumul_resolution_pricing ;
+        //    }
 
-    //fichier << " &  " << SCIPgetSolvingTime(scip) ;
-    fichier << " & " << temps_scip  ;
-    fichier << " &  " << SCIPgetGap(scip);
-    fichier << " &  " << SCIPgetDualboundRoot(scip) ;
-    fichier << " &  " << SCIPgetDualbound(scip) ;
-    fichier << " &  " << SCIPgetPrimalbound(scip) ;
-    fichier << " & " << checker.valHeuristicCplex ; // OPT
-    fichier <<" \\\\ " << endl ;
+        //fichier << " &  " << SCIPgetSolvingTime(scip) ;
+        fichier << " & " << temps_scip  ;
+        fichier << " &  " << SCIPgetGap(scip);
+        fichier << " &  " << SCIPgetDualboundRoot(scip) ;
+        fichier << " &  " << SCIPgetDualbound(scip) ;
+        fichier << " &  " << SCIPgetPrimalbound(scip) ;
+        fichier << " & " << checker.valHeuristicCplex ; // OPT
+        fichier <<" \\\\ " << endl ;
 
     }
 
     else {
 
-    //////////////////////
-    //////  CHECK    /////
-    //////////////////////
+        //////////////////////
+        //////  CHECK    /////
+        //////////////////////
 
-    cout.precision(15);
+        cout.precision(15);
 
-    //    vector<double> x_frac = vector<double>(n*T, 0) ;
-    //    for (int i=0 ; i < n*T ; i++) {
-    //        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
-    //    }
+        //    vector<double> x_frac = vector<double>(n*T, 0) ;
+        //    for (int i=0 ; i < n*T ; i++) {
+        //        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
+        //    }
 
-    checker.getIntegerObjValue();
+        checker.getIntegerObjValue();
 
-    fichier << " & " << checker.nbNodes ;
-    fichier << " & - " ;
-    fichier << " & - " ;
-    fichier << " & - " ;
-    fichier << " & " << checker.cpuTime ;
-    fichier << " & " << checker.gap ;
-   // fichier << "& " << checker.getLRValue() ; // RL*/
-    fichier << "& " << checker.getLRCplex() ; // RL CPLEX
-    fichier << " & " << checker.DualBound ;
-    fichier << " & " << checker.PrimalBound ; // OPT
-    fichier << " & - " ;
-    fichier <<" \\\\ " << endl ;
+        fichier << " & " << checker.nbNodes ;
+        fichier << " & - " ;
+        fichier << " & - " ;
+        fichier << " & - " ;
+        fichier << " & " << checker.cpuTime ;
+        fichier << " & " << checker.gap ;
+        // fichier << "& " << checker.getLRValue() ; // RL*/
+        fichier << "& " << checker.getLRCplex() ; // RL CPLEX
+        fichier << " & " << checker.DualBound ;
+        fichier << " & " << checker.PrimalBound ; // OPT
+        fichier << " & - " ;
+        fichier <<" \\\\ " << endl ;
     }
 
 
     //    cout << "check x_frac: " << endl ;
-   // checker.checkSolution(x_frac);
+    // checker.checkSolution(x_frac);
 
     return 0;
 }
