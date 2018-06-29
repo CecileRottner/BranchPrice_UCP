@@ -114,6 +114,12 @@ SCIP_RETCODE ObjPricerSite::scip_redcost(SCIP* scip, SCIP_PRICER* pricer, SCIP_R
 
     SCIPdebugMsg(scip, "call scip_redcost ...\n");
 
+    if( Param.PriceAndBranch && SCIPgetDepth(scip) != 0 )
+    {
+        *result = SCIP_SUCCESS;
+        return SCIP_OKAY;
+    }
+
     /* set result pointer, see above */
     *result = SCIP_SUCCESS;
 
@@ -127,6 +133,12 @@ SCIP_RETCODE ObjPricerSite::scip_redcost(SCIP* scip, SCIP_PRICER* pricer, SCIP_R
 SCIP_RETCODE ObjPricerSite::scip_farkas( SCIP* scip, SCIP_PRICER* pricer, SCIP_RESULT* result ){
 
     SCIPdebugMsg(scip, "call scip_farkas ...\n");
+
+    if( Param.PriceAndBranch && SCIPgetDepth(scip) != 0 )
+    {
+        *result = SCIP_SUCCESS;
+        return SCIP_OKAY;
+    }
 
     /* set result pointer, see above */
     *result = SCIP_SUCCESS;

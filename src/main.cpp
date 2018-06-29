@@ -118,14 +118,36 @@ int main(int argc, char** argv)
         Solve = false ;
     }
 
+    /// Branch & Price (& Cut)
     if (met==1) {
         heuristicInit=1 ;
     }
     if (met==2) {
+        heuristicInit=1 ;
+        IntervalUpSet =1 ;
+    }
+
+    /// Price and Branch
+    if (met==3) {
         PriceAndBranch=1;
         heuristicInit=1;
     }
+    if (met==4) {
+        PriceAndBranch=1;
+        heuristicInit=1;
+        IntervalUpSet = 1 ;
+        Ramp = 1 ;
+    }
 
+    if (met==10) {
+        TimeStepDec = 0;
+        DynProgTime = 0 ;
+    }
+
+    if (met==11) {
+        TimeStepDec = 0;
+        DynProgTime = 0 ;
+    }
     Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, PriceAndBranch);
 
