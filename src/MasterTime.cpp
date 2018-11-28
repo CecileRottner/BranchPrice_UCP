@@ -207,11 +207,11 @@ void MasterTime_Model::initMasterTimeVariable(SCIP* scip, MasterTime_Variable* v
     L_var.push_back(var);
 
 
-//    cout << "Variable " << var_name << " added, with plan: " << endl  ;
+    cout << "Variable " << var_name << " added, with plan: " << endl  ;
 
-//    for (int i=0 ; i < inst->getn() ; i++) {
-//        cout << var->UpDown_plan[i] << " "  ;
-//    }
+    for (int i=0 ; i < inst->getn() ; i++) {
+        cout << var->UpDown_plan[i] << " "  ;
+    }
 }
 
 //////// Créé des variables lambda à partir d'une solution (x,p) ///////////
@@ -252,7 +252,7 @@ void MasterTime_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p) {
 
 MasterTime_Model::MasterTime_Model(InstanceUCP* instance, const Parameters & Parametres) : Master_Model(Parametres, instance) {
 
-    cumul_resolution_pricing= 0 ;
+
     u_var.resize(n*T, (SCIP_VAR*) NULL) ;
 
     logical.resize(n*T, (SCIP_CONS*) NULL) ;
@@ -260,6 +260,7 @@ MasterTime_Model::MasterTime_Model(InstanceUCP* instance, const Parameters & Par
     min_down.resize(n*T, (SCIP_CONS*) NULL) ;
 
     convexity_cstr.resize(T, (SCIP_CONS*) NULL) ;
+    intrasite.resize(inst->getS()*T, (SCIP_CONS*) NULL) ;
 
     IUP_t0.resize(T) ;
     IUP_t1.resize(T) ;
@@ -383,6 +384,36 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
     }
 
 
+
+    ///// Intrasite ////
+
+    if (Param.IntraSite) {
+        char con_name_intrasite[255];
+        for (int t =1 ; t<T ; t++) {
+            for (int s=0 ; s < inst->getS() ; s++) {
+                SCIP_CONS* con = NULL;
+                (void) SCIPsnprintf(con_name_intrasite, 255, "Intrasite(%d,%d)", s, t); // nom de la contrainte
+                SCIPcreateConsLinear( scip, &con, con_name_intrasite, 0, NULL, NULL,
+                                      -SCIPinfinity(scip),   // lhs
+                                      1.0,   // rhs  SCIPinfinity(scip) if >=1
+                                      true,  /* initial */
+                                      false, /* separate */
+                                      true,  /* enforce */
+                                      true,  /* check */
+                                      true,  /* propagate */
+                                      false, /* local */
+                                      false,  /* modifiable */
+                                      false, /* dynamic */
+                                      false, /* removable */
+                                      false  /* stickingatnode */ );
+                SCIPaddCons(scip, con);
+                intrasite.at(s*T+t) = con;
+            }
+        }
+    }
+
+
+
     /////////////////////////////////////////////////
     ////////   MASTER START UP VARIABLES   //////////
     /////////////////////////////////////////////////
@@ -437,6 +468,12 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
             // u(i,t) apparait dans les contraintes de min-down de t à max_min_down :
             for (int k = min_min_down ; k <= max_min_down ; k++) {
                 SCIPaddCoefLinear(scip, min_down.at(i*T + k), var, 1.0);
+            }
+
+            /* add coefficients to intrasite constraints */
+            if (Param.IntraSite) {
+                int site = inst->getSiteOf(i) ;
+                SCIPaddCoefLinear(scip, intrasite.at(site*T + t), var, 1.0);
             }
         }
     }

@@ -18,11 +18,11 @@ void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
 
     int T= inst->getT() ;
 
-    int first = inst->firstUnit(Site) ;
-    int last = inst->firstUnit(Site) + inst->nbUnits(Site) - 1 ;
+    int first = Param.firstUnit(Site) ;
+    int last = Param.firstUnit(Site) + Param.nbUnits(Site) - 1 ;
 
 
-    // cout << "site " << Site << ", first unit : " << first << ", nb units: " << inst->nbUnits(Site) << endl ;
+    // cout << "site " << Site << ", first unit : " << first << ", nb units: " << Param.nbUnits(Site) << endl ;
 
     for (int i = first ; i <= last ; i++) {
         int down_t_1 = 0 ;
@@ -46,11 +46,11 @@ void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
 void MasterSite_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) {
 
     int s = lambda->Site ;
-    int first = inst->firstUnit(s) ;
+    int first = Param.firstUnit(s) ;
 
     /* for each time period, add coefficient pmin into the demand constraint at t, for each unit unit i up in site S */
     for (int t=0 ; t < T ; t++) {
-        for (int i=0 ; i < inst->nbUnits(s) ; i++) {
+        for (int i=0 ; i < Param.nbUnits(s) ; i++) {
             if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
                 SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(first+i)) ;
             }
@@ -59,7 +59,7 @@ void MasterSite_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda
 
     /* for each time period and each unit in site S, add coefficient pmin(i) - pmax(i) into the power limit constraint of unit i at t */
     for (int t=0 ; t < T ; t++) {
-        for (int i=0 ; i < inst->nbUnits(s) ; i++) {
+        for (int i=0 ; i < Param.nbUnits(s) ; i++) {
             if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
                 SCIPaddCoefLinear(scip, power_limits[(first+i)*T+t], lambda->ptr, inst->getPmax(first+i) - inst->getPmin(first+i)) ;
             }
@@ -70,7 +70,7 @@ void MasterSite_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda
     //RAMPSTUFF
     if (Param.Ramp) {
 
-        for (int i=0 ; i < inst->nbUnits(s) ; i++) {
+        for (int i=0 ; i < Param.nbUnits(s) ; i++) {
             double RU = (inst->getPmax(first+i) - inst->getPmin(first+i))/3 ;
             double RD = (inst->getPmax(first+i) - inst->getPmin(first+i))/2 ;
 
@@ -90,6 +90,65 @@ void MasterSite_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda
     /* add coefficient to the convexity constraint for site s */
     SCIPaddCoefLinear(scip, convexity_cstr[s], lambda->ptr, 1.0) ;
 
+
+
+    ///INTRASITE
+    if (Param.IntraSite && Param.UnitDecompo) {
+        // intrasite constraint in the master
+
+        int site = inst->getSiteOf(s) ; // s est un singleton ici (c'est le groupe d'unité sur lequel on décompose) = une unité
+
+        for (int t=1 ; t <T ; t++) {
+            if ( (lambda->UpDown_plan[t]  > 1 - Param.Epsilon) && (lambda->UpDown_plan[t-1] < Param.Epsilon) ) { // si unité s démarre en t
+                SCIPaddCoefLinear(scip, intrasite.at(site*T+t), lambda->ptr, 1.0) ;
+
+            }
+        }
+    }
+
+    /// CONTRAINTES LIEES A LA DECOMPO START UP
+    if (Param.StartUpDecompo) {
+
+        for (int i=0 ; i < Param.nbUnits(s) ; i++) {
+            for (int t=0 ; t <T ; t++) {
+
+                int a_t = (lambda->UpDown_plan[i*T+t]  > 1 - Param.Epsilon) ;
+                int a_t_1=0;
+                int b_t=0;
+                if (t >= 1) {
+                    a_t_1 = (lambda->UpDown_plan[i*T+t-1]  > 1 - Param.Epsilon) ;
+                    b_t = ( (lambda->UpDown_plan[i*T+t]  > 1 - Param.Epsilon) && (lambda->UpDown_plan[i*T + t-1] < Param.Epsilon) )  ;
+                }
+
+                int L = inst->getL(first+i) ;
+
+                //Min down
+                if ( b_t ) {
+                    int kmin = fmax(t, L) ;
+                    int kmax = fmin(t+L-1, T-1);
+                    for (int k=kmin ; k<=kmax; k++) {
+                        SCIPaddCoefLinear(scip, mindown.at((first+i)*T+k), lambda->ptr, 1.0) ;
+                    }
+                }
+                if (t >= L && a_t) {
+                    SCIPaddCoefLinear(scip, mindown.at((first+i)*T+t), lambda->ptr, -1.0) ;
+                }
+
+
+                //z_lambda
+                if ( a_t ) {
+                    SCIPaddCoefLinear(scip, z_lambda[(first+i)*T+t], lambda->ptr, 1.0) ;
+                }
+
+                //logical
+                if (t >= 1) {
+                    SCIPaddCoefLinear(scip, logical[(first+i)*T+t], lambda->ptr, a_t - a_t_1 - b_t) ;
+                }
+
+            }
+        }
+
+    }
 }
 
 
@@ -126,7 +185,7 @@ void MasterSite_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master
 
 //    cout << "Variable " << var_name << " added, with plan:" << endl ;
 //    for (int t=0 ; t < T ; t++) {
-//        for (int i=0 ; i < inst->nbUnits(var->Site) ; i++) {
+//        for (int i=0 ; i < Param.nbUnits(var->Site) ; i++) {
 //            cout << var->UpDown_plan[i*T+t] << " " ;
 //        }
 //        cout << endl ;
@@ -136,16 +195,28 @@ void MasterSite_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master
 MasterSite_Model::MasterSite_Model(InstanceUCP* inst, const Parameters & Parametres) : Master_Model(Parametres, inst) {
     n = inst->getn() ;
     T = inst->getT() ;
-    S = inst->getS() ;
 
+
+    S = Parametres.nbDecGpes ;
+
+
+
+    cumul_resolution_pricing= 0 ;
     demand_cstr.resize(T, (SCIP_CONS*) NULL);
     power_limits.resize(n*T, (SCIP_CONS*) NULL) ;
     ramp_up.resize(n*T, (SCIP_CONS*) NULL) ;
     ramp_down.resize(n*T, (SCIP_CONS*) NULL) ;
     convexity_cstr.resize(S, (SCIP_CONS*) NULL) ;
+    intrasite.resize(inst->getS()*T, (SCIP_CONS*) NULL) ;
+
+    mindown.resize(n*T, (SCIP_CONS*) NULL) ;
+    z_lambda.resize(n*T, (SCIP_CONS*) NULL) ;
+    logical.resize(n*T, (SCIP_CONS*) NULL) ;
 }
 
 void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
+
+
 
     cout << "init" << endl ;
 
@@ -205,7 +276,34 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
         }
     }
 
-    cout << "fin" << endl ;
+
+
+    ///// Intra-site /////
+
+    if (Param.UnitDecompo && Param.IntraSite) {
+        char con_name_intrasite[255];
+        for (int site = 0 ; site < inst->getS() ; site++) {
+            for (int t = 1; t < T; t++)   {
+                SCIP_CONS* con = NULL;
+                (void) SCIPsnprintf(con_name_intrasite, 255, "Intrasite(%d,%d)", site,t); // nom de la contrainte
+                SCIPcreateConsLinear( scip, &con, con_name_intrasite, 0, NULL, NULL,
+                                      -SCIPinfinity(scip),   // lhs
+                                      1.0,   // rhs  SCIPinfinity(scip) if >=1
+                                      true,  /* initial */
+                                      false, /* separate */
+                                      true,  /* enforce */
+                                      true,  /* check */
+                                      true,  /* propagate */
+                                      false, /* local */
+                                      true,  /* modifiable */
+                                      false, /* dynamic */
+                                      false, /* removable */
+                                      false  /* stickingatnode */ );
+                SCIPaddCons(scip, con);
+                intrasite[site*T + t] = con;
+            }
+        }
+    }
 
     ///// Ramp up & down constraints /////
     //RAMPSTUFF
@@ -286,7 +384,91 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
         convexity_cstr[s] = con;
     }
 
-    cout << "fin" << endl ;
+
+
+    if (Param.StartUpDecompo) {
+
+        /// Min down constraint
+        char con_name_mindown[255];
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = 0; t < T; t++)
+            {
+                SCIP_CONS* con = NULL;
+                (void) SCIPsnprintf(con_name_mindown, 255, "MinDown(%d,%d)", i, t); // nom de la contrainte
+                SCIPcreateConsLinear( scip, &con, con_name_mindown, 0, NULL, NULL,
+                                      -SCIPinfinity(scip),   // lhs
+                                      0.0,   // rhs  SCIPinfinity(scip) if >=1
+                                      true,  /* initial */
+                                      false, /* separate */
+                                      true,  /* enforce */
+                                      true,  /* check */
+                                      true,  /* propagate */
+                                      false, /* local */
+                                      true,  /* modifiable */
+                                      false, /* dynamic */
+                                      false, /* removable */
+                                      false  /* stickingatnode */ );
+                SCIPaddCons(scip, con);
+                mindown[i*T + t] = con;
+            }
+        }
+
+        /// z _ lambda constraint
+        char con_name_z_lambda[255];
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = 0; t < T; t++)
+            {
+                SCIP_CONS* con = NULL;
+                (void) SCIPsnprintf(con_name_z_lambda, 255, "z_lambda(%d,%d)", i, t); // nom de la contrainte
+                SCIPcreateConsLinear( scip, &con, con_name_z_lambda, 0, NULL, NULL,
+                                      0.0,   // lhs
+                                      SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
+                                      true,  /* initial */
+                                      false, /* separate */
+                                      true,  /* enforce */
+                                      true,  /* check */
+                                      true,  /* propagate */
+                                      false, /* local */
+                                      true,  /* modifiable */
+                                      false, /* dynamic */
+                                      false, /* removable */
+                                      false  /* stickingatnode */ );
+                SCIPaddCons(scip, con);
+                z_lambda[i*T + t] = con;
+            }
+        }
+
+        /// logical constraint
+        char con_name_logical[255];
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = 0; t < T; t++)
+            {
+                SCIP_CONS* con = NULL;
+                (void) SCIPsnprintf(con_name_logical, 255, "Logical(%d,%d)", i, t); // nom de la contrainte
+                SCIPcreateConsLinear( scip, &con, con_name_logical, 0, NULL, NULL,
+                                      -SCIPinfinity(scip),   // lhs
+                                      0.0,   // rhs  SCIPinfinity(scip) if >=1
+                                      true,  /* initial */
+                                      false, /* separate */
+                                      true,  /* enforce */
+                                      true,  /* check */
+                                      true,  /* propagate */
+                                      false, /* local */
+                                      true,  /* modifiable */
+                                      false, /* dynamic */
+                                      false, /* removable */
+                                      false  /* stickingatnode */ );
+                SCIPaddCons(scip, con);
+                logical[i*T + t] = con;
+            }
+        }
+
+
+    } // fin if StartUpDecompo
+
     ///////////////////////////////////////
     ////////   SLACK VARIABLES   //////////
     ///////////////////////////////////////
@@ -413,8 +595,8 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
     for (int s=0 ; s<S; s++)
     {
-        IloNumArray plan = IloNumArray(env, inst->nbUnits(s)*T) ;
-        for (int index=0 ; index < inst->nbUnits(s)*T ; index++) {
+        IloNumArray plan = IloNumArray(env, Param.nbUnits(s)*T) ;
+        for (int index=0 ; index < Param.nbUnits(s)*T ; index++) {
             plan[index]=1 ;
         }
 
@@ -427,10 +609,82 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
     }
 
 
+    /////////////////////////////////////////////////////////////
+    ////////   MASTER Z VARIABLES INITIALIZATION   //////////
+    /////////////////////////////////////////////////////////////
+
+
+    SCIP_Vartype type ;
+    if (Param.IP) {
+        type = SCIP_VARTYPE_INTEGER;
+    }
+    else {
+        type = SCIP_VARTYPE_CONTINUOUS ;
+    }
+
+
+    // Création variables z et ajout dans les contraintes
+    if (Param.StartUpDecompo) {
+        char var_name[255];
+
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = 0; t < T; t++)
+            {
+                SCIP_VAR* var = NULL;
+
+                SCIPsnprintf(var_name, 255, "z(%d,%d)",i,t);
+                SCIPdebugMsg(scip, "Variable <%s>\n", var_name);
+
+
+                SCIPcreateVar(scip, &var, var_name,
+                              0.0,                     // lower bound
+                              1.0,      // upper bound
+                              -inst->getcf(i) - inst->getcp(i)*inst->getPmin(i),                     // objective
+                              type, // variable type
+                              true, false, NULL, NULL, NULL, NULL, NULL);
+
+
+                /* add new variable to scip */
+                SCIPaddVar(scip, var);
+
+                /* add coefficient to the demand constraint */
+                SCIPaddCoefLinear(scip, demand_cstr[t], var, -inst->getPmin(i));
+
+                /* add coefficient to the power limit constraint */
+                SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -(inst->getPmax(i) - inst->getPmin(i)));
+
+                /* add coef to min down constraint */
+                if (t >= inst->getL(i)) {
+                    SCIPaddCoefLinear(scip, mindown[i*T + t], var, 1.0);
+                }
+
+
+                /* add coef to z_lambda constraint */
+                SCIPaddCoefLinear(scip, z_lambda[i*T + t], var, -1.0);
+
+                /* add coef to logical constraints */
+                if (t >= 1) {
+                    // logical constraint do not exist for t=0
+                    SCIPaddCoefLinear(scip, logical[i*T + t], var, -1.0);
+                }
+                if (t < T-1) {
+                    SCIPaddCoefLinear(scip, logical[i*T + t+1], var, 1.0);
+                }
+
+
+                /* add coef to ramp up/down*/
+                ///todo
+            }
+        }
+    }
+
+
+
     /// test
 
-//    IloNumArray plan_test = IloNumArray(env, inst->nbUnits(0)*T) ;
-//    for (int index=0 ; index < inst->nbUnits(0)*T ; index++) {
+//    IloNumArray plan_test = IloNumArray(env, Param.nbUnits(0)*T) ;
+//    for (int index=0 ; index < Param.nbUnits(0)*T ; index++) {
 //        plan_test[index]=1 ;
 //    }
 //    plan_test[1*T] = 0 ;
@@ -459,8 +713,8 @@ void MasterSite_Model::computeFracSol(SCIP* scip) {
         frac_value = fabs(SCIPgetVarSol(scip,(*itv)->ptr));
 
         int site = (*itv)->Site ;
-        int first = inst->firstUnit(site) ;
-        for (int i=0 ; i < inst->nbUnits(site) ; i++) {
+        int first = Param.firstUnit(site) ;
+        for (int i=0 ; i < Param.nbUnits(site) ; i++) {
             //int group = inst->getGroup(first+i)  ;
             for (int t=0 ; t < T ; t++) {
                 if ((*itv)->UpDown_plan[i*T+t] > Param.Epsilon) {
@@ -508,4 +762,35 @@ void MasterSite_Model::restoreVar(SCIP* scip, SCIP_ConsData* consdata) {
     }
     consdata->L_var_bound.clear() ;
 
+}
+
+
+//////// Créé des variables lambda à partir d'une solution (x) ///////////
+void MasterSite_Model::createColumns(SCIP* scip, IloNumArray x) {
+
+    int T = inst->getT() ;
+
+    for (int s = 0 ; s < Param.nbDecGpes ; s++) {
+        int size=Param.nbUnits(s);
+
+        IloNumArray plan = IloNumArray(env, T*size) ;
+        int first = Param.firstUnit(s);
+        for (int i=0 ; i < size ; i++) {
+            for (int t=0 ; t < T ; t++) {
+                if (x[(first+i)*T + t] > 1 - Param.Epsilon) {
+                    plan[i*T+t]=1 ;
+                }
+                if (x[(first+i)*T + t] < Param.Epsilon) {
+                    plan[i*T+t]=0 ;
+                }
+            }
+        }
+
+        Master_Variable* lambda = new Master_Variable(s, plan);
+        initMasterVariable(scip, inst, lambda);
+
+        SCIPaddVar(scip, lambda->ptr);
+
+        addCoefsToConstraints(scip, lambda, inst) ;
+    }
 }

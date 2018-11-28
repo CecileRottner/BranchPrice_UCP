@@ -126,7 +126,7 @@ double CplexChecker::getIntegerObjValue() {
     IloCplex IntegerObjCplex = IloCplex(IntegerModel) ; // ou juste valeur opt entière
     IntegerObjCplex.setParam(IloCplex::EpGap, Param.Epsilon) ;
     IntegerObjCplex.setParam(IloCplex::Param::ClockType, 1); //1 : CPU TIME
-    IntegerObjCplex.setParam(IloCplex::Param::TimeLimit, 3600) ;
+    IntegerObjCplex.setParam(IloCplex::Param::TimeLimit, 30) ;
 
 
     IntegerObjCplex.solve() ;

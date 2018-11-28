@@ -14,6 +14,7 @@ SCIP_RETCODE BranchingRule::scip_execlp(SCIP* scip, SCIP_BRANCHRULE* branchrule,
 #endif
 
 
+
 //    SCIP_NODE* node = SCIPgetCurrentNode(scip);
 //    SCIP_ConsData *consdata;
 //    if (node->conssetchg!=NULL) {
@@ -38,7 +39,7 @@ SCIP_RETCODE BranchingRule::scip_execlp(SCIP* scip, SCIP_BRANCHRULE* branchrule,
     // Search for the "most fractional" unit
     master->computeFracSol(scip);
 
-//    cout << "solution x frac: " << endl;
+   cout << "solution x frac: " << endl;
 
 //    for (int t=0 ; t < T ; t++) {
 //        for (int i=0 ; i <master->n ; i++) {
@@ -63,22 +64,33 @@ SCIP_RETCODE BranchingRule::scip_execlp(SCIP* scip, SCIP_BRANCHRULE* branchrule,
         }
     }
 
+
+
     if (bestfrac < 1 - eps) {
 
        // int unit = floor(bestfrac) + inst->getFirstG(group) ;
 
         int VarX=1 ;
-        int Site = inst->getSiteOf(unit);
-        int unit_on_site= unit - inst->firstUnit(Site) ;
-        if (master->Param.TimeStepDec) {
+        int unit_on_site;
+        int Site ;
+
+        if (Param.TimeStepDec) {
             Site=0 ;
             unit_on_site = unit ;
         }
 
+        else {
+            Site = Param.getSiteOf(unit);
+            unit_on_site= unit - Param.firstUnit(Site) ;
+
+        }
+
+
+
 
 #ifdef OUTPUT_BRANCHRULE
         cout<<"Branch on var x(" << unit <<", " << time << ") ";
-        cout<<" of value : "<< master->x_frac[unit*T+time] <<endl;
+        cout<<" of value : "<< master->x_frac.at(unit*T+time) <<endl;
 #endif
 
         SCIP_NODE *newnode;

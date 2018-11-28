@@ -102,6 +102,7 @@ public:
     void Lecture(const char* file);
     void Initialise() ;
 
+    IloEnv getenv() ;
     IloInt getn() const ;
     IloInt getT() const ;
     IloInt getS() const ;

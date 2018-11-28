@@ -43,6 +43,7 @@ string to_string2(int number){
 }
 
 
+
 string InstanceProcessed::createName() const {
     string s_n = to_string2(n) + "_" ;
 
@@ -68,4 +69,99 @@ string InstanceProcessed::createName() const {
     string file = s_id + ".txt" ;
 
     return s_id ;
+}
+
+Parameters::Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue, bool one, bool addColumn, bool dptime, bool pandb,
+           bool unitdecomp, bool startupdec) :
+    IP(ip),
+    ManageSubPbSym(managesubpbsym),
+    Ramp(ramp),
+    TimeStepDec(time),
+    IntraSite(intra),
+    DemandeResiduelle(dr),
+    IntervalUpSet(iup),
+    Epsilon(eps),
+    DontPriceAllTimeSteps(dont),
+    heuristicInit(h_init),
+    DontGetPValue(dontgetpvalue),
+    OneTimeStepPerIter(one),
+    AddColumnToOtherTimeSteps(addColumn),
+    DynProgTime(dptime),
+    PriceAndBranch(pandb),
+    UnitDecompo(unitdecomp),
+    StartUpDecompo(startupdec)
+{
+
+    n = inst->getn();
+    siteOf = IloIntArray(inst->getenv(), n) ;
+
+
+    for (int i=0 ; i < n ; i++) {
+        if (UnitDecompo) {
+            siteOf[i] = i ;
+        }
+        else {
+            siteOf[i] = inst->getSiteOf(i);
+        }
+    }
+
+
+    if (UnitDecompo) {
+        nbDecGpes = inst->getn();
+    }
+    else {
+        nbDecGpes = inst->getS() ;
+    }
+
+    nbUnitsGpe = IloIntArray(inst->getenv(), nbDecGpes) ;
+    for (int s = 0 ; s < nbDecGpes ; s++) {
+        if (UnitDecompo) {
+            nbUnitsGpe[s] = 1 ;
+        }
+        else {
+            nbUnitsGpe[s] = inst->nbUnits(s);
+        }
+    }
+
+    firstUnitGpe = IloIntArray(inst->getenv(), nbDecGpes) ;
+    for (int s = 0 ; s < nbDecGpes ; s++) {
+        if (UnitDecompo) {
+            firstUnitGpe[s] = s ;
+        }
+        else {
+            firstUnitGpe[s] = inst->firstUnit(s);
+        }
+    }
+
+}
+
+
+int Parameters::nbUnits(int s) const  {
+    if (s >= 0 && s < nbDecGpes) {
+        return nbUnitsGpe[s] ;
+    }
+    else {
+        cout << "indice site incorrect: " << s << endl;
+        return -1 ;
+    }
+}
+
+int Parameters::firstUnit(int s) const {
+    if (s >= 0 && s < nbDecGpes) {
+        return firstUnitGpe[s] ;
+    }
+    else {
+        cout << "indice site incorrect: " << s << endl;
+        return -1 ;
+    }
+}
+
+int Parameters::getSiteOf(int i) const {
+    if (i >= 0 && i < n) {
+        return siteOf[i] ;
+    }
+    else {
+        cout << "indice unit incorrect: " << i << endl;
+        return -1 ;
+    }
 }

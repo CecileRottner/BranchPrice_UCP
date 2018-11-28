@@ -46,6 +46,7 @@ int main(int argc, char** argv)
     int cat01 ;
     int bloc ;
     int intra  ;
+    int intra_cons;
     int id;
     int met = 0 ;
     string localisation;
@@ -73,6 +74,7 @@ int main(int argc, char** argv)
         intra = atoi(argv[9]);
         id = atoi(argv[10]);
         met = atoi(argv[11]);
+        intra_cons = atoi(argv[12]) ;
     }
 
     InstanceProcessed Instance = InstanceProcessed(n, T, bloc, demande, sym, cat01, intra, id, localisation) ;
@@ -90,16 +92,16 @@ int main(int argc, char** argv)
 
     double eps = 0.0000001;
 
-    bool IP=1 ; // est-ce qu'on résout le master en variable entières ?
+    bool IP=1; // est-ce qu'on résout le master en variable entières ?
     bool PriceAndBranch = 0;
 
     bool ManageSubPbSym = 0 ; // est-ce qu'on gère les symétries dans le sous problème ?
 
     bool Ramp = 0 ; // est-ce qu'on considère les gradients ?
-    bool IntraSite = 0 ; // à implémenter
+    bool IntraSite = intra_cons ; // à implémenter pour la décomposition par pas de temps
 
-    bool TimeStepDec = 1 ;
-    bool DynProgTime = 1 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
+    bool TimeStepDec = 0 ;
+    bool DynProgTime = 0 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
 
     bool DemandeResiduelle = 0 ;
 
@@ -112,10 +114,53 @@ int main(int argc, char** argv)
     bool OneTimeStepPerIter = 0;
     bool addColumnToOtherTimeSteps = 0 ;
 
-    bool Solve = true ;
+    bool Solve = true ; // si false: utilise Cplex
+    bool UnitDecompo = false ;
+    bool StartUpDecompo = false;
 
     if (met==-1) {
         Solve = false ;
+    }
+
+
+
+    //// COLUMN GENERATION COMPARISONS
+    ///
+    /// Unit subset decompositions
+    if (met == 101) { // UNIT DECOMPOSITION
+        UnitDecompo=true;
+    }
+    if (met == 1011) { // UNIT DECOMPOSITION
+        UnitDecompo=true;
+        StartUpDecompo=true;
+    }
+
+    if (met == 102) { // SITE DECOMPOSITION
+
+    }
+
+    if (met == 1021) { // SITE DECOMPOSITION
+        StartUpDecompo=true;
+    }
+
+    if (met == 103) { // RESIDUAL DEMAND DECOMPOSITION
+        DemandeResiduelle= true;
+    }
+    if (met == 1031) { // RESIDUAL DEMAND DECOMPOSITION
+        DemandeResiduelle= true;
+        StartUpDecompo=true;
+    }
+
+    /// Time decomposition
+    if (met == 201) {
+        TimeStepDec = true ;
+        DynProgTime = true ;
+    }
+
+    if (met == 202) {
+        TimeStepDec = true ;
+        DynProgTime = true ;
+        IntervalUpSet = true;
     }
 
     /// Branch & Price (& Cut)
@@ -148,9 +193,11 @@ int main(int argc, char** argv)
         TimeStepDec = 0;
         DynProgTime = 0 ;
     }
-    Parameters const param(IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
-                           heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, PriceAndBranch);
 
+
+
+    Parameters const param(inst, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
+                           heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, PriceAndBranch, UnitDecompo, StartUpDecompo);
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -167,7 +214,7 @@ int main(int argc, char** argv)
     SCIPinfoMessage(scip, NULL, "\n");
 
     /* include default plugins */
-    //SCIPincludeDefaultPlugins(scip);
+   // SCIPincludeDefaultPlugins(scip);
 
 
     SCIPincludeConshdlrLinear(scip);
@@ -209,7 +256,7 @@ int main(int argc, char** argv)
     SCIPincludeHeurRootsoldiving(scip);
     SCIPincludeHeurRounding(scip);
 
-    //SCIPsetLongintParam(scip, "limits/nodes", 1);
+    SCIPsetLongintParam(scip, "limits/nodes", 1);
     SCIPsetRealParam(scip, "limits/time", 3600);
 
     SCIPincludeDispDefault(scip) ;
@@ -236,12 +283,16 @@ int main(int argc, char** argv)
     if (param.TimeStepDec) { //// Décomposition par pas de temps
         Master_ptr = new MasterTime_Model(inst, param) ;
 
+
         MasterTime_Model* MT ;
         MT = dynamic_cast<MasterTime_Model*> (Master_ptr) ;
+
         if (MT != NULL) {
+
 
             ///Initialisation du master
             MT->initScipMasterTimeModel(scip);
+
 
             /// Initialisation du pricer
             Pricer = new ObjPricerTimeUCP(scip, PRICER_NAME, MT, inst, param);
@@ -280,6 +331,14 @@ int main(int argc, char** argv)
             SCIPincludeObjPricer(scip, Pricer, true);
             SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
         }
+
+        //// HEURISTIC INITIALIZATION OF MASTER'S COLUMNS
+        if (param.heuristicInit) {
+            IloNumArray x(env, n*T) ;
+            IloNumArray p(env, n*T) ;
+            checker.CplexPrimalHeuristic(x,p);
+            MS->createColumns(scip, x);
+        }
     }
 
 
@@ -293,7 +352,7 @@ int main(int argc, char** argv)
 
     if (param.IP) {
         BranchConsHandler* branchConsHandler = new BranchConsHandler(scip, Master_ptr, Pricer);
-        BranchingRule* branchRule = new BranchingRule(scip, inst,  Master_ptr, Pricer);
+        BranchingRule* branchRule = new BranchingRule(scip, inst,  Master_ptr, Pricer, param);
 
         SCIPincludeObjConshdlr(scip, branchConsHandler, TRUE);
         SCIPincludeObjBranchrule(scip, branchRule, TRUE);
@@ -310,62 +369,128 @@ int main(int argc, char** argv)
         cout << MS->convexity_cstr.size() << endl ;
     }
 
-    cout << "resolution..." << endl ;
+
     if (Solve) {
+
+        cout << "resolution..." << endl ;
         SCIPsolve(scip);
+        SCIPwriteTransProblem(scip, "priced.lp", NULL, FALSE);
+        cout << "fin resolution" << endl ;
+
+
+        /// Solution en x
+        n=inst->getn();
+        T=inst->getT();
+        Master_ptr->computeFracSol(scip);
+
+        cout << "solution x frac: " << endl;
+
+        for (int t=0 ; t < T ; t++) {
+            for (int i=0 ; i <n ; i++) {
+                cout << Master_ptr->x_frac[i*T+t] << " " ;
+            }
+            cout << endl ;
+        }
+
     }
-    cout << "fin resolution" << endl ;
+
 
     double temps_scip =  ( clock() - start ) / (double) CLOCKS_PER_SEC;
-
-    /// Solution en x
-    n=inst->getn();
-    T=inst->getT();
-
-    //        cout << "solution x frac: " << endl;
-
-    //        for (int t=0 ; t < T ; t++) {
-    //            for (int i=0 ; i <n ; i++) {
-    //                cout << Master_ptr->x_frac[i*T+t] << " " ;
-    //            }
-    //            cout << endl ;
-    //        }
-
-
     //////////////////////
     //////   STATS   /////
     //////////////////////
 
     fichier.precision(7);
 
-    // SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
+    SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
 
+    if (met==101) {
+        fichier << " Unit " ;
+    }
+    if (met==1011) {
+        fichier << " Unit-SU " ;
+    }
+    if (met==102) {
+        fichier << "Site ";
+    }
+    if (met==1021) {
+        fichier << "Site-SU ";
+    }
+    if (met==103) {
+        fichier << "RD ";
+    }
+    if (met==201) {
+        fichier << "Time ";
+    }
+    if (met==202) {
+        fichier << "Time+I ";
+    }
     //fichier << "met & n & T & id & nodes & IUP & Iter & Var & CPU & gap & RL & low & up & cplex heur \\\\ " << endl;
-    fichier << met << " & " << n << " & " << T << " & " << id ;
+    fichier << " & " << n << " & " << T << " & " << demande << " & " << id ;
 
+
+
+    ///// AFFICHAGE BRANCH AND PRICE
     if (Solve) {
-        fichier << " &  " << SCIPgetNNodes(scip) ;
-        fichier << " & " << Master_ptr->nbIntUpSet ;
+       // fichier << " &  " << SCIPgetNNodes(scip) ;
+        if (param.IntervalUpSet) {
+            fichier << " & " << Master_ptr->nbIntUpSet ;
+        }
+        else {
+            fichier << " & - "  ;
+        }
         fichier << " &  " << SCIPgetNLPIterations(scip) ;
         fichier << " & " << SCIPgetNPricevarsFound(scip) ;
-        //fichier << " & " << SCIPpricerGetTime(scippricer[0]) ;
+        // fichier << " & " << Master_ptr->cumul_resolution_pricing ;
+
         //    if (param.TimeStepDec && !param.DynProgTime) {
         //        fichier << " & " << pricerTime->nbCallsToCplex ;
         //        fichier << " & " << MasterTime.cumul_resolution_pricing ;
         //    }
 
-        //fichier << " &  " << SCIPgetSolvingTime(scip) ;
-        fichier << " & " << temps_scip  ;
+        double timeScip =  SCIPgetSolvingTime(scip) ;
+        fichier << " &  " << timeScip;
+        fichier << " & " <<  timeScip - SCIPpricerGetTime(scippricer[0]); // MASTER TIME
+        //fichier << " & " << temps_scip  ;
         fichier << " &  " << SCIPgetGap(scip);
-        fichier << " &  " << SCIPgetDualboundRoot(scip) ;
+        // fichier << " &  " << SCIPgetDualboundRoot(scip) ;
         fichier << " &  " << SCIPgetDualbound(scip) ;
-        fichier << " &  " << SCIPgetPrimalbound(scip) ;
-        fichier << " & " << checker.valHeuristicCplex ; // OPT
+       // fichier << " &  " << SCIPgetPrimalbound(scip) ;
+        //   fichier << " & " << checker.valHeuristicCplex ; // OPT
+
+//        if (n==10 && met==201) {
+//            checker.getIntegerObjValue();
+//            fichier << " & " << checker.PrimalBound ; // OPT
+//        }
+
+//        else {
+//            fichier << " & - "  ; // OPT
+//        }
+                if (met*intra_cons==102 || !intra_cons*met==103) {
+
+                    fichier << " & " << checker.getLRValue() ; // RL*/
+                    fichier << " & " << checker.getLRCplex() ; // RL CPLEX
+
+                    if (demande==4 || n < 20 || T < 48) {
+                        checker.getIntegerObjValue();
+                        fichier << " & " << checker.PrimalBound ; // OPT
+                    }
+                    else {
+                        fichier << " & {-} "  ; // OPT
+                    }
+
+                }
+                else{
+                    fichier << " & & & " ;
+                }
         fichier <<" \\\\ " << endl ;
+        checker.checkSolution(Master_ptr->x_frac);
 
     }
 
+
     else {
+
 
         //////////////////////
         //////  CHECK    /////
@@ -386,8 +511,8 @@ int main(int argc, char** argv)
         fichier << " & - " ;
         fichier << " & " << checker.cpuTime ;
         fichier << " & " << checker.gap ;
-        // fichier << "& " << checker.getLRValue() ; // RL*/
-        fichier << "& " << checker.getLRCplex() ; // RL CPLEX
+        //   fichier << " & " << checker.getLRValue() ; // RL*/
+        //  fichier << " & " << checker.getLRCplex() ; // RL CPLEX
         fichier << " & " << checker.DualBound ;
         fichier << " & " << checker.PrimalBound ; // OPT
         fichier << " & - " ;
@@ -395,8 +520,99 @@ int main(int argc, char** argv)
     }
 
 
-    //    cout << "check x_frac: " << endl ;
-    // checker.checkSolution(x_frac);
+
+//    ////// AFFICHAGE PRICE AND BRANCH
+//    if (Solve) {
+//        //fichier << " &  " << SCIPgetNNodes(scip) ;
+//        fichier << " & - "  ;
+//        if (param.IntervalUpSet) {
+//            fichier << " & " << Master_ptr->nbIntUpSet ;
+//        }
+//        else {
+//            fichier << " & - "  ;
+//        }
+////        fichier << " &  " << SCIPgetNLPIterations(scip) ;
+//        fichier << " & " << SCIPgetNPricevarsFound(scip) ;
+//        fichier << " & " << temps_scip ;
+//        fichier << " &  " << SCIPgetDualbound(scip) ;
+
+//       // fichier << " & " << Master_ptr->cumul_resolution_pricing ;
+
+//        //    if (param.TimeStepDec && !param.DynProgTime) {
+//        //        fichier << " & " << pricerTime->nbCallsToCplex ;
+//        //        fichier << " & " << MasterTime.cumul_resolution_pricing ;
+//        //    }
+
+////        double timeScip =  SCIPgetSolvingTime(scip) ;
+////        fichier << " &  " << timeScip;
+////        fichier << " & " <<  timeScip - SCIPpricerGetTime(scippricer[0]); // MASTER TIME
+////        //fichier << " & " << temps_scip  ;
+////        fichier << " &  " << SCIPgetGap(scip);
+////       // fichier << " &  " << SCIPgetDualboundRoot(scip) ;
+////     //   fichier << " &  " << SCIPgetPrimalbound(scip) ;
+////     //   fichier << " & " << checker.valHeuristicCplex ; // OPT
+
+////        if (met*intra_cons==102 || !intra_cons*met==103) {
+
+////            fichier << " & " << checker.getLRValue() ; // RL*/
+////            fichier << " & " << checker.getLRCplex() ; // RL CPLEX
+
+////            if (demande==4 || n < 20 || T < 48) {
+////                checker.getIntegerObjValue();
+////                fichier << " & " << checker.PrimalBound ; // OPT
+////            }
+////            else {
+////                fichier << " & - "  ; // OPT
+////            }
+
+////        }
+////        else{
+////            fichier << " & & & " ;
+////        }
+////        fichier <<" \\\\ " << endl ;
+//        //checker.checkSolution(Master_ptr->x_frac);
+
+//    }
+
+
+//    else {
+
+//        //////////////////////
+//        //////  CHECK    /////
+//        //////////////////////
+
+//        cout.precision(15);
+
+//        //    vector<double> x_frac = vector<double>(n*T, 0) ;
+//        //    for (int i=0 ; i < n*T ; i++) {
+//        //        x_frac[i] = (checker.cplex).getValue(checker.x[i], x_frac[i]) ;
+//        //    }
+
+//        checker.getIntegerObjValue();
+
+//        fichier << " & - " ;
+//        fichier << " & - " ;
+//        fichier << " & - "  ;
+//        fichier << " & - "  ;
+
+//        fichier << " & " << checker.DualBound ;
+
+//        fichier << " & " << checker.PrimalBound ;
+//         fichier << " & " << checker.cpuTime ;
+//        fichier << " & " << checker.nbNodes ;
+//        fichier << " & " << checker.gap << "\\%" ;
+////        fichier << " & - " ;
+
+
+////        fichier << " & " << checker.gap ;
+////        fichier << " & " << checker.getLRValue() ; // RL*/
+////        fichier << " & " << checker.getLRCplex() ; // RL CPLEX
+
+////        // OPT
+////        fichier << " & - " ;
+//        fichier <<" \\\\ " << endl ;
+//    }
+
 
     return 0;
 }

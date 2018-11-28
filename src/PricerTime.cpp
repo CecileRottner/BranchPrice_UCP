@@ -252,11 +252,13 @@ void ObjPricerTimeUCP::updateDualCosts(SCIP* scip, DualCostsTime & dual_cost, bo
 void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas             /**< SCIP data structure */)
 {
 #ifdef OUTPUT_PRICER
-  //  cout<<"**************PRICER************ " << endl ;
+   //cout<<"**************PRICER************ " << endl ;
     // SCIPprintBestSol(scip, NULL, FALSE);
 #endif
 
     int print = 0 ;
+
+    //cout<<"**************PRICER************ " << endl ;
 
 
 
@@ -359,13 +361,13 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
 
                     //cout << "total prod: " << totalProd << endl ;
 
-                     if (print) {
+                    // if (print) {
                          cout << "Minimum reduced cost plan: "<< objvalue << "for time " << t << endl ;
                          for (int i=0 ; i < n ; i++) {
                              cout << fabs(upDownPlan[i]) << " " ;
                          }
                          cout << endl ;
-                     }
+                     //}
 
 
 
@@ -419,7 +421,7 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
         }
     }
 
-
+  //  cout<<"************END PRICER******************"<<endl;
 #ifdef OUTPUT_PRICER
     SCIPwriteTransProblem(scip, "ucp.lp", "lp", FALSE);
   //  cout<<"************END PRICER******************"<<endl;

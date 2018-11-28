@@ -626,6 +626,10 @@ IloInt InstanceUCP::getSommePmax()  const {
     return SommePmax ;
 }
 
+IloEnv InstanceUCP::getenv()  {
+    return env;
+}
+
 IloInt InstanceUCP::getTri(IloInt i)  const {
     return Tri[i] ;
 }

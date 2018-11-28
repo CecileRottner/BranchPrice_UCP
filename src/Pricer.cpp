@@ -26,9 +26,9 @@ ObjPricerSite::ObjPricerSite(
     ObjPricerUCP(scip, pp_name, instance, param)
 {
     Master=M ;
-    AlgoCplex = vector<CplexPricingAlgo*>(inst->getS(), NULL) ;
+    AlgoCplex = vector<CplexPricingAlgo*>(Param.nbDecGpes, NULL) ;
 
-    for (int s=0 ; s < inst->getS() ; s++) {
+    for (int s=0 ; s < Param.nbDecGpes ; s++) {
         AlgoCplex[s] = new CplexPricingAlgo(inst, param, s) ;
     }
 }
@@ -64,7 +64,7 @@ SCIP_DECL_PRICERINIT(ObjPricerSite::scip_init)
     }
 
     //convexity constraints
-    for (int s = 0 ; s < inst->getS() ; s++) {
+    for (int s = 0 ; s < Param.nbDecGpes ; s++) {
         SCIPgetTransformedCons(scip, Master->convexity_cstr[s], &(Master->convexity_cstr[s]));
     }
 
@@ -74,6 +74,28 @@ SCIP_DECL_PRICERINIT(ObjPricerSite::scip_init)
             for (int i = 0 ; i < inst->getn() ; i++) {
                 SCIPgetTransformedCons(scip, Master->ramp_up[i*T+t], &(Master->ramp_up[i*T+t]));
                 SCIPgetTransformedCons(scip, Master->ramp_down[i*T+t], &(Master->ramp_down[i*T+t]));
+            }
+        }
+    }
+
+    if (Param.IntraSite && Param.UnitDecompo) {
+        for (int t = 1; t < T; t++) {
+            for (int s = 0 ; s < inst->getS() ; s++) {
+                SCIPgetTransformedCons(scip, Master->intrasite[s*T+t], &(Master->intrasite[s*T+t]));
+            }
+        }
+    }
+
+    if (Param.StartUpDecompo) {
+        for (int t = 0 ; t < T ; t++) {
+            for (int i = 0 ; i < inst->getn() ; i++) {
+
+                SCIPgetTransformedCons(scip, Master->mindown[i*T+t], &(Master->mindown[i*T+t]));
+
+                SCIPgetTransformedCons(scip, Master->z_lambda[i*T+t], &(Master->z_lambda[i*T+t]));
+
+                SCIPgetTransformedCons(scip, Master->logical[i*T+t], &(Master->logical[i*T+t]));
+
             }
         }
     }
@@ -158,7 +180,7 @@ void ObjPricerSite::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Fark
     int print = 0 ;
     int n = inst->getn() ;
     int T = inst->getT() ;
-    int S = inst->getS() ;
+    int S = Param.nbDecGpes ;
 
     //cout << "solution duale :" << endl ;
     //couts duaux des power limits
@@ -216,6 +238,56 @@ void ObjPricerSite::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Fark
         if (print) cout << "sigma: " << dual_cost.Sigma[s] <<endl;
     }
 
+    //couts duaux intrasite
+    if (Param.IntraSite && Param.UnitDecompo) {
+        for (int s = 0 ; s < inst->getS() ; s++) {
+            for (int t = 1 ; t < T ; t++) {
+                if (!Farkas) {
+                    dual_cost.Eta[s*T+t] = SCIPgetDualsolLinear(scip, Master->intrasite[s*T+t]);
+                }
+                else{
+                    dual_cost.Eta[s*T+t] = SCIPgetDualfarkasLinear(scip, Master->intrasite[s*T+t]);
+                }
+            }
+        }
+    }
+
+
+    //couts duaux des contraintes pour Start up decompo
+    if (Param.StartUpDecompo) {
+        for (int i = 0; i < n; i++) {
+            for (int t = 0 ; t < T ; t++) {
+
+                if (!Farkas) {
+                    if (t >= inst->getL(i)) {
+                        dual_cost.Zeta[i*T+t] = SCIPgetDualsolLinear(scip, Master->mindown[i*T+t]);
+                    }
+
+                    dual_cost.Ksi[i*T+t] = SCIPgetDualsolLinear(scip, Master->z_lambda[i*T+t]);
+
+                    if (t>= 1) {
+                        dual_cost.Theta[i*T+t] = SCIPgetDualsolLinear(scip, Master->logical[i*T+t]);
+                    }
+
+                    if (print) cout << "zeta(" << i <<"," << t <<") = " << dual_cost.Zeta[i*T+t] <<endl;
+                    if (print) cout << "ksi(" << i <<"," << t <<") = " << dual_cost.Ksi[i*T+t] <<endl;
+                    if (print) cout << "theta(" << i <<"," << t <<") = " << dual_cost.Theta[i*T+t] <<endl;
+                }
+                else{
+                    if (t>= inst->getL(i)) {
+                        dual_cost.Zeta[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->mindown[i*T+t]);
+                    }
+
+                    dual_cost.Ksi[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->z_lambda[i*T+t]);
+
+                    if (t>= 1) {
+                        dual_cost.Theta[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->logical[i*T+t]);
+                    }
+                }
+
+            }
+        }
+    }
     if (print) cout << endl ;
 
 }
@@ -230,7 +302,7 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
     int print = 0 ;
 
 //    /// PMR courant et sa solution
-//    SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
+   // SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
 
 //   // cout << "solution du PMR:" << endl ;
 //    SCIPprintSol(scip, NULL, NULL, FALSE);
@@ -240,9 +312,9 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
 
     //// Cout duaux
     int T = inst->getT() ;
-    int S = inst->getS() ;
+    int S = Param.nbDecGpes ;
 
-    DualCosts dual_cost = DualCosts(inst) ;
+    DualCosts dual_cost = DualCosts(inst,Param) ;
     updateDualCosts(scip, dual_cost, Farkas);
 
     double epsilon= 0.0000001 ;
@@ -256,9 +328,9 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
 
         //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
         double objvalue = 0 ;
-        IloNumArray upDownPlan = IloNumArray((AlgoCplex[s])->env, inst->nbUnits(s)*T) ;
+        IloNumArray upDownPlan = IloNumArray((AlgoCplex[s])->env, Param.nbUnits(s)*T) ;
         int solutionFound = (AlgoCplex[s])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue) ;
-        for (int index=0 ; index <inst->nbUnits(s)*T ; index++ ) {
+        for (int index=0 ; index <Param.nbUnits(s)*T ; index++ ) {
             if (upDownPlan[index]>1-epsilon) {
                 upDownPlan[index]=1 ;
             }
@@ -275,7 +347,7 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
 
         if (print) {
             for (int t=0 ; t < T ; t++)  {
-                for (int i=0 ; i < inst->nbUnits(s) ; i++) {
+                for (int i=0 ; i < Param.nbUnits(s) ; i++) {
                     cout << fabs(upDownPlan[i*T+t]) << " " ;
                 }
                 cout << endl ;
@@ -288,7 +360,8 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
         if (objvalue < -epsilon) {
 
             Master_Variable* lambda = new Master_Variable(s, upDownPlan);
-            cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " ";
+            cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " "  << endl ;
+
             //// CREATION D'UNE NOUVELLE VARIABLE DANS LE MASTER
             Master->initMasterVariable(scip, inst, lambda) ;
 

@@ -18,10 +18,15 @@ public:
     vector<double> Mu ;
     vector<double> Nu ;
     vector<double> Sigma ;
-    vector<double> Phi ;
+    vector<double> Eta ; // intra site dual cost
+    vector<double> Phi ; // ramp dual cost
     vector<double> Psi ;
 
-    DualCosts(InstanceUCP* inst) ;
+    vector<double> Zeta ;
+    vector<double> Ksi ;
+    vector<double> Theta ;
+
+    DualCosts(InstanceUCP* inst, const Parameters & Param) ;
 };
 
 
@@ -39,6 +44,8 @@ class CplexPricingAlgo {
   IloBoolVarArray u;
 
   vector<double> BaseObjCoefX ;
+
+  double cpuTime ;
 
   CplexPricingAlgo(InstanceUCP* inst, const Parameters & Param, int site);
 

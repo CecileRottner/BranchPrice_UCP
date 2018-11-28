@@ -11,6 +11,7 @@
 #include <ctime>
 #include <list>
 
+#include "InstanceUCP.h"
 using namespace std ;
 
 struct Parameters
@@ -30,24 +31,32 @@ struct Parameters
     bool AddColumnToOtherTimeSteps ;
     bool DynProgTime ;
     bool PriceAndBranch ;
+    bool UnitDecompo ;
+    bool StartUpDecompo ;
 
-    Parameters(bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue, bool one, bool addColumn, bool dptime, bool pandb) :
-        IP(ip),
-        ManageSubPbSym(managesubpbsym),
-        Ramp(ramp),
-        TimeStepDec(time),
-        IntraSite(intra),
-        DemandeResiduelle(dr),
-        IntervalUpSet(iup),
-        Epsilon(eps),
-        DontPriceAllTimeSteps(dont),
-        heuristicInit(h_init),
-        DontGetPValue(dontgetpvalue),
-        OneTimeStepPerIter(one),
-        AddColumnToOtherTimeSteps(addColumn),
-        DynProgTime(dptime),
-        PriceAndBranch(pandb)
-    {}
+
+    /// Sites (ou groupes) définis par Param: groupes d'unités de la décomposition (correspondant à des sousproblème)
+    /// Sites définis dans inst: sites sur lesquels vaut la contrainte d'intrasite
+
+    int nbDecGpes ;
+    int n;
+    IloIntArray nbUnitsGpe ;
+    IloIntArray firstUnitGpe ;
+    IloIntArray siteOf ;
+
+    Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue, bool one, bool addColumn, bool dptime, bool pandb,
+               bool unitdecomp, bool startupdec) ;
+
+    int nbUnits(int s) const ;
+
+    int firstUnit(int s) const ;
+
+    int getSiteOf(int i) const;
+
+    int test() {
+        cout << "size: " << siteOf.getSize() << endl ;
+        return siteOf[0] ;
+    }
 };
 
 class InstanceProcessed {

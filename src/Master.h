@@ -74,6 +74,7 @@ public:
     int nbIntUpSet ;
 
     vector<double> x_frac ;
+    double cumul_resolution_pricing ;
 
     Master_Model(const Parameters & Par, InstanceUCP* i) : Param(Par), inst(i) {
         n= inst->getn();
@@ -151,6 +152,11 @@ public:
     vector<SCIP_CONS*> ramp_up;
     vector<SCIP_CONS*> ramp_down;
     vector<SCIP_CONS*> convexity_cstr;
+    vector<SCIP_CONS*> intrasite;
+
+    vector<SCIP_CONS*> mindown; //start up decomposition only. contrainte minup en fait
+    vector<SCIP_CONS*> z_lambda; //start up decomposition only
+    vector<SCIP_CONS*> logical; //start up decomposition only
 
     // Keep informations on every variables of the Master program
     //NB: le fait d'utiliser une liste ne permet pas de supprimer des variables
@@ -161,6 +167,7 @@ public:
     void addCoefsToConstraints(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) ;
     void  InitScipMasterModel(SCIP* scip, InstanceUCP* inst);
     void initMasterVariable(SCIP* scip, InstanceUCP* inst , Master_Variable* lambda) ;
+    void createColumns(SCIP* scip, IloNumArray x) ;
 
     void computeFracSol(SCIP* scip) ;
 
@@ -177,7 +184,7 @@ public:
 class MasterTime_Model : public Master_Model {
 public:
 
-    double cumul_resolution_pricing ;
+
 
     IloEnv env;
 
@@ -186,6 +193,7 @@ public:
     vector<SCIP_CONS*> min_up;
     vector<SCIP_CONS*> min_down;
     vector<SCIP_CONS*> convexity_cstr;
+    vector<SCIP_CONS*> intrasite;
 
     //Interval up set inequalities
     vector< list<IneqIntUpSet*> > IUP_t0 ; // IUP_t0[t] : liste des interval-up-set telles que t0=t

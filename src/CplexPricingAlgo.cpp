@@ -3,23 +3,28 @@
 
 using namespace std;
 
-DualCosts::DualCosts(InstanceUCP* inst) {
+DualCosts::DualCosts(InstanceUCP* inst, const Parameters & Param) {
     int n = inst->getn() ;
     int T= inst->getT() ;
     Mu.resize(T, 0) ;
     Nu.resize(n*T, 0) ;
+    Eta.resize(inst->getS()*T, 0) ;
     Phi.resize(n*T, 0) ;
     Psi.resize(n*T, 0) ;
-    Sigma.resize(inst->getS(), 0) ;
+    Sigma.resize(Param.nbDecGpes, 0) ;
+
+    Zeta.resize(n*T, 0) ;
+    Ksi.resize(n*T, 0) ;
+    Theta.resize(n*T, 0) ;
 }
 
 void AddSSBI(IloEnv env, IloModel model, IloBoolVarArray x, IloBoolVarArray u, int site, InstanceUCP* inst) {
 
-    int allCoupleInequalities=0;
+    /*int allCoupleInequalities=0;
 
     int T = inst->getT() ;
-    int firstOfSite = inst->firstUnit(site) ;
-    int ns = inst->nbUnits(site) ;
+    int firstOfSite = Param.firstUnit(site) ;
+    int ns = Param.nbUnits(site) ;
     int k ;
 
     //inégalités symétries
@@ -82,7 +87,7 @@ void AddSSBI(IloEnv env, IloModel model, IloBoolVarArray x, IloBoolVarArray u, i
                 }
             }
         }
-    }
+    }*/
 }
 
 CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int site) : Param(p) {
@@ -90,8 +95,8 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int 
     //env = IloEnv() ;
     Site=site ;
 
-    int ns = inst->nbUnits(Site) ;
-    int first = inst->firstUnit(Site) ;
+    int ns = Param.nbUnits(Site) ;
+    int first = Param.firstUnit(Site) ;
     int last = first+ns-1;
 
     int T = inst->getT() ;
@@ -100,6 +105,8 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int 
 
     x = IloBoolVarArray(env, ns*T) ;
     u = IloBoolVarArray(env, ns*T) ;
+
+   cpuTime=0 ;
 
 
     //AddSSBI(env, model, x,u, site, inst) ;
@@ -140,7 +147,12 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int 
             for (int k= t - inst->getl(first+i) + 1; k <= t ; k++) {
                 sum += u[i*T + k] ;
             }
-            model.add(sum <= 1 - x[i*T + t - inst->getl(first+i)]) ;
+            if (!Param.StartUpDecompo) {
+                model.add(sum <= 1 - x[i*T + t - inst->getl(first+i)]) ;
+            }
+            else {
+                model.add(sum == 1 - x[i*T + t - inst->getl(first+i)]) ;
+            }
             sum.end() ;
         }
     }
@@ -153,7 +165,7 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int 
     }
 
     //Contraintes intra-site
-    if (Param.IntraSite) {
+    if (Param.IntraSite && !Param.UnitDecompo) {
         for (int t=1 ; t < T ; t++) {
             IloExpr sum(env) ;
             for (int i=0 ; i <ns ; i++) {
@@ -205,16 +217,21 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int 
 }
 
 void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCosts & Dual, bool Farkas) {
-    int ns = inst->nbUnits(Site) ;
+    int ns = Param.nbUnits(Site) ;
     int T = inst->getT();
-    int first = inst->firstUnit(Site) ;
+    int first = Param.firstUnit(Site) ;
     for (int i=0 ; i<ns ; i++) {
 
         double RU = (inst->getPmax(first+i) - inst->getPmin(first+i))/3 ;
         double RD = (inst->getPmax(first+i) - inst->getPmin(first+i))/2 ;
 
         for (int t=0 ; t < T ; t++) {
-            //RAMPSTUFF
+
+            double dual_coef_u = 0 ;
+            if (Param.UnitDecompo && Param.IntraSite && t>0) {
+                dual_coef_u = - Dual.Eta[inst->getSiteOf(first)*T +t];
+            }
+
             double dual_coef = - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] ;
             if (Param.Ramp) {
                 if (t > 0) {
@@ -224,13 +241,46 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters
                     dual_coef += RU*Dual.Phi[(first+i)*T+t+1] ;
                 }
             }
+
+            if (Param.StartUpDecompo) { // rajout des couts duaux lies aux contraintes supplémentaires, ie logical, mindown, z_lambda
+
+                int L = inst->getL(first+i);
+                /// COEFS de X
+                //ksi
+                dual_coef -= Dual.Ksi[(first+i)*T+t] ;
+
+                //theta
+                if (t >=1) {
+                    dual_coef -= Dual.Theta[(first+i)*T+t] ;
+                }
+                if (t< T-1) {
+                    dual_coef += Dual.Theta[(first+i)*T+t+1] ;
+                }
+                if (t >=L) {
+                    dual_coef += Dual.Zeta[(first+i)*T+t] ;
+                }
+
+                /// COEFS de U
+
+                if (t >= 1) {
+                    for (int k = fmax(t,L) ; k < fmin(T, t+L) ;k++) {
+                        dual_coef_u -= Dual.Zeta[(first+i)*T+k] ;
+                    }
+                }
+                if (t>=1) {
+                    dual_coef_u += Dual.Theta[(first+i)*T+t] ;
+                }
+
+            }
+
+
             if (!Farkas) {
                 obj.setLinearCoef(x[i*T +t],BaseObjCoefX[i]  + dual_coef );
-                obj.setLinearCoef(u[i*T +t],inst->getc0(first+i)) ;
+                obj.setLinearCoef(u[i*T +t],inst->getc0(first+i) + dual_coef_u) ;
             }
             else{
                 obj.setLinearCoef(x[i*T +t],  dual_coef );
-                obj.setLinearCoef(u[i*T +t],0.0) ;
+                obj.setLinearCoef(u[i*T +t], dual_coef_u ) ;
             }
             //cout << "obj coef: " << BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] - Dual.Sigma[Site] << endl ;
         }
@@ -262,6 +312,8 @@ bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual,
         /*cout << "for site " << Site << "; " << endl ;
        cout << "obj value without sigma: " << cplex.getObjValue() << endl;*/
         objvalue = cplex.getObjValue() - Dual.Sigma[Site] ;
+
+        //cpuTime = cplex.getCpu
     }
 
 
