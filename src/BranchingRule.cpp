@@ -1,7 +1,7 @@
 #include "BranchingRule.h"
 #include "BranchConsHandler.h"
 
-//#define OUTPUT_BRANCHRULE
+#define OUTPUT_BRANCHRULE
 
 
 using namespace std;

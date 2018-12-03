@@ -26,7 +26,17 @@ public:
     vector<double> Ksi ;
     vector<double> Theta ;
 
+
+    //Coefficients de x et u
+    vector<double> BaseObjCoefX ; //ne change pas: calculé dans le constructeur
+    vector<double> ObjCoefX ;
+
+    vector<double> ObjCoefU ;
+
     DualCosts(InstanceUCP* inst, const Parameters & Param) ;
+
+    //Computes objective coefficients of x and u once dual values are updated
+    void computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool Farkas) ;
 };
 
 
@@ -57,6 +67,39 @@ class CplexPricingAlgo {
 
 };
 
+
+
+///// Programmation dynamique pour une unité seulement //////
+///////// Pas adapté à la décomposition start-up ////////////
+// en construction
+
+class DynProgPricingAlgo {
+ public:
+
+  Parameters Param ;
+  Master_Model* Master;
+  int Site ;
+  IloEnv   env;
+
+  vector<double> BaseObjCoefX ;
+  vector<double> ObjCoefX ;
+  vector<double> ObjCoefU ;
+  vector<double> Bellman ;
+  vector<double> Prec ;
+
+  DynProgPricingAlgo(InstanceUCP* inst, Master_Model* Master, const Parameters & par, int Site); // initialise les vecteurs
+
+  void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCosts & Dual, bool Farkas);
+
+  // Launch Cplex solver and get back an optimal up/down plan
+  bool findImprovingSolution(InstanceUCP* inst, const DualCosts & Dual, double& objvalue) ;
+  //computes Bellman and Prec (predecessor) vectors
+  // returns true if an improving solution has been found. objvalue is updated in this case
+
+  void getUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan) ;
+  //updates UpDownPlan and realCost
+
+};
 
 ////////////////////////////////////////////////////
 ////////// DECOMPOSITION PAR PAS DE TEMPS //////////
@@ -119,9 +162,12 @@ class DynProgPricingAlgoTime { // codé dans le cas Pmin=Pmax pour voir si c'est
 
   void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas);
 
-  // Launch Cplex solver and get back an optimal up/down plan
-  bool findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) ; // returns true if an improving solution has been found. objvalue is updated in this case
-  void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, double & totalProd, bool Farkas) ; //updates UpDownPlan and realCost
+  bool findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) ;
+  // computes Bellman table (vector Table)
+  // returns true if an improving solution has been found. objvalue is updated in this case
+
+  void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, double & totalProd, bool Farkas) ;
+  //updates UpDownPlan and realCost
 
 };
 

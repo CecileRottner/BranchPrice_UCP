@@ -165,6 +165,8 @@ void MasterSite_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master
     var->computeCost(inst, Param);
     double cost= var->cost;
 
+    cout << "cost: " << cost << endl ;
+
     SCIP_Vartype type ;
     if (Param.IP) {
         type = SCIP_VARTYPE_INTEGER;

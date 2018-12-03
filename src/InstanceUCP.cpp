@@ -496,6 +496,7 @@ IloInt InstanceUCP::getSiteOf(IloInt i) const {
 }
 
 IloInt InstanceUCP::nbUnits(IloInt s) const {
+
     int nb= 1;
     int i=firstUnit(s)+1 ;
     while ((i < n) && firstOfSite[i]==0) {

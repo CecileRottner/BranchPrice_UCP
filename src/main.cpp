@@ -91,6 +91,7 @@ int main(int argc, char** argv)
     ///////////////////////////
 
     double eps = 0.0000001;
+    int node_limit = 1 ;
 
     bool IP=1; // est-ce qu'on résout le master en variable entières ?
     bool PriceAndBranch = 0;
@@ -98,10 +99,11 @@ int main(int argc, char** argv)
     bool ManageSubPbSym = 0 ; // est-ce qu'on gère les symétries dans le sous problème ?
 
     bool Ramp = 0 ; // est-ce qu'on considère les gradients ?
-    bool IntraSite = intra_cons ; // à implémenter pour la décomposition par pas de temps
+    bool IntraSite = 0; //intra_cons ; // à implémenter pour la décomposition par pas de temps
 
     bool TimeStepDec = 0 ;
     bool DynProgTime = 0 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
+    bool DynProg = 0; // implémenté pour Pmax=Pmin et décomposition par unités
 
     bool DemandeResiduelle = 0 ;
 
@@ -197,7 +199,8 @@ int main(int argc, char** argv)
 
 
     Parameters const param(inst, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
-                           heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, PriceAndBranch, UnitDecompo, StartUpDecompo);
+                           heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
+                           UnitDecompo, StartUpDecompo);
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -256,7 +259,7 @@ int main(int argc, char** argv)
     SCIPincludeHeurRootsoldiving(scip);
     SCIPincludeHeurRounding(scip);
 
-    SCIPsetLongintParam(scip, "limits/nodes", 1);
+    SCIPsetLongintParam(scip, "limits/nodes", node_limit);
     SCIPsetRealParam(scip, "limits/time", 3600);
 
     SCIPincludeDispDefault(scip) ;
@@ -383,16 +386,20 @@ int main(int argc, char** argv)
         T=inst->getT();
         Master_ptr->computeFracSol(scip);
 
-        cout << "solution x frac: " << endl;
 
-        for (int t=0 ; t < T ; t++) {
-            for (int i=0 ; i <n ; i++) {
-                cout << Master_ptr->x_frac[i*T+t] << " " ;
-            }
-            cout << endl ;
-        }
+
+//        cout << "solution x frac: " << endl;
+
+//        for (int t=0 ; t < T ; t++) {
+//            for (int i=0 ; i <n ; i++) {
+//                cout << Master_ptr->x_frac[i*T+t] << " " ;
+//            }
+//            cout << endl ;
+//        }
 
     }
+
+    cout << "ici" << endl ;
 
 
     double temps_scip =  ( clock() - start ) / (double) CLOCKS_PER_SEC;
@@ -402,6 +409,7 @@ int main(int argc, char** argv)
 
     fichier.precision(7);
 
+    cout << "ici" << endl ;
     SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
 
     if (met==101) {

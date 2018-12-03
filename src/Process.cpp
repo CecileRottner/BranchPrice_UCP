@@ -71,8 +71,11 @@ string InstanceProcessed::createName() const {
     return s_id ;
 }
 
-Parameters::Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue, bool one, bool addColumn, bool dptime, bool pandb,
-           bool unitdecomp, bool startupdec) :
+Parameters::Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ramp,
+                       bool time, bool intra, bool dr, bool iup, double eps,
+                       bool dont, bool h_init, bool dontgetpvalue, bool one,
+                       bool addColumn, bool dptime, bool dp, bool pandb,
+                       bool unitdecomp, bool startupdec) :
     IP(ip),
     ManageSubPbSym(managesubpbsym),
     Ramp(ramp),
@@ -87,6 +90,7 @@ Parameters::Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ram
     OneTimeStepPerIter(one),
     AddColumnToOtherTimeSteps(addColumn),
     DynProgTime(dptime),
+    DynProg(dp),
     PriceAndBranch(pandb),
     UnitDecompo(unitdecomp),
     StartUpDecompo(startupdec)

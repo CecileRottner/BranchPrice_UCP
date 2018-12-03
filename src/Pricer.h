@@ -58,7 +58,9 @@ public:
 
     MasterSite_Model* Master ;
     vector<CplexPricingAlgo*> AlgoCplex;
+    vector<DynProgPricingAlgo*> AlgoDynProg;
 
+    int iteration;
    /** Constructs the pricer object with the data needed */
    ObjPricerSite(
       SCIP*                               scip,        /**< SCIP pointer */

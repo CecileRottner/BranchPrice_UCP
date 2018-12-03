@@ -4,7 +4,7 @@
 #include "Master.h"
 
 #define eps 1e-6
-//#define OUTPUT_BRANCH_HANDLER
+#define OUTPUT_BRANCH_HANDLER
 
 //////////////////////////////////////////////
 //////////////////////////////////////////////
@@ -31,7 +31,7 @@ void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, int s
     consdata->time = time ;
     consdata->site = site ;
 
-    if (!pricer->Param.TimeStepDec) { // CAS D'UNE DECOMPOSITION PAR SITE: on a besoin de créer les contraintes de branchement (de type cplex) dans consdata
+    if (!pricer->Param.TimeStepDec && !pricer->Param.DynProg) { // CAS D'UNE DECOMPOSITION PAR SITE: on a besoin de créer les contraintes de branchement (de type cplex) dans consdata
         ObjPricerSite* PricerSite ;
         PricerSite = dynamic_cast<ObjPricerSite*> (pricer) ;
 

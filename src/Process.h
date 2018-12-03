@@ -30,6 +30,7 @@ struct Parameters
     bool OneTimeStepPerIter ;
     bool AddColumnToOtherTimeSteps ;
     bool DynProgTime ;
+    bool DynProg ;
     bool PriceAndBranch ;
     bool UnitDecompo ;
     bool StartUpDecompo ;
@@ -44,7 +45,10 @@ struct Parameters
     IloIntArray firstUnitGpe ;
     IloIntArray siteOf ;
 
-    Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ramp, bool time, bool intra, bool dr, bool iup, double eps, bool dont, bool h_init, bool dontgetpvalue, bool one, bool addColumn, bool dptime, bool pandb,
+    Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ramp,
+               bool time, bool intra, bool dr, bool iup, double eps,
+               bool dont, bool h_init, bool dontgetpvalue, bool one,
+               bool addColumn, bool dptime, bool dp, bool pandb,
                bool unitdecomp, bool startupdec) ;
 
     int nbUnits(int s) const ;

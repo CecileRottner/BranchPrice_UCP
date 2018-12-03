@@ -27,10 +27,21 @@ ObjPricerSite::ObjPricerSite(
 {
     Master=M ;
     AlgoCplex = vector<CplexPricingAlgo*>(Param.nbDecGpes, NULL) ;
+    AlgoDynProg = vector<DynProgPricingAlgo*>(Param.nbDecGpes, NULL) ;
+    iteration=0;
 
-    for (int s=0 ; s < Param.nbDecGpes ; s++) {
-        AlgoCplex[s] = new CplexPricingAlgo(inst, param, s) ;
+    if (!Param.DynProg) {
+        for (int s=0 ; s < Param.nbDecGpes ; s++) {
+            AlgoCplex[s] = new CplexPricingAlgo(inst, param, s) ;
+        }
     }
+    else {
+        for (int s=0 ; s < Param.nbDecGpes ; s++) {
+            AlgoDynProg.at(s) = new DynProgPricingAlgo(inst, Master, param, s) ;
+        }
+    }
+
+
 }
 
 
@@ -224,7 +235,9 @@ void ObjPricerSite::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Fark
         else{
             dual_cost.Mu[t] = SCIPgetDualfarkasLinear(scip, Master->demand_cstr[t]);
         }
+        print=1;
         if (print) cout << "mu: " << dual_cost.Mu[t] <<endl;
+        print=0;
     }
 
     //couts duaux contrainte convexité
@@ -295,12 +308,14 @@ void ObjPricerSite::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Fark
 void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas             /**< SCIP data structure */)
 {
 #ifdef OUTPUT_PRICER
-   // cout<<"**************PRICER************ "<< endl ;
+    cout<<"**************PRICER************ "<< endl ;
     // SCIPprintBestSol(scip, NULL, FALSE);
 #endif
 
-    int print = 0 ;
+    int print = 1 ;
+    iteration++;
 
+    //int iteration_limit=5 ;
 //    /// PMR courant et sa solution
    // SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
 
@@ -324,19 +339,40 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
 
         ///// MISE A JOUR DES OBJECTIFS DES SOUS PROBLEMES
        // cout << "mise à jour des couts, farkas=" << Farkas << endl;
-        (AlgoCplex[s])->updateObjCoefficients(inst, Param, dual_cost, Farkas) ;
+        if (!Param.DynProg) {
+            (AlgoCplex[s])->updateObjCoefficients(inst, Param, dual_cost, Farkas) ;
+        }
+        else {
+            (AlgoDynProg[s])->updateObjCoefficients(inst, Param, dual_cost, Farkas) ;
+            cout << "obj coef updated" << endl ;
+        }
 
         //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
         double objvalue = 0 ;
-        IloNumArray upDownPlan = IloNumArray((AlgoCplex[s])->env, Param.nbUnits(s)*T) ;
-        int solutionFound = (AlgoCplex[s])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue) ;
-        for (int index=0 ; index <Param.nbUnits(s)*T ; index++ ) {
-            if (upDownPlan[index]>1-epsilon) {
-                upDownPlan[index]=1 ;
+        IloNumArray upDownPlan  ;
+        int solutionFound ;
+
+
+        if (!Param.DynProg) {
+            upDownPlan = IloNumArray((AlgoCplex[s])->env, Param.nbUnits(s)*T) ;
+            solutionFound= (AlgoCplex[s])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue) ;
+            for (int index=0 ; index <Param.nbUnits(s)*T ; index++ ) {
+                if (upDownPlan[index]>1-epsilon) {
+                    upDownPlan[index]=1 ;
+                }
+                if (upDownPlan[index]< epsilon) {
+                    upDownPlan[index]=0 ;
+                }
             }
-            if (upDownPlan[index]< epsilon) {
-                upDownPlan[index]=0 ;
-            }
+        }
+
+        else { // résolution par programmation dynamique
+            upDownPlan = IloNumArray((AlgoDynProg[s])->env, Param.nbUnits(s)*T) ;
+            (AlgoDynProg.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
+            (AlgoDynProg.at(s))->getUpDownPlan(inst, upDownPlan) ;
+
+            cout << "DP resolution done" << endl ;
+
         }
 
         // cout << "solution found: " << solutionFound << endl;
@@ -350,14 +386,16 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
                 for (int i=0 ; i < Param.nbUnits(s) ; i++) {
                     cout << fabs(upDownPlan[i*T+t]) << " " ;
                 }
-                cout << endl ;
+                //cout << endl ;
             }
             cout << endl ;
         }
 
+        cout << endl ;
+
         //if (SCIPisNegative(scip, objvalue)) {
 
-        if (objvalue < -epsilon) {
+        if (objvalue < -epsilon ) {
 
             Master_Variable* lambda = new Master_Variable(s, upDownPlan);
             cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " "  << endl ;
@@ -375,7 +413,7 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
 
 #ifdef OUTPUT_PRICER
     SCIPwriteTransProblem(scip, "ucp.lp", "lp", FALSE);
-    //cout<<"************END PRICER******************"<<endl;
+    cout<<"************END PRICER******************"<<endl;
 #endif
 
 }

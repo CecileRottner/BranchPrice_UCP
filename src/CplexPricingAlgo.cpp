@@ -16,6 +16,91 @@ DualCosts::DualCosts(InstanceUCP* inst, const Parameters & Param) {
     Zeta.resize(n*T, 0) ;
     Ksi.resize(n*T, 0) ;
     Theta.resize(n*T, 0) ;
+
+    BaseObjCoefX.resize(n*T, 0) ;
+
+    for (int i=0 ; i <n ; i++) {
+        BaseObjCoefX[i] = inst->getcf(i) + (inst->getPmin(i))*inst->getcp(i) ;
+    }
+
+    ObjCoefX.resize(n*T, 0) ;
+    ObjCoefU.resize(n*T, 0) ;
+}
+
+void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool Farkas) {
+
+    // dual values are up to date
+    int n = inst->getn() ;
+    int T = inst->getT();
+
+   // int first = Param.firstUnit(Site) ;
+    for (int i=0 ; i<n ; i++) {
+
+        double RU = (inst->getPmax(i) - inst->getPmin(i))/3 ;
+        double RD = (inst->getPmax(i) - inst->getPmin(i))/2 ;
+
+        for (int t=0 ; t < T ; t++) {
+
+            ObjCoefX.at(i*T+t) = 0;
+            ObjCoefU.at(i*T+t) = 0;
+
+            if (Param.UnitDecompo && Param.IntraSite && t>0) {
+                ObjCoefU.at(i*T+t) += - Eta[inst->getSiteOf(i)*T +t];
+            }
+
+            ObjCoefX.at(i*T+t) += - inst->getPmin(i)*Mu[t] - (inst->getPmax(i) - inst->getPmin(i))*Nu[(i)*T+t] ;
+
+            if (Param.Ramp) {
+                if (t > 0) {
+                    ObjCoefX.at(i*T+t)  += RD*Psi[(i)*T+t] ;
+                }
+                if (t < T-1) {
+                    ObjCoefX.at(i*T+t)  += RU*Phi[(i)*T+t+1] ;
+                }
+            }
+
+            if (Param.StartUpDecompo) { // rajout des couts duaux lies aux contraintes supplémentaires, ie logical, mindown, z_lambda
+
+                int L = inst->getL(i);
+                /// COEFS de X
+                //ksi
+                ObjCoefX.at(i*T+t)  -= Ksi[(i)*T+t] ;
+
+                //theta
+                if (t >=1) {
+                    ObjCoefX.at(i*T+t)  -= Theta[(i)*T+t] ;
+                }
+                if (t< T-1) {
+                    ObjCoefX.at(i*T+t)  += Theta[(i)*T+t+1] ;
+                }
+                if (t >=L) {
+                    ObjCoefX.at(i*T+t)  += Zeta[(i)*T+t] ;
+                }
+
+                /// COEFS de U
+
+                if (t >= 1) {
+                    for (int k = fmax(t,L) ; k < fmin(T, t+L) ;k++) {
+                        ObjCoefU.at(i*T+t) -= Zeta[(i)*T+k] ;
+                    }
+                }
+                if (t>=1) {
+                    ObjCoefU.at(i*T+t) += Theta[(i)*T+t] ;
+                }
+
+            }
+
+
+            if (!Farkas) {
+                ObjCoefU.at(i*T+t) += inst->getc0(i) ;
+                ObjCoefX.at(i*T+t) += BaseObjCoefX[i] ;
+            }
+
+
+        }
+    }
+
+
 }
 
 void AddSSBI(IloEnv env, IloModel model, IloBoolVarArray x, IloBoolVarArray u, int site, InstanceUCP* inst) {
@@ -220,6 +305,7 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters
     int ns = Param.nbUnits(Site) ;
     int T = inst->getT();
     int first = Param.firstUnit(Site) ;
+    cout << "couts duaux " << endl ;
     for (int i=0 ; i<ns ; i++) {
 
         double RU = (inst->getPmax(first+i) - inst->getPmin(first+i))/3 ;
@@ -233,6 +319,7 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters
             }
 
             double dual_coef = - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] ;
+
             if (Param.Ramp) {
                 if (t > 0) {
                     dual_coef += RD*Dual.Psi[(first+i)*T+t] ;
@@ -282,9 +369,34 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters
                 obj.setLinearCoef(x[i*T +t],  dual_coef );
                 obj.setLinearCoef(u[i*T +t], dual_coef_u ) ;
             }
+
+            //cout << dual_coef << endl ;
             //cout << "obj coef: " << BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] - Dual.Sigma[Site] << endl ;
         }
     }
+
+//    double coef[14] = { 58.8965,
+//            -308.102,
+//            -242.81 ,
+//            -1082.15 ,
+//            -83.2854 ,
+//            -462.664 ,
+//            -242.81 ,
+//            -65.7877 ,
+//            1098.26 ,
+//            -49.9218 ,
+//            -496.027 ,
+//            -921.18 ,
+//            -62.0229 ,
+//            69.7596 };
+
+//    for (int t=0 ; t < T ; t++) {
+//    if (!Farkas) {
+//        obj.setLinearCoef(x[t],coef[t] );
+//        obj.setLinearCoef(u[t],inst->getc0(first) ) ;
+//    }
+//    }
+
 }
 
 
