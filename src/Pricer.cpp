@@ -331,6 +331,7 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
 
     DualCosts dual_cost = DualCosts(inst,Param) ;
     updateDualCosts(scip, dual_cost, Farkas);
+    dual_cost.computeObjCoef(inst,Param,Farkas);
 
     double epsilon= 0.0000001 ;
     for (int s = 0 ; s < S ; s++) {

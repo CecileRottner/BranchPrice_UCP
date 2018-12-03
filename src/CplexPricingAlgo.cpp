@@ -305,73 +305,12 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters
     int ns = Param.nbUnits(Site) ;
     int T = inst->getT();
     int first = Param.firstUnit(Site) ;
-    cout << "couts duaux " << endl ;
     for (int i=0 ; i<ns ; i++) {
-
-        double RU = (inst->getPmax(first+i) - inst->getPmin(first+i))/3 ;
-        double RD = (inst->getPmax(first+i) - inst->getPmin(first+i))/2 ;
-
         for (int t=0 ; t < T ; t++) {
 
-            double dual_coef_u = 0 ;
-            if (Param.UnitDecompo && Param.IntraSite && t>0) {
-                dual_coef_u = - Dual.Eta[inst->getSiteOf(first)*T +t];
-            }
+            obj.setLinearCoef(x[i*T +t], (Dual.ObjCoefX).at((first+i)*T+t)  );
+            obj.setLinearCoef(u[i*T +t], (Dual.ObjCoefU).at((first+i)*T+t) ) ;
 
-            double dual_coef = - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] ;
-
-            if (Param.Ramp) {
-                if (t > 0) {
-                    dual_coef += RD*Dual.Psi[(first+i)*T+t] ;
-                }
-                if (t < T-1) {
-                    dual_coef += RU*Dual.Phi[(first+i)*T+t+1] ;
-                }
-            }
-
-            if (Param.StartUpDecompo) { // rajout des couts duaux lies aux contraintes supplémentaires, ie logical, mindown, z_lambda
-
-                int L = inst->getL(first+i);
-                /// COEFS de X
-                //ksi
-                dual_coef -= Dual.Ksi[(first+i)*T+t] ;
-
-                //theta
-                if (t >=1) {
-                    dual_coef -= Dual.Theta[(first+i)*T+t] ;
-                }
-                if (t< T-1) {
-                    dual_coef += Dual.Theta[(first+i)*T+t+1] ;
-                }
-                if (t >=L) {
-                    dual_coef += Dual.Zeta[(first+i)*T+t] ;
-                }
-
-                /// COEFS de U
-
-                if (t >= 1) {
-                    for (int k = fmax(t,L) ; k < fmin(T, t+L) ;k++) {
-                        dual_coef_u -= Dual.Zeta[(first+i)*T+k] ;
-                    }
-                }
-                if (t>=1) {
-                    dual_coef_u += Dual.Theta[(first+i)*T+t] ;
-                }
-
-            }
-
-
-            if (!Farkas) {
-                obj.setLinearCoef(x[i*T +t],BaseObjCoefX[i]  + dual_coef );
-                obj.setLinearCoef(u[i*T +t],inst->getc0(first+i) + dual_coef_u) ;
-            }
-            else{
-                obj.setLinearCoef(x[i*T +t],  dual_coef );
-                obj.setLinearCoef(u[i*T +t], dual_coef_u ) ;
-            }
-
-            //cout << dual_coef << endl ;
-            //cout << "obj coef: " << BaseObjCoefX[i] - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] - Dual.Sigma[Site] << endl ;
         }
     }
 
