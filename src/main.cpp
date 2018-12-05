@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     ///////////////////////////
 
     double eps = 0.0000001;
-    int node_limit =100000000000000000;
+    int node_limit =100000000;
 
     bool IP=1; // est-ce qu'on résout le master en variable entières ?
     bool PriceAndBranch = 0;
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 
     bool TimeStepDec = 0 ;
     bool DynProgTime = 0 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
-    bool DynProg = 1; // implémenté pour Pmax=Pmin et décomposition par unités
+    bool DynProg = 0; // implémenté pour Pmax=Pmin et décomposition par unités
 
     bool DemandeResiduelle = 0 ;
 
@@ -120,6 +120,10 @@ int main(int argc, char** argv)
     bool UnitDecompo = false ;
     bool StartUpDecompo = false;
 
+    bool useSSBIinSubPb = false;
+
+    bool powerPlanGivenByLambda = false ; // implémenté pour décompo par unit subset. Les puissances sont uniquement dans le sous problème. utile pour les ramp.
+
     if (met==-1) {
         Solve = false ;
     }
@@ -129,40 +133,74 @@ int main(int argc, char** argv)
     //// COLUMN GENERATION COMPARISONS
     ///
     /// Unit subset decompositions
+    ///
+
+    if (met == 100) { // UNIT DECOMPOSITION BRANCH AND PRICE
+        UnitDecompo=true;
+        heuristicInit=1 ;
+        DynProg=1 ;
+
+    }
+
     if (met == 101) { // UNIT DECOMPOSITION
         UnitDecompo=true;
+        DynProg=1 ;
+        node_limit=1 ;
+
     }
     if (met == 1011) { // UNIT DECOMPOSITION
         UnitDecompo=true;
         StartUpDecompo=true;
+
+        node_limit=1 ;
     }
 
     if (met == 102) { // SITE DECOMPOSITION
 
+        node_limit=1 ;
+    }
+    if (met == 1022) { // SITE DECOMPOSITION
+        useSSBIinSubPb=true;
+        node_limit=1 ;
     }
 
     if (met == 1021) { // SITE DECOMPOSITION
         StartUpDecompo=true;
+
+        node_limit=1 ;
     }
 
     if (met == 103) { // RESIDUAL DEMAND DECOMPOSITION
         DemandeResiduelle= true;
+
+        node_limit=1 ;
     }
     if (met == 1031) { // RESIDUAL DEMAND DECOMPOSITION
         DemandeResiduelle= true;
         StartUpDecompo=true;
+
+        node_limit=1 ;
     }
 
     /// Time decomposition
+
+    if (met == 200) {
+        TimeStepDec = true ;
+        DynProgTime = true ;
+    }
+
     if (met == 201) {
         TimeStepDec = true ;
         DynProgTime = true ;
+        node_limit=1 ;
     }
 
     if (met == 202) {
         TimeStepDec = true ;
         DynProgTime = true ;
         IntervalUpSet = true;
+
+        node_limit=1 ;
     }
 
     /// Branch & Price (& Cut)
@@ -200,7 +238,7 @@ int main(int argc, char** argv)
 
     Parameters const param(inst, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
-                           UnitDecompo, StartUpDecompo);
+                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda);
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -412,7 +450,7 @@ int main(int argc, char** argv)
     cout << "ici" << endl ;
     SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
 
-    if (met==101) {
+    if (met==101 || met==100) {
         fichier << " Unit " ;
     }
     if (met==1011) {
@@ -440,7 +478,7 @@ int main(int argc, char** argv)
 
     ///// AFFICHAGE BRANCH AND PRICE
     if (Solve) {
-       // fichier << " &  " << SCIPgetNNodes(scip) ;
+        fichier << " &  " << SCIPgetNNodes(scip) ;
         if (param.IntervalUpSet) {
             fichier << " & " << Master_ptr->nbIntUpSet ;
         }
@@ -449,7 +487,7 @@ int main(int argc, char** argv)
         }
         fichier << " &  " << SCIPgetNLPIterations(scip) ;
         fichier << " & " << SCIPgetNPricevarsFound(scip) ;
-        fichier << " &  " << SCIPgetNNodes(scip) ;
+        //fichier << " &  " << SCIPgetNNodes(scip) ;
         // fichier << " & " << Master_ptr->cumul_resolution_pricing ;
 
         //    if (param.TimeStepDec && !param.DynProgTime) {
@@ -463,7 +501,13 @@ int main(int argc, char** argv)
         //fichier << " & " << temps_scip  ;
         fichier << " &  " << SCIPgetGap(scip);
         // fichier << " &  " << SCIPgetDualboundRoot(scip) ;
+        if (met==100) {
+        fichier << " &  " << SCIPgetPrimalbound(scip) ;
+        }
+        else {
         fichier << " &  " << SCIPgetDualbound(scip) ;
+        }
+
        // fichier << " &  " << SCIPgetPrimalbound(scip) ;
         //   fichier << " & " << checker.valHeuristicCplex ; // OPT
 
@@ -475,7 +519,7 @@ int main(int argc, char** argv)
 //        else {
 //            fichier << " & - "  ; // OPT
 //        }
-                if (met*intra_cons==102 || !intra_cons*met==103) {
+                if (0 && met*intra_cons==102 || !intra_cons*met==103) {
 
                     fichier << " & " << checker.getLRValue() ; // RL*/
                     fichier << " & " << checker.getLRCplex() ; // RL CPLEX

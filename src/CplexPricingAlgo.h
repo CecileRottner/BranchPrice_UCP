@@ -65,6 +65,8 @@ class CplexPricingAlgo {
   // Launch Cplex solver and get back an optimal up/down plan
   bool findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual, IloNumArray UpDownPlan, double & objvalue);
 
+  void AddSSBI(IloEnv env, IloModel model, IloBoolVarArray x, IloBoolVarArray u, int site, InstanceUCP* inst) ;
+
 };
 
 

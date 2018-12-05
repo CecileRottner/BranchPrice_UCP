@@ -75,7 +75,8 @@ Parameters::Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ram
                        bool time, bool intra, bool dr, bool iup, double eps,
                        bool dont, bool h_init, bool dontgetpvalue, bool one,
                        bool addColumn, bool dptime, bool dp, bool pandb,
-                       bool unitdecomp, bool startupdec) :
+                       bool unitdecomp, bool startupdec, bool useSSBISub,
+                       bool powerplanGiven) :
     IP(ip),
     ManageSubPbSym(managesubpbsym),
     Ramp(ramp),
@@ -93,7 +94,9 @@ Parameters::Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ram
     DynProg(dp),
     PriceAndBranch(pandb),
     UnitDecompo(unitdecomp),
-    StartUpDecompo(startupdec)
+    StartUpDecompo(startupdec),
+    useSSBIinSubPb(useSSBISub),
+    powerPlanGivenByLambda(powerplanGiven)
 {
 
     n = inst->getn();

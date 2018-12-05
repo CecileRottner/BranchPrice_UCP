@@ -101,9 +101,9 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
 
 }
 
-void AddSSBI(IloEnv env, IloModel model, IloBoolVarArray x, IloBoolVarArray u, int site, InstanceUCP* inst) {
+void CplexPricingAlgo::AddSSBI(IloEnv env, IloModel model, IloBoolVarArray x, IloBoolVarArray u, int site, InstanceUCP* inst) {
 
-    /*int allCoupleInequalities=0;
+    int allCoupleInequalities=0;
 
     int T = inst->getT() ;
     int firstOfSite = Param.firstUnit(site) ;
@@ -170,7 +170,7 @@ void AddSSBI(IloEnv env, IloModel model, IloBoolVarArray x, IloBoolVarArray u, i
                 }
             }
         }
-    }*/
+    }
 }
 
 CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int site) : Param(p) {
@@ -192,7 +192,9 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int 
    cpuTime=0 ;
 
 
-    //AddSSBI(env, model, x,u, site, inst) ;
+   if (Param.useSSBIinSubPb) {
+    AddSSBI(env, model, x,u, site, inst) ;
+   }
 
     obj = IloAdd(model, IloMinimize(env, 0.0));
 

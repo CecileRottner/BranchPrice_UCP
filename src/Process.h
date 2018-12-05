@@ -34,6 +34,8 @@ struct Parameters
     bool PriceAndBranch ;
     bool UnitDecompo ;
     bool StartUpDecompo ;
+    bool useSSBIinSubPb ;
+    bool powerPlanGivenByLambda;
 
 
     /// Sites (ou groupes) définis par Param: groupes d'unités de la décomposition (correspondant à des sousproblème)
@@ -49,7 +51,8 @@ struct Parameters
                bool time, bool intra, bool dr, bool iup, double eps,
                bool dont, bool h_init, bool dontgetpvalue, bool one,
                bool addColumn, bool dptime, bool dp, bool pandb,
-               bool unitdecomp, bool startupdec) ;
+               bool unitdecomp, bool startupdec, bool useSSBISub,
+               bool powerPlanGiven) ;
 
     int nbUnits(int s) const ;
 

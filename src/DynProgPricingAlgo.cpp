@@ -163,7 +163,7 @@ bool DynProgPricingAlgo::findImprovingSolution(InstanceUCP* inst, const DualCost
 
             double down_prec = std::numeric_limits<double>::infinity();
             if ( checkTransition(t-L, t, 0, 1) ) {
-                cout << "transition ok from down to up, from time " << t-L << " to " << t << endl ;
+               // cout << "transition ok from down to up, from time " << t-L << " to " << t << endl ;
                 down_prec = Bellman.at(0*T+t-L) + (Dual.ObjCoefU).at(i*T + t-L+1) + (Dual.ObjCoefX).at(i*T + t);
 
                 for (int k=t-L+1 ; k < t ; k++) {

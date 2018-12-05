@@ -107,6 +107,9 @@ public:
     //// up/down plan corresponding to ptr
     IloNumArray UpDown_plan ;
 
+    //// power production plan (if given by master variable lambda)
+    IloNumArray Power_plan ;
+
     double cost ;
 
     Master_Variable(int site, IloNumArray UpDown) ;
