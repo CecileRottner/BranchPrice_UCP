@@ -235,9 +235,7 @@ void ObjPricerSite::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Fark
         else{
             dual_cost.Mu[t] = SCIPgetDualfarkasLinear(scip, Master->demand_cstr[t]);
         }
-        print=1;
         if (print) cout << "mu: " << dual_cost.Mu[t] <<endl;
-        print=0;
     }
 
     //couts duaux contrainte convexité
@@ -344,8 +342,9 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
             (AlgoCplex[s])->updateObjCoefficients(inst, Param, dual_cost, Farkas) ;
         }
         else {
-            (AlgoDynProg[s])->updateObjCoefficients(inst, Param, dual_cost, Farkas) ;
-            cout << "obj coef updated" << endl ;
+            //nothing to do
+           // (AlgoDynProg[s])->updateObjCoefficients(inst, Param, dual_cost, Farkas) ;
+
         }
 
         //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
@@ -420,11 +419,27 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
 }
 
 void ObjPricerSite::addVarBound(SCIP_ConsData* consdata) {
-    AlgoCplex[consdata->site]->model.add(consdata->BranchConstraint) ;
+
+    cout << "Enter addVarBound:" << endl;
+
+    if (!Param.DynProg) {
+        AlgoCplex[consdata->site]->model.add(consdata->BranchConstraint) ;
+    }
+    else {
+        (AlgoDynProg[consdata->site])->branchingDecisions.at(consdata->time) = consdata->bound ;
+        cout << "for unit " << consdata->site << ", at time " << consdata->time <<", bound set to " << consdata->bound << endl ;
+        cout << "End addVarBound" << endl ;
+    }
 }
 
 void ObjPricerSite::removeVarBound(SCIP_ConsData* consdata) {
-    AlgoCplex[consdata->site]->model.remove(consdata->BranchConstraint) ;
+
+    if (!Param.DynProg) {
+        AlgoCplex[consdata->site]->model.remove(consdata->BranchConstraint) ;
+    }
+    else {
+        (AlgoDynProg[consdata->site])->branchingDecisions.at(consdata->time) = 8 ;
+    }
 }
 
 

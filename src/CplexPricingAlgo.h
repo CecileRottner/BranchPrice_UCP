@@ -28,7 +28,7 @@ public:
 
 
     //Coefficients de x et u
-    vector<double> BaseObjCoefX ; //ne change pas: calculé dans le constructeur
+    vector<double> BaseObjCoefX ; //ne change pas au cours des itérations: calculé dans le constructeur
     vector<double> ObjCoefX ;
 
     vector<double> ObjCoefU ;
@@ -81,9 +81,8 @@ class DynProgPricingAlgo {
   int Site ;
   IloEnv   env;
 
-  vector<double> BaseObjCoefX ;
-  vector<double> ObjCoefX ;
-  vector<double> ObjCoefU ;
+  vector<double> branchingDecisions ;
+
   vector<double> Bellman ;
   vector<double> Prec ;
 
@@ -99,6 +98,10 @@ class DynProgPricingAlgo {
   void getUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan) ;
   //updates UpDownPlan and realCost
 
+
+  //checks that the dynamic programming transition given as argument can be used w.r.t. to the branching decisions
+  //returns true if this is the case
+  bool checkTransition(int prec_time, int current_time, int prec_status, int current_status) ;
 };
 
 ////////////////////////////////////////////////////

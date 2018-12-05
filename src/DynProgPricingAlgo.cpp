@@ -7,118 +7,139 @@ using namespace std;
 
 DynProgPricingAlgo::DynProgPricingAlgo(InstanceUCP* inst, Master_Model* M, const Parameters & par, int s) : Param(par) {
     //env=IloEnv() ;
-
     Master=M ;
     Site = s ;
 
-
-    int nbS = Param.nbUnits(Site);
-
-    int first = Param.firstUnit(Site) ;
     int T = inst->getT() ;
 
+    branchingDecisions.resize(T, 8) ;
 
     Bellman.resize(2*T, 0) ;
     Prec.resize(2*T, 0) ;
-
-    //Initialisation des coefficients objectifs (primaux) de x
-    BaseObjCoefX.resize(nbS, 0) ;
-    for (int i=0 ; i <nbS ; i++) {
-        BaseObjCoefX.at(i) = inst->getcf(first+i) + (inst->getPmin(first+i))*inst->getcp(first+i) ;
-    }
-
-    ObjCoefX.resize(nbS*T, 0) ;
-    ObjCoefU.resize(nbS*T, 0) ;
-
 }
 
-void DynProgPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCosts & Dual, bool Farkas) {
+//void DynProgPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCosts & Dual, bool Farkas) {
 
-    int T = inst->getT() ;
-    int nbS = Param.nbUnits(Site);
+//    int T = inst->getT() ;
+//    int nbS = Param.nbUnits(Site);
 
-    cout << "nbS = " << nbS << endl ;
-    int first = Param.firstUnit(Site) ;
+//    cout << "nbS = " << nbS << endl ;
+//    int first = Param.firstUnit(Site) ;
 
-    for (int i=0 ; i<nbS ; i++) {
-        for (int t=0 ; t < T ; t++) {
+//    for (int i=0 ; i<nbS ; i++) {
+//        for (int t=0 ; t < T ; t++) {
 
-            ObjCoefX.at(i*T+t) = 0 ;
-            if (!Farkas) {
-                ObjCoefX.at(i*T + t) += BaseObjCoefX.at(i) ;
+//            ObjCoefX.at(i*T+t) = 0 ;
+//            if (!Farkas) {
+//                ObjCoefX.at(i*T + t) += BaseObjCoefX.at(i) ;
+//            }
+//            ObjCoefX.at(i*T + t) +=  - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] ;
+//        }
+//    }
+
+
+//    cout << "c0: " << inst->getc0(first) << endl ;
+
+//}
+
+bool DynProgPricingAlgo::checkTransition(int prec_time, int current_time, int prec_status, int current_status) {
+    if ( branchingDecisions.at(current_time) != current_status && branchingDecisions.at(current_time) !=8 ) {
+        return false;
+    }
+    if (current_time>0) {
+        if ( branchingDecisions.at(prec_time) != prec_status && branchingDecisions.at(prec_time) != 8) {
+            return false;
+        }
+        for (int t= prec_time+1 ; t < current_time ; t++) {
+            if ( branchingDecisions.at(t) != current_status &&  branchingDecisions.at(t) != 8) {
+                return false;
             }
-            ObjCoefX.at(i*T + t) +=  - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] ;
         }
     }
-
-    for (int i=0 ; i<nbS ; i++) {
-        for (int t=1 ; t < T ; t++) {
-
-            ObjCoefU.at(i*T+t) = 0 ;
-            if (!Farkas) {
-                ObjCoefU.at(i*T + t) += inst->getc0(first) ;
-            }
-            ObjCoefU.at(i*T + t) +=  - inst->getPmin(first+i)*Dual.Mu[t] - (inst->getPmax(first+i) - inst->getPmin(first+i))*Dual.Nu[(first+i)*T+t] ;
-        }
-    }
-
-    cout << "c0: " << inst->getc0(first) << endl ;
-
+    return true ;
 }
-
-
 
 bool DynProgPricingAlgo::findImprovingSolution(InstanceUCP* inst, const DualCosts & Dual, double& objvalue) {
 
-    //returns True if an improving Up/Down plan has been found
-
     int T = inst->getT() ;
+
+    cout << "branching decisions: " ;
+    for (int t=0 ; t < T ; t++) {
+        cout << branchingDecisions.at(t) << " " ;
+    }
+    cout << endl ;
+
+
 
     int i = Param.firstUnit(Site) ;
 
     int l = inst->getl(i);
     int L = inst->getL(i);
-    double c0 = inst->getc0(i) ;
-    cout << "c0 utilisé: " << c0 << endl ;
-    cout << "cf: " <<  BaseObjCoefX.at(0);
+
+    cout << "L: " << L << endl ;
 
     //initialisation
+    for (int t=0; t < 2*T ; t++) {
+        Bellman.at(t) = std::numeric_limits<double>::infinity(); ;
+    }
 
-    Bellman.at(0*T+ 0) = 0 ;
-    Bellman.at(1*T+ 0) = ObjCoefX.at(0) ;
+
+    if ( checkTransition( -1, 0, -1, 0) ) {
+        Bellman.at(0*T+ 0) = 0 ;
+    }
+    if ( checkTransition( -1, 0, -1, 1) ) {
+        Bellman.at(1*T+ 0) = (Dual.ObjCoefX).at(i*T + 0) ;
+    }
+
+
 
     Prec.at(0*T+ 0) = -1 ;
     Prec.at(1*T+ 0) = -1;
 
+    //cout << "obj coef: " << endl ;
 
     for (int t = 1 ; t < T ; t++) {
 
+        //cout << (Dual.ObjCoefX).at(i*T+t) << endl;
+
         ///// mise à jour de V(t, up) /////
         if ( t <= L-1 ) {
-            Bellman.at(1*T+t) = Bellman.at(1*T+t-1) + ObjCoefX.at(t);
-            Prec.at(1*T+t) = 1*T+t-1;
+            if (checkTransition(t-1,t, 1, 1)) {
+                Bellman.at(1*T+t) = Bellman.at(1*T+t-1) + (Dual.ObjCoefX).at(i*T + t);
+                Prec.at(1*T+t) = 1*T+t-1;
+            }
         }
 
 
 
         else if (t==T-1) {
-            double up_prec = Bellman.at(1*T+t-1) + ObjCoefX.at(t);
+            double up_prec = std::numeric_limits<double>::infinity();
+            if (checkTransition(t-1, t, 1, 1))  {
+                up_prec= Bellman.at(1*T+t-1) + (Dual.ObjCoefX).at(i*T + t);
+            }
 
             int from = t-1 ;
 
 
-            double somme_obj = ObjCoefX.at(t) + c0;
-            double down_prec = Bellman.at(0*T+t-1) + somme_obj;
+            double somme_obj = (Dual.ObjCoefX).at(i*T + t) ;
 
+
+            double down_prec = std::numeric_limits<double>::infinity();
+            if (checkTransition(t-1, t, 0, 1)) {
+                down_prec = Bellman.at(0*T+t-1) + (Dual.ObjCoefU).at(i*T + t) + somme_obj;
+            }
 
             double best_down_prec = down_prec ;
 
             for (int k=t-2 ; k >= t - L ; k--) {
-                somme_obj += ObjCoefX.at(k+1) ;
-                down_prec = Bellman.at(0*T+k) + somme_obj ;
-                if (down_prec < best_down_prec) {
-                    best_down_prec =down_prec;
-                    from=k;
+                somme_obj += (Dual.ObjCoefX).at(i*T + k+1) ;
+                if (checkTransition(k, t, 0, 1)) {
+                    down_prec = Bellman.at(0*T+k) + (Dual.ObjCoefU).at(i*T + k+1) + somme_obj ;
+
+                    if (down_prec < best_down_prec) {
+                        best_down_prec =down_prec;
+                        from=k;
+                    }
                 }
             }
             if (up_prec < best_down_prec) {
@@ -126,63 +147,93 @@ bool DynProgPricingAlgo::findImprovingSolution(InstanceUCP* inst, const DualCost
                 Prec.at(1*T+t) = 1*T+t-1;
             }
             else {
-                Bellman.at(1*T+t) =best_down_prec ;
-                Prec.at(1*T+t) = 0*T+from;
+                if (checkTransition(from, t, 0, 1)) {
+                    Bellman.at(1*T+t) =best_down_prec ;
+                    Prec.at(1*T+t) = 0*T+from;
+                }
             }
 
         }
 
         else {
-            double up_prec = Bellman.at(1*T+t-1) + ObjCoefX.at(t);
-            double down_prec = Bellman.at(0*T+t-L) + c0 + ObjCoefX.at(t);
-            for (int k=t-L+1 ; k < t ; k++) {
-                down_prec += ObjCoefX.at(k);
+            double up_prec = std::numeric_limits<double>::infinity();
+            if ( checkTransition(t-1, t, 1, 1) ) {
+                up_prec = Bellman.at(1*T+t-1) + (Dual.ObjCoefX).at(i*T + t);
             }
+
+            double down_prec = std::numeric_limits<double>::infinity();
+            if ( checkTransition(t-L, t, 0, 1) ) {
+                cout << "transition ok from down to up, from time " << t-L << " to " << t << endl ;
+                down_prec = Bellman.at(0*T+t-L) + (Dual.ObjCoefU).at(i*T + t-L+1) + (Dual.ObjCoefX).at(i*T + t);
+
+                for (int k=t-L+1 ; k < t ; k++) {
+                    down_prec += (Dual.ObjCoefX).at(i*T + k);
+                }
+            }
+
             if (up_prec < down_prec) {
-                Bellman.at(1*T+t) = up_prec ;
-                Prec.at(1*T+t) = 1*T+t-1;
+                if ( checkTransition(t-1, t, 1, 1) ) {
+                    Bellman.at(1*T+t) = up_prec ;
+                    Prec.at(1*T+t) = 1*T+t-1;
+                }
             }
             else {
-                Bellman.at(1*T+t) = down_prec ;
-                Prec.at(1*T+t) = 0*T+t-L;
+                if ( checkTransition(t-L, t, 0, 1) ) {
+                    Bellman.at(1*T+t) = down_prec ;
+                    Prec.at(1*T+t) = 0*T+t-L;
+                }
             }
         }
 
         ///// mise à jour de V(t, down) //////
         if ( t <= l-1 ) {
+            if (checkTransition(t-1, t, 0, 0)) {
             Bellman.at(0*T+t) = Bellman.at(0*T+t-1)  ;
             Prec.at(0*T+t) = 0*T+t-1;
+            }
         }
 
 
         //Si t==T-1, il y a plus de prédécesseurs (pas de min-down à satisfaire)
         else if (t==T-1) {
-            double down_prec = Bellman.at(0*T+t-1) ;
+            double down_prec =  std::numeric_limits<double>::infinity();
+            if ( checkTransition(t-1, t, 0, 0) ) {
+                down_prec = Bellman.at(0*T+t-1) ;
+            }
 
             int from = t-1 ;
-            double up_prec = Bellman.at(1*T+t-1) ;
+
+            double up_prec =  std::numeric_limits<double>::infinity();
+            if ( checkTransition(t-1, t, 1, 0) ) {
+                up_prec = Bellman.at(1*T+t-1) ;
+            }
+
 
             double best_up_prec = up_prec ;
 
             for (int k=t-2 ; k >= t - l ; k--) {
-                up_prec = Bellman.at(1*T+k);
-                //cout << "for k = " << k << ", up_prec: " << Bellman.at(1*T+k) << endl ;
-                if (up_prec < best_up_prec) {
-                    best_up_prec =up_prec;
-                    from=k;
+                if ( checkTransition(k, t, 1, 0) ) {
+                    up_prec = Bellman.at(1*T+k);
+
+                    //cout << "for k = " << k << ", up_prec: " << Bellman.at(1*T+k) << endl ;
+                    if (up_prec < best_up_prec) {
+                        best_up_prec =up_prec;
+                        from=k;
+                    }
                 }
             }
 
 //            cout << "best up: " << best_up_prec << endl ;
 //            cout << "down prec: " << down_prec << endl ;
             if (best_up_prec < down_prec) {
-                cout << "ici" << endl ;
                 Bellman.at(0*T+t) = best_up_prec ;
                 Prec.at(0*T+t) = 1*T+from;
             }
             else {
+                if ( checkTransition(t-1, t, 0, 0) ) {
                 Bellman.at(0*T+t) = down_prec ;
                 Prec.at(0*T+t) = 0*T+t-1;
+               }
             }
 
             double V_up_1 = Bellman.at(1*T+T-1) ;
@@ -194,12 +245,16 @@ bool DynProgPricingAlgo::findImprovingSolution(InstanceUCP* inst, const DualCost
             double up_prec = Bellman.at(1*T+t-l)  ;
             double down_prec = Bellman.at(0*T+t-1) ;
             if (up_prec < down_prec) {
-                Bellman.at(0*T+t) = up_prec ;
-                Prec.at(0*T+t) = 1*T+t-l;
+                if ( checkTransition(t-l, t, 1, 0) ) {
+                    Bellman.at(0*T+t) = up_prec ;
+                    Prec.at(0*T+t) = 1*T+t-l;
+                }
             }
             else {
+                if ( checkTransition(t-1, t, 0, 0) ) {
                 Bellman.at(0*T+t) = down_prec ;
                 Prec.at(0*T+t) = 0*T+t-1;
+                }
             }
         }
     }
@@ -215,7 +270,7 @@ bool DynProgPricingAlgo::findImprovingSolution(InstanceUCP* inst, const DualCost
         cout << endl;
     }
 
-    cout << "valeur sans sigma: " <<fmin(V_up, V_down) << endl ;
+//    cout << "valeur sans sigma: " <<fmin(V_up, V_down) << endl ;
 
     objvalue = fmin(V_up, V_down) - Dual.Sigma[Site] ;
 
@@ -280,18 +335,18 @@ void DynProgPricingAlgo::getUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan
 
     ///CHECK
 
-    int first = Param.firstUnit(Site) ;
-    double  cost = 0 ;
-    for (int t = 0 ; t < T ; t++) {
-        if (UpDownPlan[t]) {
-            cost += ObjCoefX.at(t) ;
+//    int first = Param.firstUnit(Site) ;
+//    double  cost = 0 ;
+//    for (int t = 0 ; t < T ; t++) {
+//        if (UpDownPlan[t]) {
+//            cost += (Dual.ObjCoefX).at(t) ;
 
-            if (t> 0 && !UpDownPlan[t-1] ) {
-                cost += inst->getc0(first)  ;
-            }
-        }
-    }
+//            if (t> 0 && !UpDownPlan[t-1] ) {
+//                cost += (Dual.ObjCoefU).at(t) ;  ;
+//            }
+//        }
+//    }
 
-    cout << "check cost: " << cost << endl ;
+//    cout << "check cost: " << cost << endl ;
 
 }

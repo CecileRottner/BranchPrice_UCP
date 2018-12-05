@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     ///////////////////////////
 
     double eps = 0.0000001;
-    int node_limit = 1 ;
+    int node_limit =100000000000000000;
 
     bool IP=1; // est-ce qu'on résout le master en variable entières ?
     bool PriceAndBranch = 0;
@@ -99,11 +99,11 @@ int main(int argc, char** argv)
     bool ManageSubPbSym = 0 ; // est-ce qu'on gère les symétries dans le sous problème ?
 
     bool Ramp = 0 ; // est-ce qu'on considère les gradients ?
-    bool IntraSite = 0; //intra_cons ; // à implémenter pour la décomposition par pas de temps
+    bool IntraSite = intra_cons ; // à implémenter pour la décomposition par pas de temps
 
     bool TimeStepDec = 0 ;
     bool DynProgTime = 0 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
-    bool DynProg = 0; // implémenté pour Pmax=Pmin et décomposition par unités
+    bool DynProg = 1; // implémenté pour Pmax=Pmin et décomposition par unités
 
     bool DemandeResiduelle = 0 ;
 
@@ -449,6 +449,7 @@ int main(int argc, char** argv)
         }
         fichier << " &  " << SCIPgetNLPIterations(scip) ;
         fichier << " & " << SCIPgetNPricevarsFound(scip) ;
+        fichier << " &  " << SCIPgetNNodes(scip) ;
         // fichier << " & " << Master_ptr->cumul_resolution_pricing ;
 
         //    if (param.TimeStepDec && !param.DynProgTime) {

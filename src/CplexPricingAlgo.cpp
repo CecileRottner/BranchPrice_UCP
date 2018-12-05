@@ -17,10 +17,10 @@ DualCosts::DualCosts(InstanceUCP* inst, const Parameters & Param) {
     Ksi.resize(n*T, 0) ;
     Theta.resize(n*T, 0) ;
 
-    BaseObjCoefX.resize(n*T, 0) ;
+    BaseObjCoefX.resize(n, 0) ;
 
     for (int i=0 ; i <n ; i++) {
-        BaseObjCoefX[i] = inst->getcf(i) + (inst->getPmin(i))*inst->getcp(i) ;
+        BaseObjCoefX.at(i) = inst->getcf(i) + (inst->getPmin(i))*inst->getcp(i) ;
     }
 
     ObjCoefX.resize(n*T, 0) ;
@@ -90,12 +90,10 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
 
             }
 
-
             if (!Farkas) {
                 ObjCoefU.at(i*T+t) += inst->getc0(i) ;
-                ObjCoefX.at(i*T+t) += BaseObjCoefX[i] ;
+                ObjCoefX.at(i*T+t) += BaseObjCoefX.at(i) ;
             }
-
 
         }
     }
@@ -314,27 +312,6 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters
         }
     }
 
-//    double coef[14] = { 58.8965,
-//            -308.102,
-//            -242.81 ,
-//            -1082.15 ,
-//            -83.2854 ,
-//            -462.664 ,
-//            -242.81 ,
-//            -65.7877 ,
-//            1098.26 ,
-//            -49.9218 ,
-//            -496.027 ,
-//            -921.18 ,
-//            -62.0229 ,
-//            69.7596 };
-
-//    for (int t=0 ; t < T ; t++) {
-//    if (!Farkas) {
-//        obj.setLinearCoef(x[t],coef[t] );
-//        obj.setLinearCoef(u[t],inst->getc0(first) ) ;
-//    }
-//    }
 
 }
 

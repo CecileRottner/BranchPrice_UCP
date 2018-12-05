@@ -78,7 +78,7 @@ SCIP_RETCODE BranchConsHandler::scip_active(SCIP * scip, SCIP_CONSHDLR * conshdl
 
     SCIP_ConsData *consdata = SCIPconsGetData(cons);
 
-    //cout << "Active node: unit " << consdata->unit << ", time " << consdata->time << " at bound " << consdata->bound<< endl;
+    cout << "Active node: unit " << consdata->unit << "  from decomposition site " << consdata->site << ", time " << consdata->time << " at bound " << consdata->bound<< endl;
 
     //////On ajoute la contrainte dans cons au modèle Cplex du sous problème correspondant
     //pricer_ptr->AlgoCplex[consdata->site]->model.add(consdata->BranchConstraint) ;
