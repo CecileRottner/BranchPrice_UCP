@@ -113,6 +113,7 @@ public:
     double cost ;
 
     Master_Variable(int site, IloNumArray UpDown) ;
+    void addPowerPlan(IloNumArray PowerPlan);
     void computeCost(InstanceUCP* inst, const Parameters & Param) ;
 
 };

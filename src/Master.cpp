@@ -11,6 +11,11 @@ Master_Variable::Master_Variable(int site, IloNumArray UpDown) {
     UpDown_plan = UpDown  ;
 }
 
+void Master_Variable::addPowerPlan(IloNumArray PowerPlan) {
+
+    Power_plan = PowerPlan  ;
+}
+
 void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
     //compute cost of up/down plan lambda: fixed cost (including minimum power output cost) and start up cost
     //init à prendre en compte plus tard
@@ -40,6 +45,14 @@ void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
             }
         }
     }
+
+    if (Param.powerPlanGivenByLambda) {
+        for (int i = first ; i <= last ; i++) {
+            for (int t = 0 ; t < T ; t++) {
+                cost += Power_plan[(i-first)*T+t]*inst->getcp(i) ;
+            }
+        }
+    }
 }
 
 
@@ -51,8 +64,16 @@ void MasterSite_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda
     /* for each time period, add coefficient pmin into the demand constraint at t, for each unit unit i up in site S */
     for (int t=0 ; t < T ; t++) {
         for (int i=0 ; i < Param.nbUnits(s) ; i++) {
-            if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
-                SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(first+i)) ;
+
+            if (!Param.powerPlanGivenByLambda) {
+                if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
+                    SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(first+i)) ;
+                }
+            }
+
+            else {
+                double power = lambda->Power_plan[i*T+t] + lambda->UpDown_plan[i*T+t]*inst->getPmin(first+i) ;
+                SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, power) ;
             }
         }
     }
@@ -60,15 +81,18 @@ void MasterSite_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda
     /* for each time period and each unit in site S, add coefficient pmin(i) - pmax(i) into the power limit constraint of unit i at t */
     for (int t=0 ; t < T ; t++) {
         for (int i=0 ; i < Param.nbUnits(s) ; i++) {
-            if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
-                SCIPaddCoefLinear(scip, power_limits[(first+i)*T+t], lambda->ptr, inst->getPmax(first+i) - inst->getPmin(first+i)) ;
+
+            if (!Param.powerPlanGivenByLambda) {
+                if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
+                    SCIPaddCoefLinear(scip, power_limits[(first+i)*T+t], lambda->ptr, inst->getPmax(first+i) - inst->getPmin(first+i)) ;
+                }
             }
         }
     }
 
     /* for each time period and each unit in site S, add coefficient RU (resp RD) into the ramp up (resp down) constraint of unit i at t+1 */
     //RAMPSTUFF
-    if (Param.Ramp) {
+    if (Param.Ramp && !Param.powerPlanGivenByLambda) {
 
         for (int i=0 ; i < Param.nbUnits(s) ; i++) {
             double RU = (inst->getPmax(first+i) - inst->getPmin(first+i))/3 ;
@@ -185,13 +209,13 @@ void MasterSite_Model::initMasterVariable(SCIP* scip, InstanceUCP* inst , Master
     L_var.push_back(var);
 
 
-//    cout << "Variable " << var_name << " added, with plan:" << endl ;
-//    for (int t=0 ; t < T ; t++) {
-//        for (int i=0 ; i < Param.nbUnits(var->Site) ; i++) {
-//            cout << var->UpDown_plan[i*T+t] << " " ;
-//        }
-//        cout << endl ;
-//    }
+    //    cout << "Variable " << var_name << " added, with plan:" << endl ;
+    //    for (int t=0 ; t < T ; t++) {
+    //        for (int i=0 ; i < Param.nbUnits(var->Site) ; i++) {
+    //            cout << var->UpDown_plan[i*T+t] << " " ;
+    //        }
+    //        cout << endl ;
+    //    }
 }
 
 MasterSite_Model::MasterSite_Model(InstanceUCP* inst, const Parameters & Parametres) : Master_Model(Parametres, inst) {
@@ -218,9 +242,6 @@ MasterSite_Model::MasterSite_Model(InstanceUCP* inst, const Parameters & Paramet
 
 void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
-
-
-    cout << "init" << endl ;
 
     ////////////////////////////////////////////////////////////////
     /////////////   MASTER CONSTRAINT INITIALIZATION   /////////////
@@ -309,7 +330,7 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
     ///// Ramp up & down constraints /////
     //RAMPSTUFF
-    if (Param.Ramp) {
+    if (Param.Ramp && !Param.powerPlanGivenByLambda) {
         char con_name_ramp_up[255];
         for (int i = 0 ; i <n ; i++)
         {
@@ -602,7 +623,19 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
             plan[index]=1 ;
         }
 
+        int first = Param.firstUnit(s);
         Master_Variable* lambda = new Master_Variable(s, plan);
+        if (Param.powerPlanGivenByLambda) {
+            IloNumArray powerPlan = IloNumArray(env, Param.nbUnits(s)*T) ;
+            for (int i=0 ; i< Param.nbUnits(s) ; i++) {
+                for (int t=0 ; t < T ; t++) {
+                    powerPlan[i*T + t]= inst->getPmax(first+i) -  inst->getPmin(first+i);
+                }
+            }
+            lambda->addPowerPlan(powerPlan);
+        }
+
+
         initMasterVariable(scip, inst, lambda);
 
         SCIPaddVar(scip, lambda->ptr);
@@ -614,6 +647,7 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
     /////////////////////////////////////////////////////////////
     ////////   MASTER Z VARIABLES INITIALIZATION   //////////
     /////////////////////////////////////////////////////////////
+    /// --> Variables z from start up decomposition
 
 
     SCIP_Vartype type ;
@@ -682,24 +716,6 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
     }
 
 
-
-    /// test
-
-//    IloNumArray plan_test = IloNumArray(env, Param.nbUnits(0)*T) ;
-//    for (int index=0 ; index < Param.nbUnits(0)*T ; index++) {
-//        plan_test[index]=1 ;
-//    }
-//    plan_test[1*T] = 0 ;
-//    plan_test[2*T] = 0 ;
-//    plan_test[2*T+1] = 0 ;
-
-//    Master_Variable* lambda = new Master_Variable(0, plan_test);
-//    initMasterVariable(scip, inst, lambda);
-
-//    SCIPaddVar(scip, lambda->ptr);
-
-//    addCoefsToConstraints(scip, lambda, inst) ;
-
 }
 
 
@@ -733,24 +749,24 @@ void MasterSite_Model::discardVar(SCIP* scip, SCIP_ConsData* consdata) {
 
     /////On met à 0 les lambda incompatibles avec la contrainte
 
-     consdata->L_var_bound.clear() ; // L_var_bound stocke les variables scip dont la borne a été effectivement changée (ie elle n'était pas déjà à 0)
+    consdata->L_var_bound.clear() ; // L_var_bound stocke les variables scip dont la borne a été effectivement changée (ie elle n'était pas déjà à 0)
 
-     list<Master_Variable*>::const_iterator itv;
+    list<Master_Variable*>::const_iterator itv;
 
-     for (itv = L_var.begin(); itv!=L_var.end(); itv++) {
-         if ((*itv)->Site == consdata->site) {
-             if ((*itv)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
+    for (itv = L_var.begin(); itv!=L_var.end(); itv++) {
+        if ((*itv)->Site == consdata->site) {
+            if ((*itv)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
 
-                 SCIP_Real old_bound =  SCIPgetVarUbAtIndex(scip, (*itv)->ptr, NULL, 0) ;
+                SCIP_Real old_bound =  SCIPgetVarUbAtIndex(scip, (*itv)->ptr, NULL, 0) ;
 
-                 ///  L_var_bound est mis à jour
-                 if (!SCIPisZero(scip,old_bound)) {
-                     SCIPchgVarUbNode(scip, NULL, (*itv)->ptr, 0) ;
-                     consdata->L_var_bound.push_back((*itv)->ptr) ;
-                 }
-             }
-         }
-     }
+                ///  L_var_bound est mis à jour
+                if (!SCIPisZero(scip,old_bound)) {
+                    SCIPchgVarUbNode(scip, NULL, (*itv)->ptr, 0) ;
+                    consdata->L_var_bound.push_back((*itv)->ptr) ;
+                }
+            }
+        }
+    }
 }
 
 void MasterSite_Model::restoreVar(SCIP* scip, SCIP_ConsData* consdata) {
@@ -791,8 +807,9 @@ void MasterSite_Model::createColumns(SCIP* scip, IloNumArray x) {
         Master_Variable* lambda = new Master_Variable(s, plan);
         initMasterVariable(scip, inst, lambda);
 
-        SCIPaddVar(scip, lambda->ptr);
-
-        addCoefsToConstraints(scip, lambda, inst) ;
+        if (!Param.powerPlanGivenByLambda) { //fonction spécifique à implémenter dans le cas où le paramètre est à 1
+            SCIPaddVar(scip, lambda->ptr);
+            addCoefsToConstraints(scip, lambda, inst) ;
+        }
     }
 }

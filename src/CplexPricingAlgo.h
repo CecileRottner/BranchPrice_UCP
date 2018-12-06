@@ -32,6 +32,7 @@ public:
     vector<double> ObjCoefX ;
 
     vector<double> ObjCoefU ;
+    vector<double> ObjCoefP ;
 
     DualCosts(InstanceUCP* inst, const Parameters & Param) ;
 
@@ -52,8 +53,8 @@ class CplexPricingAlgo {
 
   IloBoolVarArray x;
   IloBoolVarArray u;
+  IloNumVarArray p;
 
-  vector<double> BaseObjCoefX ;
 
   double cpuTime ;
 

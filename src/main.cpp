@@ -90,16 +90,16 @@ int main(int argc, char** argv)
     //////  PARAMETERS    /////
     ///////////////////////////
 
-    double eps = 0.0000001;
-    int node_limit =100000000;
+    double eps = 0.0000001; // tolérance
+    int node_limit =1000000000;
 
     bool IP=1; // est-ce qu'on résout le master en variable entières ?
     bool PriceAndBranch = 0;
 
-    bool ManageSubPbSym = 0 ; // est-ce qu'on gère les symétries dans le sous problème ?
+    bool ManageSubPbSym = 0 ; // est-ce qu'on gère les symétries dans le sous problème ? --> paramètre inutile. à enlever
 
-    bool Ramp = 0 ; // est-ce qu'on considère les gradients ?
-    bool IntraSite = intra_cons ; // à implémenter pour la décomposition par pas de temps
+    bool Ramp = 0 ; // gradients pris en compte ou pas
+    bool IntraSite = intra_cons ; // contraintes intrasites prises en compte ou pas
 
     bool TimeStepDec = 0 ;
     bool DynProgTime = 0 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
@@ -111,18 +111,21 @@ int main(int argc, char** argv)
 
     bool heuristicInit = 0 ;
 
+
+    //Paramètres pricing décomposition par pas de temps.
     bool DontPriceAllTimeSteps = 0;
     bool DontGetPValue = 0 ;
     bool OneTimeStepPerIter = 0;
     bool addColumnToOtherTimeSteps = 0 ;
 
-    bool Solve = true ; // si false: utilise Cplex
+    bool Solve = true ; // true: Branch & Price avec SCIP. false: résolution Cplex boîte noire
     bool UnitDecompo = false ;
     bool StartUpDecompo = false;
 
     bool useSSBIinSubPb = false;
 
-    bool powerPlanGivenByLambda = false ; // implémenté pour décompo par unit subset. Les puissances sont uniquement dans le sous problème. utile pour les ramp.
+    bool powerPlanGivenByLambda = false ; // implémenté pour unit et site décompo seulement. Les puissances sont uniquement dans le sous problème. utile pour les ramp.
+                                          // pas compatible avec la décomposition start up notamment
 
     if (met==-1) {
         Solve = false ;
@@ -130,56 +133,71 @@ int main(int argc, char** argv)
 
 
 
-    //// COLUMN GENERATION COMPARISONS
+    //// COMPARISONS
     ///
     /// Unit subset decompositions
     ///
 
-    if (met == 100) { // UNIT DECOMPOSITION BRANCH AND PRICE
+    if (met == 100) { // UNIT DECOMPOSITION ---- BRANCH AND PRICE
         UnitDecompo=true;
         heuristicInit=1 ;
         DynProg=1 ;
 
     }
 
-    if (met == 101) { // UNIT DECOMPOSITION
+    if (met == 101) { // UNIT DECOMPOSITION ---- COL GEN
         UnitDecompo=true;
         DynProg=1 ;
         node_limit=1 ;
 
     }
-    if (met == 1011) { // UNIT DECOMPOSITION
+
+    if (met == 1012) { // UNIT DECOMPOSITION ---- COL GEN, subpb résolu par Cplex
+        UnitDecompo=true;
+        node_limit=1 ;
+
+    }
+
+    if (met == 1011) { // UNIT START UP DECOMPOSITION ---- COL GEN
         UnitDecompo=true;
         StartUpDecompo=true;
 
         node_limit=1 ;
     }
 
-    if (met == 102) { // SITE DECOMPOSITION
+    if (met == 102) { // SITE DECOMPOSITION ---- COL GEN
 
         node_limit=1 ;
     }
-    if (met == 1022) { // SITE DECOMPOSITION
+    if (met == 1022) { // SITE DECOMPOSITION WITH SSBI in SUBPB ---- COL GEN
         useSSBIinSubPb=true;
         node_limit=1 ;
     }
 
-    if (met == 1021) { // SITE DECOMPOSITION
+    if (met == 1021) { // SITE START-UP DECOMPOSITION ---- COL GEN
         StartUpDecompo=true;
 
         node_limit=1 ;
     }
 
-    if (met == 103) { // RESIDUAL DEMAND DECOMPOSITION
+    if (met == 103) { // RESIDUAL DEMAND DECOMPOSITION ---- COL GEN
         DemandeResiduelle= true;
 
         node_limit=1 ;
     }
-    if (met == 1031) { // RESIDUAL DEMAND DECOMPOSITION
+    if (met == 1031) { // RESIDUAL DEMAND START UP DECOMPOSITION ---- COL GEN
         DemandeResiduelle= true;
         StartUpDecompo=true;
 
         node_limit=1 ;
+    }
+
+
+    if (met == 104) { // UNIT DECOMPOSITION with P GIVEN BY LAMBDA ---- COL GEN
+        UnitDecompo=true;
+        powerPlanGivenByLambda = true;
+        node_limit=1 ;
+
     }
 
     /// Time decomposition
@@ -519,7 +537,7 @@ int main(int argc, char** argv)
 //        else {
 //            fichier << " & - "  ; // OPT
 //        }
-                if (0 && met*intra_cons==102 || !intra_cons*met==103) {
+                if (0 && (met*intra_cons==102) || (!intra_cons*met==103)) {
 
                     fichier << " & " << checker.getLRValue() ; // RL*/
                     fichier << " & " << checker.getLRCplex() ; // RL CPLEX

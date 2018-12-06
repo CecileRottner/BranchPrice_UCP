@@ -25,6 +25,8 @@ DualCosts::DualCosts(InstanceUCP* inst, const Parameters & Param) {
 
     ObjCoefX.resize(n*T, 0) ;
     ObjCoefU.resize(n*T, 0) ;
+    ObjCoefP.resize(n*T, 0) ;
+
 }
 
 void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool Farkas) {
@@ -43,20 +45,28 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
 
             ObjCoefX.at(i*T+t) = 0;
             ObjCoefU.at(i*T+t) = 0;
+            ObjCoefP.at(i*T+t) = 0;
 
             if (Param.UnitDecompo && Param.IntraSite && t>0) {
                 ObjCoefU.at(i*T+t) += - Eta[inst->getSiteOf(i)*T +t];
             }
 
-            ObjCoefX.at(i*T+t) += - inst->getPmin(i)*Mu[t] - (inst->getPmax(i) - inst->getPmin(i))*Nu[(i)*T+t] ;
+            if (!Param.powerPlanGivenByLambda) {
+                ObjCoefX.at(i*T+t) += - inst->getPmin(i)*Mu[t] - (inst->getPmax(i) - inst->getPmin(i))*Nu[(i)*T+t] ;
 
-            if (Param.Ramp) {
-                if (t > 0) {
-                    ObjCoefX.at(i*T+t)  += RD*Psi[(i)*T+t] ;
+                if (Param.Ramp) {
+                    if (t > 0) {
+                        ObjCoefX.at(i*T+t)  += RD*Psi[(i)*T+t] ;
+                    }
+                    if (t < T-1) {
+                        ObjCoefX.at(i*T+t)  += RU*Phi[(i)*T+t+1] ;
+                    }
                 }
-                if (t < T-1) {
-                    ObjCoefX.at(i*T+t)  += RU*Phi[(i)*T+t+1] ;
-                }
+            }
+
+            if (Param.powerPlanGivenByLambda) {
+                ObjCoefP.at(i*T+t) += - Mu[t] ;
+                ObjCoefX.at(i*T+t) += - inst->getPmin(i)*Mu[t];
             }
 
             if (Param.StartUpDecompo) { // rajout des couts duaux lies aux contraintes supplémentaires, ie logical, mindown, z_lambda
@@ -93,6 +103,7 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
             if (!Farkas) {
                 ObjCoefU.at(i*T+t) += inst->getc0(i) ;
                 ObjCoefX.at(i*T+t) += BaseObjCoefX.at(i) ;
+                ObjCoefP.at(i*T+t) += inst->getcp(i) ;
             }
 
         }
@@ -173,7 +184,7 @@ void CplexPricingAlgo::AddSSBI(IloEnv env, IloModel model, IloBoolVarArray x, Il
     }
 }
 
-CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int site) : Param(p) {
+CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & par, int site) : Param(par) {
 
     //env = IloEnv() ;
     Site=site ;
@@ -188,6 +199,7 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int 
 
     x = IloBoolVarArray(env, ns*T) ;
     u = IloBoolVarArray(env, ns*T) ;
+    p = IloNumVarArray(env, ns*T, 0, 10000) ;
 
    cpuTime=0 ;
 
@@ -261,6 +273,18 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int 
         }
     }
 
+
+    if (Param.powerPlanGivenByLambda) {
+        cout << "contrainte UB prise en compte" << endl ;
+        //power limits
+        for (int i=0; i<ns; i++) {
+            for (int t=0 ; t < T ; t++) {
+                model.add( (inst->getPmax(first+i) - inst->getPmin(first+i) )*x[i*T + t] >= p[i*T + t]);
+            }
+        }
+    }
+
+
     if (Param.DemandeResiduelle) {
 
         double DR = 0 ;
@@ -292,13 +316,6 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & p, int 
     cplex = IloCplex(model);
     cplex.setParam(IloCplex::EpGap, 0.00001) ;
 
-    //Initialisation des coefficients objectifs (primaux) de x
-    BaseObjCoefX.resize(ns, 0) ;
-    for (int i=0 ; i <ns ; i++) {
-        BaseObjCoefX[i] = inst->getcf(first+i) + (inst->getPmin(first+i))*inst->getcp(first+i) ;
-        //  cout << "unit i: " << inst->getcf(first+i) + (inst->getPmax(first+i) - inst->getPmin(first+i))*inst->getcp(first+i) << endl ;
-    }
-
 }
 
 void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCosts & Dual, bool Farkas) {
@@ -310,6 +327,9 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters
 
             obj.setLinearCoef(x[i*T +t], (Dual.ObjCoefX).at((first+i)*T+t)  );
             obj.setLinearCoef(u[i*T +t], (Dual.ObjCoefU).at((first+i)*T+t) ) ;
+            if (Param.powerPlanGivenByLambda) {
+                obj.setLinearCoef(p[i*T +t], (Dual.ObjCoefP).at((first+i)*T+t) ) ;
+            }
 
         }
     }
@@ -349,3 +369,4 @@ bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual,
 
     return true;
 }
+

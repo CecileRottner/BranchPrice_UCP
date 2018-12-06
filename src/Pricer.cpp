@@ -350,6 +350,7 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
         //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
         double objvalue = 0 ;
         IloNumArray upDownPlan  ;
+        IloNumArray powerPlan  ;
         int solutionFound ;
 
 
@@ -399,6 +400,13 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
 
             Master_Variable* lambda = new Master_Variable(s, upDownPlan);
             cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " "  << endl ;
+
+            if (Param.powerPlanGivenByLambda && !Param.DynProg) {
+                powerPlan = IloNumArray((AlgoCplex[s])->env, Param.nbUnits(s)*T) ;
+                (AlgoCplex[s]->cplex).getValues(AlgoCplex[s]->p, powerPlan) ;
+                cout << "power plan: " << powerPlan << endl;
+                lambda->addPowerPlan(powerPlan);
+            }
 
             //// CREATION D'UNE NOUVELLE VARIABLE DANS LE MASTER
             Master->initMasterVariable(scip, inst, lambda) ;
