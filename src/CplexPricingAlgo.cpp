@@ -54,7 +54,7 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
             if (!Param.powerPlanGivenByLambda) {
                 ObjCoefX.at(i*T+t) += - inst->getPmin(i)*Mu[t] - (inst->getPmax(i) - inst->getPmin(i))*Nu[(i)*T+t] ;
 
-                if (Param.Ramp) {
+                if (Param.Ramp && Param.rampInMaster) {
                     if (t > 0) {
                         ObjCoefX.at(i*T+t)  += RD*Psi[(i)*T+t] ;
                     }
@@ -236,7 +236,6 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & par, in
         }
     }
 
-
     // Min down constraints
     for (int i=0; i<ns; i++) {
         for (int t=inst->getl(first+i) ; t < T ; t++) {
@@ -273,7 +272,6 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & par, in
         }
     }
 
-
     if (Param.powerPlanGivenByLambda) {
         cout << "contrainte UB prise en compte" << endl ;
         //power limits
@@ -284,6 +282,18 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & par, in
         }
     }
 
+    if (Param.Ramp && Param.rampInSubPb) {
+        for (int i = 0 ; i <ns ; i++) {
+
+            double RU = (inst->getPmax(first+i) - inst->getPmin(first+i))/3 ;
+            double RD = (inst->getPmax(first+i) - inst->getPmin(first+i))/2 ;
+
+            for (int t = 1 ; t < T ; t++) {
+                model.add(p[i*T + t] - p[i*T + t-1] <= RU*x[i*T + t-1] );
+                model.add(p[i*T + t-1] - p[i*T + t] <= RD*x[i*T + t] );
+            }
+        }
+    }
 
     if (Param.DemandeResiduelle) {
 
@@ -304,7 +314,6 @@ CplexPricingAlgo::CplexPricingAlgo(InstanceUCP* inst, const Parameters & par, in
             Prod.end() ;
         }
     }
-
 
     //Objectif pour u
     for (int i=0 ; i<ns ; i++) {

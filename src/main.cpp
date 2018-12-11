@@ -96,41 +96,56 @@ int main(int argc, char** argv)
     bool IP=1; // est-ce qu'on résout le master en variable entières ?
     bool PriceAndBranch = 0;
 
-    bool ManageSubPbSym = 0 ; // est-ce qu'on gère les symétries dans le sous problème ? --> paramètre inutile. à enlever
-
-    bool Ramp = 0 ; // gradients pris en compte ou pas
     bool IntraSite = intra_cons ; // contraintes intrasites prises en compte ou pas
+
+
+    //// Paramètres: type de décomposition ////
+    bool UnitDecompo = false ;
+    bool StartUpDecompo = false;
 
     bool TimeStepDec = 0 ;
     bool DynProgTime = 0 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
     bool DynProg = 0; // implémenté pour Pmax=Pmin et décomposition par unités
 
     bool DemandeResiduelle = 0 ;
+    /////////////////////////////////////////
 
+
+
+    //// Paramètres symétries et interval up-set ///
     bool IntervalUpSet = 0 ;
+    bool masterSSBI = 0 ; // implémenté pour time decomposition seulement
+
+    bool useSSBIinSubPb = false;
+    bool ManageSubPbSym = 0 ; // est-ce qu'on gère les symétries dans le sous problème ? --> paramètre inutile. à enlever
 
     bool heuristicInit = 0 ;
+    ////////////////////////////////////
 
 
-    //Paramètres pricing décomposition par pas de temps.
+    //// paramètres gradients /////
+    bool Ramp = 1 ; // gradients pris en compte ou pas
+    bool RampInMaster = 0 ; // contraintes de gradients dualisées
+    bool RampInSubPb = 0 ; // contraintes de gradient non dualisées
+
+    bool powerPlanGivenByLambda = false ; // implémenté pour unit et site décompo seulement. Les puissances sont uniquement dans le sous problème. utile pour les ramp.
+                                          // pas compatible avec la décomposition start up notamment
+    //////////////////////////////
+
+
+    ///// Paramètres pricing décomposition par pas de temps. //////
     bool DontPriceAllTimeSteps = 0;
     bool DontGetPValue = 0 ;
     bool OneTimeStepPerIter = 0;
     bool addColumnToOtherTimeSteps = 0 ;
+    ////////////////////////////////////////////////////////////////
 
     bool Solve = true ; // true: Branch & Price avec SCIP. false: résolution Cplex boîte noire
-    bool UnitDecompo = false ;
-    bool StartUpDecompo = false;
 
-    bool useSSBIinSubPb = false;
-
-    bool powerPlanGivenByLambda = false ; // implémenté pour unit et site décompo seulement. Les puissances sont uniquement dans le sous problème. utile pour les ramp.
-                                          // pas compatible avec la décomposition start up notamment
 
     if (met==-1) {
         Solve = false ;
     }
-
 
 
     //// COMPARISONS
@@ -155,6 +170,7 @@ int main(int argc, char** argv)
     if (met == 1012) { // UNIT DECOMPOSITION ---- COL GEN, subpb résolu par Cplex
         UnitDecompo=true;
         node_limit=1 ;
+        RampInMaster=1 ;
 
     }
 
@@ -197,6 +213,7 @@ int main(int argc, char** argv)
         UnitDecompo=true;
         powerPlanGivenByLambda = true;
         node_limit=1 ;
+        RampInSubPb=1 ;
 
     }
 
@@ -256,7 +273,7 @@ int main(int argc, char** argv)
 
     Parameters const param(inst, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
-                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda);
+                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, RampInMaster, RampInSubPb, masterSSBI);
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -537,7 +554,7 @@ int main(int argc, char** argv)
 //        else {
 //            fichier << " & - "  ; // OPT
 //        }
-                if (0 && (met*intra_cons==102) || (!intra_cons*met==103)) {
+                if (1 || (met*intra_cons==102) || (!intra_cons*met==103)) {
 
                     fichier << " & " << checker.getLRValue() ; // RL*/
                     fichier << " & " << checker.getLRCplex() ; // RL CPLEX

@@ -1,34 +1,43 @@
 CPXPARAM_MIP_Tolerances_MIPGap                   1.0000000000000001e-05
-11 of 11 MIP starts provided solutions.
-MIP start 'm1' defined initial solution with objective -1204.6974.
+126 of 126 MIP starts provided solutions.
+MIP start 'm1' defined initial solution with objective -716.1072.
 Tried aggregator 1 time.
-MIP Presolve eliminated 10 rows and 11 columns.
-Reduced MIP has 13 rows, 19 columns, and 63 nonzeros.
-Reduced MIP has 19 binaries, 0 generals, 0 SOSs, and 0 indicators.
-Presolve time = 0.00 sec. (0.05 ticks)
-Probing time = 0.00 sec. (0.02 ticks)
+MIP Presolve eliminated 0 rows and 1 columns.
+Reduced MIP has 277 rows, 143 columns, and 959 nonzeros.
+Reduced MIP has 95 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (0.52 ticks)
+Probing time = 0.00 sec. (0.41 ticks)
 Tried aggregator 1 time.
-Reduced MIP has 13 rows, 19 columns, and 63 nonzeros.
-Reduced MIP has 19 binaries, 0 generals, 0 SOSs, and 0 indicators.
-Presolve time = 0.00 sec. (0.05 ticks)
-Probing time = 0.00 sec. (0.03 ticks)
-Clique table members: 61.
+Reduced MIP has 277 rows, 143 columns, and 959 nonzeros.
+Reduced MIP has 95 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (0.64 ticks)
+Probing time = 0.00 sec. (0.41 ticks)
+Clique table members: 266.
 MIP emphasis: balance optimality and feasibility.
 MIP search method: dynamic search.
 Parallel mode: deterministic, using up to 8 threads.
-Root relaxation solution time = 0.00 sec. (0.02 ticks)
+Root relaxation solution time = 0.00 sec. (0.54 ticks)
 
         Nodes                                         Cuts/
    Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
 
-*     0+    0                        -1204.6974    -1436.6974            19.26%
-      0     0        cutoff          -1204.6974                      6    0.00%
+*     0+    0                         -716.1072    -7880.2217              --- 
+      0     0     -805.2599    23     -716.1072     -805.2599       67   12.45%
+      0     0     -732.9400     6     -716.1072      Cuts: 17       76    2.35%
+      0     0        cutoff           -716.1072                     78    0.00%
+Elapsed time = 0.02 sec. (8.87 ticks, tree = 0.01 MB, solutions = 126)
+
+Implied bound cuts applied:  6
+Flow cuts applied:  2
+Mixed integer rounding cuts applied:  4
+Lift and project cuts applied:  1
+Gomory fractional cuts applied:  1
 
 Root node processing (before b&c):
-  Real time             =    0.00 sec. (0.26 ticks)
+  Real time             =    0.02 sec. (9.03 ticks)
 Parallel b&c, 8 threads:
   Real time             =    0.00 sec. (0.00 ticks)
   Sync time (average)   =    0.00 sec.
   Wait time (average)   =    0.00 sec.
                           ------------
-Total (root+branch&cut) =    0.00 sec. (0.26 ticks)
+Total (root+branch&cut) =    0.02 sec. (9.03 ticks)

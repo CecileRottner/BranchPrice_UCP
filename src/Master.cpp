@@ -92,7 +92,7 @@ void MasterSite_Model::addCoefsToConstraints(SCIP* scip, Master_Variable* lambda
 
     /* for each time period and each unit in site S, add coefficient RU (resp RD) into the ramp up (resp down) constraint of unit i at t+1 */
     //RAMPSTUFF
-    if (Param.Ramp && !Param.powerPlanGivenByLambda) {
+    if (Param.Ramp && Param.rampInMaster && !Param.powerPlanGivenByLambda) {
 
         for (int i=0 ; i < Param.nbUnits(s) ; i++) {
             double RU = (inst->getPmax(first+i) - inst->getPmin(first+i))/3 ;
@@ -330,7 +330,7 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
     ///// Ramp up & down constraints /////
     //RAMPSTUFF
-    if (Param.Ramp && !Param.powerPlanGivenByLambda) {
+    if (Param.Ramp && Param.rampInMaster) {
         char con_name_ramp_up[255];
         for (int i = 0 ; i <n ; i++)
         {
@@ -580,26 +580,28 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
 
 
             /* add new variable to scip */
-            SCIPaddVar(scip, var);
+            if (!Param.powerPlanGivenByLambda) {
+                SCIPaddVar(scip, var);
 
-            /* add coefficient to the demand constraint */
-            SCIPaddCoefLinear(scip, demand_cstr[t], var, 1.0);
+                /* add coefficient to the demand constraint */
+                SCIPaddCoefLinear(scip, demand_cstr[t], var, 1.0);
 
-            /* add coefficient to the power limit constraint */
-            SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);
+                /* add coefficient to the power limit constraint */
+                SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);
 
 
-            /* add coefficients to the ramp up and down constraints */
+                /* add coefficients to the ramp up and down constraints */
 
-            //RAMPSTUFF
-            if (Param.Ramp) {
-                if (t>0) {
-                    SCIPaddCoefLinear(scip, ramp_up[i*T + t], var, 1.0);
-                    SCIPaddCoefLinear(scip, ramp_down[i*T + t], var, -1.0);
-                }
-                if (t < T-1) {
-                    SCIPaddCoefLinear(scip, ramp_up[i*T + t+1], var, -1.0);
-                    SCIPaddCoefLinear(scip, ramp_down[i*T + t+1], var, 1.0);
+                //RAMPSTUFF
+                if (Param.Ramp && Param.rampInMaster) {
+                    if (t>0) {
+                        SCIPaddCoefLinear(scip, ramp_up[i*T + t], var, 1.0);
+                        SCIPaddCoefLinear(scip, ramp_down[i*T + t], var, -1.0);
+                    }
+                    if (t < T-1) {
+                        SCIPaddCoefLinear(scip, ramp_up[i*T + t+1], var, -1.0);
+                        SCIPaddCoefLinear(scip, ramp_down[i*T + t+1], var, 1.0);
+                    }
                 }
             }
         }

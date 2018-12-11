@@ -80,7 +80,7 @@ SCIP_DECL_PRICERINIT(ObjPricerSite::scip_init)
     }
 
 
-    if (Param.Ramp) {
+    if (Param.Ramp && Param.rampInMaster) {
         for (int t = 1; t < T; t++) {
             for (int i = 0 ; i < inst->getn() ; i++) {
                 SCIPgetTransformedCons(scip, Master->ramp_up[i*T+t], &(Master->ramp_up[i*T+t]));
@@ -210,7 +210,7 @@ void ObjPricerSite::updateDualCosts(SCIP* scip, DualCosts & dual_cost, bool Fark
 
     //couts duaux des ramp
     //RAMPSTUFF
-    if (Param.Ramp) {
+    if (Param.Ramp && Param.rampInMaster) {
         for (int i = 0; i < n; i++) {
             for (int t = 1 ; t < T ; t++) {
                 if (!Farkas) {

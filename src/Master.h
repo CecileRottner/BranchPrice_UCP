@@ -199,6 +199,10 @@ public:
     vector<SCIP_CONS*> convexity_cstr;
     vector<SCIP_CONS*> intrasite;
 
+    vector<SCIP_CONS*> rsu;
+
+    vector<SCIP_CONS*> rsd;
+
     //Interval up set inequalities
     vector< list<IneqIntUpSet*> > IUP_t0 ; // IUP_t0[t] : liste des interval-up-set telles que t0=t
     vector< list<IneqIntUpSet*> > IUP_t1 ; // IUP_t1[t] : liste des interval-up-set telles que t1=t. Redondant mais plus efficace
