@@ -58,12 +58,14 @@ MAINOBJ		=	main.o \
 			Process.o \
 			Master.o \
 			MasterTime.o \
+			MasterDouble.o \
 			CplexPricingAlgo.o \
 			CplexPricingAlgoTime.o \
 			DynProgPricingAlgo.o \
 			DynProgPricingAlgoTime.o \
 			Pricer.o \
 			PricerTime.o \
+			PricerDouble.o \
 			BranchConsHandler.o \
 			BranchingRule.o \
 			IntervalUpSet.o \

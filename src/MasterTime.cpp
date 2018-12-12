@@ -142,6 +142,25 @@ void MasterTime_Model::addCoefsToConstraints(SCIP* scip, MasterTime_Variable* la
     /* add coefficient to the convexity constraint for site s */
     SCIPaddCoefLinear(scip, convexity_cstr.at(t), lambda->ptr, 1.0) ;
 
+    ///SSBI coefficients
+
+    //RSU
+    if (Param.masterSSBI) {
+        for (int i=0; i < n-1 ; i++) {
+            if (!inst->getLast(i)) {
+            int l = inst->getl(i);
+            if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
+                if (t<=T-1-l) {
+                    SCIPaddCoefLinear(scip, rsu.at(i*T+t+l), lambda->ptr, 1.0) ;
+                }
+            }
+            }
+        }
+    }
+
+    //RSD
+
+
 
     //// Interval up set inequalities ////
 
@@ -264,13 +283,6 @@ MasterTime_Model::MasterTime_Model(InstanceUCP* instance, const Parameters & Par
     rsu.resize(n*T, (SCIP_CONS*) NULL) ;
     rsd.resize(n*T, (SCIP_CONS*) NULL) ;
 
-    IUP_t0.resize(T) ;
-    IUP_t1.resize(T) ;
-
-    for (int t=0 ; t < T ; t++) {
-        (IUP_t0.at(t)).clear() ;
-        (IUP_t1.at(t)).clear() ;
-    }
 }
 
 void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
@@ -418,27 +430,29 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
 
         ///// Ready to start up /////
         char con_name_rsu[255];
-        for (int i = 0 ; i <n ; i++)
+        for (int i = 0 ; i <n-1 ; i++)
         {
-            for (int t = inst->getl(i); t < T; t++)
-            {
-                SCIP_CONS* con = NULL;
-                (void) SCIPsnprintf(con_name_rsu, 255, "RSU(%d,%d)", i, t); // nom de la contrainte
-                SCIPcreateConsLinear( scip, &con, con_name_rsu, 0, NULL, NULL,
-                                      0.0,   // lhs
-                                      SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
-                                      true,  /* initial */
-                                      false, /* separate */
-                                      true,  /* enforce */
-                                      true,  /* check */
-                                      true,  /* propagate */
-                                      false, /* local */
-                                      true,  /* modifiable */
-                                      false, /* dynamic */
-                                      false, /* removable */
-                                      false  /* stickingatnode */ );
-                SCIPaddCons(scip, con);
-                rsu.at(i*T + t) = con;
+            if (!inst->getLast(i)) {
+                for (int t = inst->getl(i); t < T; t++)
+                {
+                    SCIP_CONS* con = NULL;
+                    (void) SCIPsnprintf(con_name_rsu, 255, "RSU(%d,%d)", i, t); // nom de la contrainte
+                    SCIPcreateConsLinear( scip, &con, con_name_rsu, 0, NULL, NULL,
+                                          0.0,   // lhs
+                                          SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
+                                          true,  /* initial */
+                                          false, /* separate */
+                                          true,  /* enforce */
+                                          true,  /* check */
+                                          true,  /* propagate */
+                                          false, /* local */
+                                          true,  /* modifiable */
+                                          false, /* dynamic */
+                                          false, /* removable */
+                                          false  /* stickingatnode */ );
+                    SCIPaddCons(scip, con);
+                    rsu.at(i*T + t) = con;
+                }
             }
         }
 
@@ -446,28 +460,31 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
         char con_name_rsd[255];
         for (int i = 0 ; i <n ; i++)
         {
-            for (int t = inst->getL(i); t < T; t++)
-            {
-                SCIP_CONS* con = NULL;
-                (void) SCIPsnprintf(con_name_rsd, 255, "RSD(%d,%d)", i, t); // nom de la contrainte
-                SCIPcreateConsLinear( scip, &con, con_name_rsd, 0, NULL, NULL,
-                                      0.0,   // lhs
-                                      SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
-                                      true,  /* initial */
-                                      false, /* separate */
-                                      true,  /* enforce */
-                                      true,  /* check */
-                                      true,  /* propagate */
-                                      false, /* local */
-                                      true,  /* modifiable */
-                                      false, /* dynamic */
-                                      false, /* removable */
-                                      false  /* stickingatnode */ );
-                SCIPaddCons(scip, con);
-                rsd.at(i*T + t) = con;
+            if (!inst->getLast(i)) {
+                for (int t = inst->getL(i); t < T; t++)
+                {
+                    SCIP_CONS* con = NULL;
+                    (void) SCIPsnprintf(con_name_rsd, 255, "RSD(%d,%d)", i, t); // nom de la contrainte
+                    SCIPcreateConsLinear( scip, &con, con_name_rsd, 0, NULL, NULL,
+                                          0.0,   // lhs
+                                          SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
+                                          true,  /* initial */
+                                          false, /* separate */
+                                          true,  /* enforce */
+                                          true,  /* check */
+                                          true,  /* propagate */
+                                          false, /* local */
+                                          true,  /* modifiable */
+                                          false, /* dynamic */
+                                          false, /* removable */
+                                          false  /* stickingatnode */ );
+                    SCIPaddCons(scip, con);
+                    rsd.at(i*T + t) = con;
+                }
             }
         }
     }
+
 
 
 
@@ -531,6 +548,37 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
             if (Param.IntraSite) {
                 int site = inst->getSiteOf(i) ;
                 SCIPaddCoefLinear(scip, intrasite.at(site*T + t), var, 1.0);
+            }
+
+            if (Param.masterSSBI) {
+
+
+                ///RSU
+                int l = inst->getl(i);
+                int n = inst->getn();
+
+                if (i>0) {
+                    int l_i_1=inst->getl(i-1);
+                    if (t >= l_i_1 && (!inst->getLast(i-1)) ) {
+                        SCIPaddCoefLinear(scip, rsu.at((i-1)*T + t), var, -1.0);
+                    }
+                }
+
+                if (i<n-1 && (!inst->getLast(i)) ) {
+
+                    int t_min = fmax(t, l);
+                    int t_max = fmin(T-1,t+l-1);
+                    for (int k=t_min ; k <= t_max ; k++) {
+                        SCIPaddCoefLinear(scip, rsu.at((i)*T + k), var, 1.0);
+                    }
+                }
+
+
+//                ///RSD
+//                if (i>0) {
+
+//                }
+//                int L = inst->getL(i);
             }
         }
     }

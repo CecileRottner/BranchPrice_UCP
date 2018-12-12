@@ -17,6 +17,8 @@ DualCosts::DualCosts(InstanceUCP* inst, const Parameters & Param) {
     Ksi.resize(n*T, 0) ;
     Theta.resize(n*T, 0) ;
 
+    Omega.resize(n*T, 0) ;
+
     BaseObjCoefX.resize(n, 0) ;
 
     for (int i=0 ; i <n ; i++) {
@@ -28,6 +30,8 @@ DualCosts::DualCosts(InstanceUCP* inst, const Parameters & Param) {
     ObjCoefP.resize(n*T, 0) ;
 
 }
+
+
 
 void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool Farkas) {
 
@@ -47,11 +51,15 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
             ObjCoefU.at(i*T+t) = 0;
             ObjCoefP.at(i*T+t) = 0;
 
+            if (Param.doubleDecompo) {
+                ObjCoefX.at(i*T+t) += - Omega.at(i*T+t);
+            }
+
             if (Param.UnitDecompo && Param.IntraSite && t>0) {
                 ObjCoefU.at(i*T+t) += - Eta[inst->getSiteOf(i)*T +t];
             }
 
-            if (!Param.powerPlanGivenByLambda) {
+            if (!Param.powerPlanGivenByLambda && !Param.doubleDecompo) {
                 ObjCoefX.at(i*T+t) += - inst->getPmin(i)*Mu[t] - (inst->getPmax(i) - inst->getPmin(i))*Nu[(i)*T+t] ;
 
                 if (Param.Ramp && Param.rampInMaster) {
@@ -64,12 +72,12 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
                 }
             }
 
-            if (Param.powerPlanGivenByLambda) {
+            if (Param.powerPlanGivenByLambda && !Param.doubleDecompo) {
                 ObjCoefP.at(i*T+t) += - Mu[t] ;
                 ObjCoefX.at(i*T+t) += - inst->getPmin(i)*Mu[t];
             }
 
-            if (Param.StartUpDecompo) { // rajout des couts duaux lies aux contraintes supplémentaires, ie logical, mindown, z_lambda
+            if (Param.StartUpDecompo && !Param.doubleDecompo) { // rajout des couts duaux lies aux contraintes supplémentaires, ie logical, mindown, z_lambda
 
                 int L = inst->getL(i);
                 /// COEFS de X
@@ -342,9 +350,8 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters
 
         }
     }
-
-
 }
+
 
 
 bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual, IloNumArray UpDownPlan, double& objvalue) {

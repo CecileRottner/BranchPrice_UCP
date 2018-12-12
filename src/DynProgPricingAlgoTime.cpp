@@ -5,7 +5,7 @@
 using namespace std;
 
 
-DynProgPricingAlgoTime::DynProgPricingAlgoTime(InstanceUCP* inst, MasterTime_Model* M, const Parameters & par, int t) : Param(par) {
+DynProgPricingAlgoTime::DynProgPricingAlgoTime(InstanceUCP* inst, Master_Model* M, const Parameters & par, int t) : Param(par) {
     //env=IloEnv() ;
 
     Master=M ;
@@ -39,29 +39,45 @@ void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Para
 
         ObjCoefX.at(i) = 0 ;
 
-        //// Couts primaux de x[i]
-        if (!Farkas) {
-            ObjCoefX.at(i) += BaseObjCoefX.at(i) ;
+        if (Param.doubleDecompo) {
+            ObjCoefX.at(i) += Dual.Omega.at(i*T+time);
         }
+        else {
+            //// Couts primaux de x[i]
+            if (!Farkas) {
+                ObjCoefX.at(i) += BaseObjCoefX.at(i) ;
+            }
 
-        int L= inst->getL(i);
-        int l= inst->getl(i);
+            int L= inst->getL(i);
+            int l= inst->getl(i);
 
-        //// Calcul du cout réduit de x
-        if (time>0) {
-            ObjCoefX.at(i) += - Dual.Mu.at(i*T + time) ;
-        }
-        if (time< T-1) {
-            ObjCoefX.at(i) += Dual.Mu.at(i*T + time+1) ;
-        }
-        if (time>=L) {
-            ObjCoefX.at(i) += - Dual.Nu.at(i*T+ time) ;
-        }
+            //// Calcul du cout réduit de x
+            if (time>0) {
+                ObjCoefX.at(i) += - Dual.Mu.at(i*T + time) ;
+            }
+            if (time< T-1) {
+                ObjCoefX.at(i) += Dual.Mu.at(i*T + time+1) ;
+            }
+            if (time>=L) {
+                ObjCoefX.at(i) += - Dual.Nu.at(i*T+ time) ;
+            }
 
-        if (time<=T-l-1) {
-            ObjCoefX.at(i) += - Dual.Xi.at(i*T + time + l) ;
+            if (time<=T-l-1) {
+                ObjCoefX.at(i) += - Dual.Xi.at(i*T + time + l) ;
+            }
+
+            /// couts duaux SSBI
+            if (Param.masterSSBI) {
+                if (!inst->getLast(i)) {
+                    if ( (time<=T-l-1) && (i < n-1) ) {
+                        ObjCoefX.at(i) += - Dual.Epsilon.at(i*T + time + l) ;
+                    }
+                }
+            }
         }
     }
+
+
 
     //// ajouts des couts duaux des interval up-set ////
 

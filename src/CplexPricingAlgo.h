@@ -27,6 +27,9 @@ public:
     vector<double> Theta ;
 
 
+    vector<double> Omega ; // contraintes d'égalités time/site
+
+
     //Coefficients de x et u
     vector<double> BaseObjCoefX ; //ne change pas au cours des itérations: calculé dans le constructeur
     vector<double> ObjCoefX ;
@@ -39,6 +42,11 @@ public:
     //Computes objective coefficients of x and u once dual values are updated
     void computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool Farkas) ;
 };
+
+
+
+
+
 
 
 class CplexPricingAlgo {
@@ -119,6 +127,9 @@ public:
     vector<double> Xi ;
     vector<double> Sigma ;
 
+    vector<double> Epsilon ;
+
+    vector<double> Omega ; // contraintes d'égalités time/site
     DualCostsTime(InstanceUCP* inst) ;
 };
 
@@ -142,7 +153,8 @@ class CplexPricingAlgoTime {
   void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas);
 
   // Launch Cplex solver and get back an optimal up/down plan
-  bool findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) ; // returns true if an improving solution has been found. objvalue is updated in this case
+  bool findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) ;
+  // returns true if an improving solution has been found. objvalue is updated in this case
   void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, double & totalProd, bool Farkas) ; //updates UpDownPlan and realCost
 };
 
@@ -151,7 +163,7 @@ class DynProgPricingAlgoTime { // codé dans le cas Pmin=Pmax pour voir si c'est
  public:
 
   Parameters Param ;
-  MasterTime_Model* Master;
+  Master_Model* Master;
   int time ;
   IloEnv   env;
 
@@ -164,7 +176,7 @@ class DynProgPricingAlgoTime { // codé dans le cas Pmin=Pmax pour voir si c'est
   vector<double> ObjCoefX ;
   vector<double> Table ;
 
-  DynProgPricingAlgoTime(InstanceUCP* inst, MasterTime_Model* Master, const Parameters & par, int t); // initialise les vecteurs, et W
+  DynProgPricingAlgoTime(InstanceUCP* inst, Master_Model* Master, const Parameters & par, int t); // initialise les vecteurs, et W
 
   void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas);
 

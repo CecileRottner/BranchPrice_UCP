@@ -3,14 +3,14 @@ rm result.txt
 
 nom=result.txt
 
-sym=5
+sym=0
 
 cat01=1
 intra=1
 
 
 
-dossier=data/Data_/Sym/
+dossier=data/Data_/
 
 printf $dossier " \n" >> result.txt
 
@@ -23,27 +23,10 @@ UseIntraCons=1
 
 demand_type=3
 
-for n in 15 ; do
-  for T in 24 ; do
-    for id in {4..10}; do
-      for met in 200 204 ; do
-        ./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dossier $n $T 1 $demand_type $sym $cat01 $intra $id $met $UseIntraCons
-      done
-      printf "\\hline \n" >> result.txt	
-    done
-   printf "\\hline \n" >> result.txt	
-  done
-  printf "\n" >> result.txt
-  printf "\n" >> result.txt
-done
-printf "\n" >> result.txt
-printf "\n" >> result.txt
-
-for sym in 5 3 ; do
 for n in 20 ; do
   for T in 24 ; do
-    for id in {1..10}; do
-      for met in 200 204 ; do
+    for id in {1..1}; do
+      for met in 203 ; do
         ./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dossier $n $T 1 $demand_type $sym $cat01 $intra $id $met $UseIntraCons
       done
       printf "\\hline \n" >> result.txt	
@@ -55,6 +38,4 @@ for n in 20 ; do
 done
 printf "\n" >> result.txt
 printf "\n" >> result.txt
-done
-
 

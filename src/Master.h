@@ -73,6 +73,10 @@ public:
 
     int nbIntUpSet ;
 
+    //Interval up set inequalities
+    vector< list<IneqIntUpSet*> > IUP_t0 ; // IUP_t0[t] : liste des interval-up-set telles que t0=t
+    vector< list<IneqIntUpSet*> > IUP_t1 ; // IUP_t1[t] : liste des interval-up-set telles que t1=t. Redondant mais plus efficace
+
     vector<double> x_frac ;
     double cumul_resolution_pricing ;
 
@@ -81,6 +85,14 @@ public:
         T= inst->getT() ;
         nbIntUpSet = 0 ;
         x_frac.resize(n*T,0);
+
+        IUP_t0.resize(T) ;
+        IUP_t1.resize(T) ;
+
+        for (int t=0 ; t < T ; t++) {
+            (IUP_t0.at(t)).clear() ;
+            (IUP_t1.at(t)).clear() ;
+        }
     }
     virtual void computeFracSol(SCIP* scip) = 0;  // = 0 signifie "virtuelle pure"
 
@@ -203,9 +215,7 @@ public:
 
     vector<SCIP_CONS*> rsd;
 
-    //Interval up set inequalities
-    vector< list<IneqIntUpSet*> > IUP_t0 ; // IUP_t0[t] : liste des interval-up-set telles que t0=t
-    vector< list<IneqIntUpSet*> > IUP_t1 ; // IUP_t1[t] : liste des interval-up-set telles que t1=t. Redondant mais plus efficace
+
 
     // Keep informations on every variables of the Master program
     //NB: le fait d'utiliser une liste ne permet pas de supprimer des variables
@@ -230,5 +240,45 @@ public:
     void discardVar(SCIP* scip, SCIP_ConsData* consdata) ;
     void restoreVar(SCIP* scip, SCIP_ConsData* consdata) ;
 
+};
+
+
+////////////////////////////////////////////////////
+////////// MASTER -- DOUBLE DECOMPOSITION ///////
+////////////////////////////////////////////////////
+
+
+class MasterDouble_Model : public Master_Model {
+public:
+
+    int S ;
+    IloEnv env;
+
+    // Keep a pointer on every constraint of the Master program
+
+    vector<SCIP_CONS*> conv_lambda_site;
+    vector<SCIP_CONS*> conv_lambda_time;
+    vector<SCIP_CONS*> eq_time_site;
+
+    // Keep informations on every variables of the Master program
+    //NB: le fait d'utiliser une liste ne permet pas de supprimer des variables
+    list<Master_Variable*> L_var_site;
+    list<MasterTime_Variable*> L_var_time;
+
+    MasterDouble_Model(InstanceUCP* inst, const Parameters & Param) ;
+
+    void addCoefsToConstraints_siteVar(SCIP* scip, Master_Variable* lambda, InstanceUCP* inst) ;
+
+    void addCoefsToConstraints_timeVar(SCIP* scip, MasterTime_Variable* lambda) ;
+
+    void initScipMasterDoubleModel(SCIP* scip, InstanceUCP* inst);
+    void initMasterSiteVariable(SCIP* scip, InstanceUCP* inst , Master_Variable* lambda) ;
+    void initMasterTimeVariable(SCIP* scip, MasterTime_Variable* lambda) ;
+    void createColumns(SCIP* scip, IloNumArray x, IloNumArray p) ;
+
+    void computeFracSol(SCIP* scip) ;
+
+    void discardVar(SCIP* scip, SCIP_ConsData* consdata) ;
+    void restoreVar(SCIP* scip, SCIP_ConsData* consdata) ;
 };
 #endif /* MASTER INCLUDED */

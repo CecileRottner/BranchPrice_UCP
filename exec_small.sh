@@ -5,12 +5,12 @@ nom=result.txt
 
 sym=0
 
-cat01=0
+cat01=1
 intra=1
 
 
 
-dossier=data/
+dossier=data/Data_/
 
 printf $dossier " \n" >> result.txt
 
@@ -24,9 +24,9 @@ UseIntraCons=1
 demand_type=3
 
 for n in 20 ; do
-  for T in 48 ; do
+  for T in 24 48 ; do
     for id in {1..10}; do
-      for met in 1012 104 ; do
+      for met in 2011 301 ; do
         ./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dossier $n $T 1 $demand_type $sym $cat01 $intra $id $met $UseIntraCons
       done
       printf "\\hline \n" >> result.txt	

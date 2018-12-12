@@ -103,28 +103,33 @@ int main(int argc, char** argv)
     bool UnitDecompo = false ;
     bool StartUpDecompo = false;
 
+
     bool TimeStepDec = 0 ;
     bool DynProgTime = 0 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
     bool DynProg = 0; // implémenté pour Pmax=Pmin et décomposition par unités
 
     bool DemandeResiduelle = 0 ;
+
+    bool doubleDecompo = 0 ;
+
     /////////////////////////////////////////
 
 
 
     //// Paramètres symétries et interval up-set ///
-    bool IntervalUpSet = 0 ;
-    bool masterSSBI = 0 ; // implémenté pour time decomposition seulement
+    bool IntervalUpSet = 0 ;// implémenté pour time decomposition seulement (résolution dyn prog)
+    bool masterSSBI = 0 ; // implémenté pour time decomposition seulement (résolution dyn prog)
 
     bool useSSBIinSubPb = false;
     bool ManageSubPbSym = 0 ; // est-ce qu'on gère les symétries dans le sous problème ? --> paramètre inutile. à enlever
 
-    bool heuristicInit = 0 ;
+    bool heuristicInit = 0;
     ////////////////////////////////////
 
 
     //// paramètres gradients /////
-    bool Ramp = 1 ; // gradients pris en compte ou pas
+    /// implémentés pour unit decomposition
+    bool Ramp = 0 ; // gradients pris en compte ou pas
     bool RampInMaster = 0 ; // contraintes de gradients dualisées
     bool RampInSubPb = 0 ; // contraintes de gradient non dualisées
 
@@ -230,12 +235,45 @@ int main(int argc, char** argv)
         node_limit=1 ;
     }
 
+    if (met == 2011) {
+        TimeStepDec = true ;
+        DynProgTime = true ;
+        IntraSite=0;
+        node_limit=1 ;
+    }
+
     if (met == 202) {
         TimeStepDec = true ;
         DynProgTime = true ;
         IntervalUpSet = true;
 
         node_limit=1 ;
+    }
+
+
+
+    if (met == 203) {
+        TimeStepDec = true ;
+        DynProgTime = true ;
+        node_limit=1 ;
+        masterSSBI=1 ;
+    }
+    if (met == 204) {
+        TimeStepDec = true ;
+        DynProgTime = true ;
+        masterSSBI=1 ;
+    }
+
+    if (met== 301) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=true ;
     }
 
     /// Branch & Price (& Cut)
@@ -273,7 +311,7 @@ int main(int argc, char** argv)
 
     Parameters const param(inst, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
-                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, RampInMaster, RampInSubPb, masterSSBI);
+                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo);
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -391,6 +429,35 @@ int main(int argc, char** argv)
         }
     }
 
+    else if (param.doubleDecompo) {
+        Master_ptr = new MasterDouble_Model(inst, param) ;
+        MasterDouble_Model* MD ;
+        MD = dynamic_cast<MasterDouble_Model*> (Master_ptr) ;
+
+        if (MD != NULL) {
+
+
+            ///Initialisation du master
+            MD->initScipMasterDoubleModel(scip, inst);
+
+
+            /// Initialisation du pricer
+            Pricer = new ObjPricerDouble(scip, PRICER_NAME, MD, inst, param);
+            SCIPincludeObjPricer(scip, Pricer, true);
+            SCIPactivatePricer(scip, SCIPfindPricer(scip, PRICER_NAME));
+
+            if (param.heuristicInit) {
+                IloNumArray x(env, n*T) ;
+                IloNumArray p(env, n*T) ;
+                checker.CplexPrimalHeuristic(x,p);
+                MD->createColumns(scip, x, p);
+            }
+        }
+
+
+
+    }
+
     else { //// Décomposition par sites
         Master_ptr = new MasterSite_Model(inst, param) ;
 
@@ -482,7 +549,7 @@ int main(int argc, char** argv)
 
     fichier.precision(7);
 
-    cout << "ici" << endl ;
+    cout << "ici write" << endl ;
     SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
 
     if (met==101 || met==100) {
@@ -541,6 +608,7 @@ int main(int argc, char** argv)
         }
         else {
         fichier << " &  " << SCIPgetDualbound(scip) ;
+        fichier << " &  " << SCIPgetPrimalbound(scip) ;
         }
 
        // fichier << " &  " << SCIPgetPrimalbound(scip) ;
@@ -554,7 +622,7 @@ int main(int argc, char** argv)
 //        else {
 //            fichier << " & - "  ; // OPT
 //        }
-                if (1 || (met*intra_cons==102) || (!intra_cons*met==103)) {
+                if (0 && (met*intra_cons==102) || (!intra_cons*met==103)) {
 
                     fichier << " & " << checker.getLRValue() ; // RL*/
                     fichier << " & " << checker.getLRCplex() ; // RL CPLEX
@@ -573,6 +641,8 @@ int main(int argc, char** argv)
                 }
         fichier <<" \\\\ " << endl ;
         checker.checkSolution(Master_ptr->x_frac);
+
+        cout << "ici fin write" << endl ;
 
     }
 

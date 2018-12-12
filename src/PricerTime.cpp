@@ -1,4 +1,5 @@
 #include "Pricer.h"
+#include "Master.h"
 #include "scip/cons_linear.h"
 #include <map>
 #include <vector>
@@ -89,9 +90,25 @@ SCIP_DECL_PRICERINIT(ObjPricerTimeUCP::scip_init)
             SCIPgetTransformedCons( scip, Master->min_down.at(i*T+t), &(Master->min_down.at(i*T+t)) );
         }
     }
+
+    //convexity constraint
     for (int t=0 ; t < T ; t++) {
         SCIPgetTransformedCons( scip, Master->convexity_cstr.at(t), &(Master->convexity_cstr.at(t)) );
     }
+
+
+    // ssbi constraints
+    if (Param.masterSSBI) {
+    for (int i = 0 ; i < n-1 ; i++) {
+        if (!inst->getLast(i)) {
+        int l = inst->getl(i) ;
+        for (int t = l ; t < T ; t++) {
+            SCIPgetTransformedCons( scip, Master->rsu.at(i*T+t), &(Master->rsu.at(i*T+t)) );
+        }
+        }
+    }
+    }
+
 
     cout<<"**************FIN PRICER INIT************ "<<endl;
     //variables ?
@@ -231,16 +248,39 @@ void ObjPricerTimeUCP::updateDualCosts(SCIP* scip, DualCostsTime & dual_cost, bo
             cout << "sigma(" << t <<") = " << dual_cost.Sigma[t] <<endl;
     }
 
+    if (Param.masterSSBI) {
 
-    // Couts duaux "interval up set"
-    list<IneqIntUpSet*>::const_iterator iup;
-    for (int t = 0 ; t < T ; t++) {
-        for (iup = Master->IUP_t0[t].begin(); iup!= Master->IUP_t0[t].end() ; iup++) {
-            if (!Farkas) {
-                (*iup)->dual = SCIPgetDualsolLinear(scip, (*iup)->ineq);
+        ///RSU
+        for (int i = 0; i < n-1; i++) {
+            if (!inst->getLast(i)) {
+            int l = inst->getl(i) ;
+            for (int t = l ; t < T ; t++) {
+                if (!Farkas) {
+                    dual_cost.Epsilon.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->rsu.at(i*T+t));
+                }
+                else{
+                    dual_cost.Epsilon.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->rsu.at(i*T+t));
+                }
+                if (print) cout << "epsilon(" << i <<"," << t <<") = " << dual_cost.Epsilon.at(i*T+t) <<endl;
             }
-            else {
-                (*iup)->dual = SCIPgetDualfarkasLinear(scip, (*iup)->ineq);
+            }
+        }
+
+        ///RSD
+    }
+
+    if (Param.IntervalUpSet) {
+
+        // Couts duaux "interval up set"
+        list<IneqIntUpSet*>::const_iterator iup;
+        for (int t = 0 ; t < T ; t++) {
+            for (iup = Master->IUP_t0[t].begin(); iup!= Master->IUP_t0[t].end() ; iup++) {
+                if (!Farkas) {
+                    (*iup)->dual = SCIPgetDualsolLinear(scip, (*iup)->ineq);
+                }
+                else {
+                    (*iup)->dual = SCIPgetDualfarkasLinear(scip, (*iup)->ineq);
+                }
             }
         }
     }

@@ -11,6 +11,10 @@ DualCostsTime::DualCostsTime(InstanceUCP* inst) {
     Nu.resize(n*T, 0) ;
     Xi.resize(n*T, 0) ;
     Sigma.resize(T, 0) ;
+
+
+    Epsilon.resize(n*T, 0) ; //RSU
+    Omega.resize(n*T, 0) ; //RSU
 }
 
 

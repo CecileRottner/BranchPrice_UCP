@@ -39,6 +39,7 @@ struct Parameters
     bool rampInMaster;
     bool rampInSubPb ;
     bool masterSSBI;
+    bool doubleDecompo ;
 
 
     /// Sites (ou groupes) définis par Param: groupes d'unités de la décomposition (correspondant à des sousproblème)
@@ -56,7 +57,7 @@ struct Parameters
                bool addColumn, bool dptime, bool dp, bool pandb,
                bool unitdecomp, bool startupdec, bool useSSBISub,
                bool powerPlanGiven, bool rampMaster, bool rampSubpb,
-               bool masterSSBI) ;
+               bool masterSSBI, bool doubleDecompo) ;
 
     int nbUnits(int s) const ;
 
