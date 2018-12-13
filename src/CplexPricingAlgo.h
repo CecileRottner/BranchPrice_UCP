@@ -127,7 +127,9 @@ public:
     vector<double> Xi ;
     vector<double> Sigma ;
 
+    //SSBI
     vector<double> Epsilon ;
+    vector<double> Delta ;
 
     vector<double> Omega ; // contraintes d'égalités time/site
     DualCostsTime(InstanceUCP* inst) ;

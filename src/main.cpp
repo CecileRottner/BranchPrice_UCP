@@ -119,6 +119,7 @@ int main(int argc, char** argv)
     //// Paramètres symétries et interval up-set ///
     bool IntervalUpSet = 0 ;// implémenté pour time decomposition seulement (résolution dyn prog)
     bool masterSSBI = 0 ; // implémenté pour time decomposition seulement (résolution dyn prog)
+    bool RSUonly=0 ;
 
     bool useSSBIinSubPb = false;
     bool ManageSubPbSym = 0 ; // est-ce qu'on gère les symétries dans le sous problème ? --> paramètre inutile. à enlever
@@ -227,6 +228,7 @@ int main(int argc, char** argv)
     if (met == 200) {
         TimeStepDec = true ;
         DynProgTime = true ;
+       // heuristicInit=1 ;
     }
 
     if (met == 201) {
@@ -262,6 +264,7 @@ int main(int argc, char** argv)
         TimeStepDec = true ;
         DynProgTime = true ;
         masterSSBI=1 ;
+        heuristicInit=1 ;
     }
 
     if (met== 301) {
@@ -311,7 +314,7 @@ int main(int argc, char** argv)
 
     Parameters const param(inst, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
-                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo);
+                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo,RSUonly);
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -622,7 +625,7 @@ int main(int argc, char** argv)
 //        else {
 //            fichier << " & - "  ; // OPT
 //        }
-                if (0 && (met*intra_cons==102) || (!intra_cons*met==103)) {
+                if (1 || (met*intra_cons==102) || (!intra_cons*met==103)) {
 
                     fichier << " & " << checker.getLRValue() ; // RL*/
                     fichier << " & " << checker.getLRCplex() ; // RL CPLEX
@@ -640,7 +643,7 @@ int main(int argc, char** argv)
                     fichier << " & & & " ;
                 }
         fichier <<" \\\\ " << endl ;
-        checker.checkSolution(Master_ptr->x_frac);
+       // checker.checkSolution(Master_ptr->x_frac);
 
         cout << "ici fin write" << endl ;
 

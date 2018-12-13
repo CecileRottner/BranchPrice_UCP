@@ -110,6 +110,67 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
     }
 
 
+    //SSBI pour l'initialisation heuristique
+    if (Param.masterSSBI) {
+
+
+        //inégalités symétries
+//        for (int g=0 ; g < inst->getnbG() ; g++) {
+
+//            int first = inst->getFirstG(g) ;
+//            int last = inst->getLastG(g) ;
+
+//            for (int i=first ; i <= last ; i++) {
+
+//                int l = inst->getl(i) ;
+//                int L = inst->getL(i) ;
+
+//                if (i < last) {
+//                    for (int t = 1 ; t < T ; t++) {
+//                        int start_time = fmax(t - l,0) ;
+
+
+//                        IloExpr rhs(env) ;
+//                        rhs += x[i*T+t] + x[i*T+start_time];
+
+//                        for (int k=t - start_time + 1 ; k < t ; k++) {
+//                            rhs+= u[i*T+k] ;
+//                        }
+
+
+//                        int ub_j = i+1 ;
+
+//                        for (int j=i+1 ; j <= ub_j ; j++) {
+//                            model.add(u[j*T + t] <= rhs) ;
+//                        }
+//                    }
+//                }
+
+//                if (i>first) {
+
+//                    for (int t = 1 ; t < T ; t++) {
+//                        int start_time = fmax(t - L, 0) ;
+
+//                        IloExpr rhs_w(env) ;
+//                        rhs_w += 2 - x[i*T+t] - x[i*T+start_time];
+
+//                        for (int k=t - start_time + 1 ; k < t ; k++) {
+//                            rhs_w += x[i*T + k-1] - x[i*T+k] + u[i*T+k] ;
+//                        }
+
+
+//                        int lb_j = i-1 ;
+//                        for (int j=i-1 ; j >= lb_j ; j--) {
+//                            model.add(x[j*T + t-1] - x[j*T+t] + u[j*T + t] <= rhs_w) ;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
+    }
+
+
 }
 
 double CplexChecker::getIntegerObjValue() {

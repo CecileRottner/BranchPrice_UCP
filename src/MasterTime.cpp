@@ -144,22 +144,51 @@ void MasterTime_Model::addCoefsToConstraints(SCIP* scip, MasterTime_Variable* la
 
     ///SSBI coefficients
 
-    //RSU
     if (Param.masterSSBI) {
         for (int i=0; i < n-1 ; i++) {
+
+            //// RSU ////
             if (!inst->getLast(i)) {
-            int l = inst->getl(i);
-            if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
-                if (t<=T-1-l) {
-                    SCIPaddCoefLinear(scip, rsu.at(i*T+t+l), lambda->ptr, 1.0) ;
+                int l = inst->getl(i);
+                if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
+                    if (t<=T-1-l) {
+                        SCIPaddCoefLinear(scip, rsu.at(i*T+t+l), lambda->ptr, 1.0) ;
+                    }
+                }
+            }
+
+            ///// RSD ////
+            if (!Param.RSUonly) {
+            int L = inst->getL(i) ;
+            if (!inst->getLast(i)) {
+
+                /// Coef RSD(i,t)
+                if (t >= L && i<n-1) {
+                    double a_i = 0 ;
+                    double a_iP1 = 0 ;
+
+                    if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
+                        a_i=1 ;
+                    }
+
+                    if (lambda->UpDown_plan[i+1] > 1 - Param.Epsilon) {
+                        a_iP1 = 1 ;
+                    }
+
+                    SCIPaddCoefLinear(scip, rsd.at(i*T+t), lambda->ptr, a_i - a_iP1) ;
+                }
+
+                /// Coef RSD(i,t+1)
+                if (t < T-1 && t + 1 >= L && i<n-1) {
+                    if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
+                        SCIPaddCoefLinear(scip, rsd.at(i*T+t+1), lambda->ptr, -1.0) ;
+                    }
                 }
             }
             }
-        }
-    }
 
-    //RSD
-
+        } //// fin for i
+    } ///// fin SSBI
 
 
     //// Interval up set inequalities ////
@@ -226,11 +255,12 @@ void MasterTime_Model::initMasterTimeVariable(SCIP* scip, MasterTime_Variable* v
     L_var.push_back(var);
 
 
-    cout << "Variable " << var_name << " added, with plan: " << endl  ;
+    cout << "Variable " << var_name << " added, with plan: "  ;
 
     for (int i=0 ; i < inst->getn() ; i++) {
         cout << var->UpDown_plan[i] << " "  ;
     }
+    cout << endl ;
 }
 
 //////// Créé des variables lambda à partir d'une solution (x,p) ///////////
@@ -456,6 +486,7 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
             }
         }
 
+        if (!Param.RSUonly) {
         ///// Ready to shut down /////
         char con_name_rsd[255];
         for (int i = 0 ; i <n ; i++)
@@ -466,7 +497,7 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
                     SCIP_CONS* con = NULL;
                     (void) SCIPsnprintf(con_name_rsd, 255, "RSD(%d,%d)", i, t); // nom de la contrainte
                     SCIPcreateConsLinear( scip, &con, con_name_rsd, 0, NULL, NULL,
-                                          0.0,   // lhs
+                                          -1.0,   // lhs
                                           SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
                                           true,  /* initial */
                                           false, /* separate */
@@ -482,6 +513,7 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
                     rsd.at(i*T + t) = con;
                 }
             }
+        }
         }
     }
 
@@ -557,14 +589,14 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
                 int l = inst->getl(i);
                 int n = inst->getn();
 
-                if (i>0) {
+                if ( i>0 ) {
                     int l_i_1=inst->getl(i-1);
                     if (t >= l_i_1 && (!inst->getLast(i-1)) ) {
                         SCIPaddCoefLinear(scip, rsu.at((i-1)*T + t), var, -1.0);
                     }
                 }
 
-                if (i<n-1 && (!inst->getLast(i)) ) {
+                if ( i<n-1 && (!inst->getLast(i)) )  {
 
                     int t_min = fmax(t, l);
                     int t_max = fmin(T-1,t+l-1);
@@ -574,11 +606,26 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
                 }
 
 
-//                ///RSD
-//                if (i>0) {
 
-//                }
-//                int L = inst->getL(i);
+                  ///RSD
+
+                  if (!Param.RSUonly) {
+                  int L = inst->getL(i);
+
+                  if (i<n-1 && (!inst->getLast(i)) && t >= L ) {
+                      SCIPaddCoefLinear(scip, rsd.at((i)*T + t), var, -1.0);
+                  }
+
+                  if ( i>0 && (!inst->getLast(i-1)) ) {
+
+                      int t_min = fmax(t, L);
+                      int t_max = fmin(T-1,t+L-1);
+                      for (int k=t_min ; k <= t_max ; k++) {
+                          SCIPaddCoefLinear(scip, rsd.at((i-1)*T + k), var, 1.0);
+                      }
+                  }
+                  }
+
             }
         }
     }
@@ -611,7 +658,9 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
 
         SCIPaddVar(scip, lambda->ptr);
 
+
         addCoefsToConstraints(scip, lambda) ;
+
     }
 
 
@@ -631,6 +680,7 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
 //        SCIPaddVar(scip, lambda->ptr);
 
 //        addCoefsToConstraints(scip, lambda, inst) ;
+
 
 }
 

@@ -77,7 +77,7 @@ Parameters::Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ram
                        bool addColumn, bool dptime, bool dp, bool pandb,
                        bool unitdecomp, bool startupdec, bool useSSBISub,
                        bool powerplanGiven, bool rampmaster, bool rampsub,
-                       bool ssbi, bool doubledec) :
+                       bool ssbi, bool doubledec, bool rsu) :
     IP(ip),
     ManageSubPbSym(managesubpbsym),
     Ramp(ramp),
@@ -101,7 +101,8 @@ Parameters::Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ram
     rampInMaster(rampmaster),
     rampInSubPb(rampsub),
     masterSSBI(ssbi),
-    doubleDecompo(doubledec)
+    doubleDecompo(doubledec),
+    RSUonly(rsu)
 {
 
     n = inst->getn();

@@ -46,6 +46,8 @@ ObjPricerTimeUCP::ObjPricerTimeUCP(
     TimeSolNotFound = vector<int>(T,0) ;
     lastTimeStep=-1 ;
     nbCallsToCplex=0 ;
+
+    cout << "ici fin constructeur" << endl ;
 }
 
 
@@ -99,14 +101,24 @@ SCIP_DECL_PRICERINIT(ObjPricerTimeUCP::scip_init)
 
     // ssbi constraints
     if (Param.masterSSBI) {
-    for (int i = 0 ; i < n-1 ; i++) {
-        if (!inst->getLast(i)) {
-        int l = inst->getl(i) ;
-        for (int t = l ; t < T ; t++) {
-            SCIPgetTransformedCons( scip, Master->rsu.at(i*T+t), &(Master->rsu.at(i*T+t)) );
+        for (int i = 0 ; i < n-1 ; i++) {
+            if (!inst->getLast(i)) {
+                int l = inst->getl(i) ;
+                for (int t = l ; t < T ; t++) {
+                    SCIPgetTransformedCons( scip, Master->rsu.at(i*T+t), &(Master->rsu.at(i*T+t)) );
+                }
+            }
+        }
+        if (!Param.RSUonly) {
+        for (int i = 0 ; i < n-1 ; i++) {
+            if (!inst->getLast(i)) {
+                int L = inst->getL(i) ;
+                for (int t = L ; t < T ; t++) {
+                    SCIPgetTransformedCons( scip, Master->rsd.at(i*T+t), &(Master->rsd.at(i*T+t)) );
+                }
+            }
         }
         }
-    }
     }
 
 
@@ -253,20 +265,36 @@ void ObjPricerTimeUCP::updateDualCosts(SCIP* scip, DualCostsTime & dual_cost, bo
         ///RSU
         for (int i = 0; i < n-1; i++) {
             if (!inst->getLast(i)) {
-            int l = inst->getl(i) ;
-            for (int t = l ; t < T ; t++) {
-                if (!Farkas) {
-                    dual_cost.Epsilon.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->rsu.at(i*T+t));
+                int l = inst->getl(i) ;
+                for (int t = l ; t < T ; t++) {
+                    if (!Farkas) {
+                        dual_cost.Epsilon.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->rsu.at(i*T+t));
+                    }
+                    else{
+                        dual_cost.Epsilon.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->rsu.at(i*T+t));
+                    }
+                    if (print) cout << "epsilon(" << i <<"," << t <<") = " << dual_cost.Epsilon.at(i*T+t) <<endl;
                 }
-                else{
-                    dual_cost.Epsilon.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->rsu.at(i*T+t));
-                }
-                if (print) cout << "epsilon(" << i <<"," << t <<") = " << dual_cost.Epsilon.at(i*T+t) <<endl;
-            }
             }
         }
 
         ///RSD
+        if (!Param.RSUonly) {
+        for (int i = 0; i < n-1; i++) {
+            if (!inst->getLast(i)) {
+                int L = inst->getL(i) ;
+                for (int t = L ; t < T ; t++) {
+                    if (!Farkas) {
+                        dual_cost.Delta.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->rsd.at(i*T+t));
+                    }
+                    else{
+                        dual_cost.Delta.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->rsd.at(i*T+t));
+                    }
+                    if (print) cout << "delta(" << i <<"," << t <<") = " << dual_cost.Delta.at(i*T+t) <<endl;
+                }
+            }
+        }
+        }
     }
 
     if (Param.IntervalUpSet) {
@@ -298,7 +326,7 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
 
     int print = 0 ;
 
-    //cout<<"**************PRICER************ " << endl ;
+    cout<<"**************PRICER************ " << endl ;
 
 
 

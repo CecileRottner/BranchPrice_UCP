@@ -68,14 +68,30 @@ void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Para
 
             /// couts duaux SSBI
             if (Param.masterSSBI) {
+                //RSU
                 if (!inst->getLast(i)) {
                     if ( (time<=T-l-1) && (i < n-1) ) {
                         ObjCoefX.at(i) += - Dual.Epsilon.at(i*T + time + l) ;
                     }
                 }
+
+                //RSD
+                if (!Param.RSUonly) {
+                if (!inst->getLast(i) && time >= L) {
+                    ObjCoefX.at(i) += - Dual.Delta.at(i*T + time) ;
+                }
+                if (i>0 && !inst->getLast(i-1) && time >= L) {
+                    ObjCoefX.at(i) += Dual.Delta.at((i-1)*T + time) ;
+                }
+
+                if (time<T-1 && !inst->getLast(i) && time+1>= L) {
+                    ObjCoefX.at(i) += Dual.Delta.at(i*T + time+1) ;
+                }
+                }
             }
         }
     }
+
 
 
 

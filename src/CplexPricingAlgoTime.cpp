@@ -14,7 +14,9 @@ DualCostsTime::DualCostsTime(InstanceUCP* inst) {
 
 
     Epsilon.resize(n*T, 0) ; //RSU
-    Omega.resize(n*T, 0) ; //RSU
+    Delta.resize(n*T, 0) ; //RSD
+
+    Omega.resize(n*T, 0) ; //equality constraint in double decomposition
 }
 
 
