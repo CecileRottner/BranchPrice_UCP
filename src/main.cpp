@@ -228,7 +228,7 @@ int main(int argc, char** argv)
     if (met == 200) {
         TimeStepDec = true ;
         DynProgTime = true ;
-       // heuristicInit=1 ;
+        heuristicInit=1 ;
     }
 
     if (met == 201) {
@@ -260,12 +260,36 @@ int main(int argc, char** argv)
         node_limit=1 ;
         masterSSBI=1 ;
     }
+
     if (met == 204) {
+        TimeStepDec = true ;
+        DynProgTime = true ;
+        masterSSBI=1 ;
+        RSUonly=1 ;
+        heuristicInit=1 ;
+    }
+
+    if (met == 205) {
         TimeStepDec = true ;
         DynProgTime = true ;
         masterSSBI=1 ;
         heuristicInit=1 ;
     }
+
+    if (met == 206) {
+        TimeStepDec = true ;
+        DynProgTime = true ;
+        masterSSBI=1 ;
+        RSUonly=1 ;
+    }
+
+    if (met == 207) {
+        TimeStepDec = true ;
+        DynProgTime = true ;
+        masterSSBI=1 ;
+    }
+
+
 
     if (met== 301) {
         doubleDecompo =true ;
@@ -625,7 +649,7 @@ int main(int argc, char** argv)
 //        else {
 //            fichier << " & - "  ; // OPT
 //        }
-                if (1 || (met*intra_cons==102) || (!intra_cons*met==103)) {
+                if (0 && (met*intra_cons==102) || (!intra_cons*met==103)) {
 
                     fichier << " & " << checker.getLRValue() ; // RL*/
                     fichier << " & " << checker.getLRCplex() ; // RL CPLEX
