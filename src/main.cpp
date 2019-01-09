@@ -176,6 +176,7 @@ int main(int argc, char** argv)
     if (met == 1012) { // UNIT DECOMPOSITION ---- COL GEN, subpb résolu par Cplex
         UnitDecompo=true;
         node_limit=1 ;
+        Ramp=1;
         RampInMaster=1 ;
 
     }
@@ -219,6 +220,7 @@ int main(int argc, char** argv)
         UnitDecompo=true;
         powerPlanGivenByLambda = true;
         node_limit=1 ;
+        Ramp=1 ;
         RampInSubPb=1 ;
 
     }

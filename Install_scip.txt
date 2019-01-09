@@ -1,0 +1,36 @@
+﻿make  LPS=cpx ZIMPL=false GMP=false READLINE=false ZLIB=false
+
+
+
+Rq:
+ZIMPL langage de la zib
+   
+ GMP pour la version exacte de SCIP
+   
+ READLINE un truc entree-sortie inutile
+  
+  ZLIB compresseur pour des manips inutiles
+
+
+puis répondre
+
+/home/fouilhoux/logiciels/cplex-12.6.3/cplex/include/ilcplex
+
+
+  
+puis
+
+/home/fouilhoux/logiciels/cplex-12.6.3/cplex/lib/x86-64_linux/static_pic/libcplex.a
+
+
+Cluster EOLE
+
+v12.6
+/opt/cplex-12.6/cplex/include/ilcplex 
+/opt/cplex-12.6/cplex/lib/x86-64_linux/static_pic/libcplex.a
+
+
+
+v12.8
+/opt/cplex/12.8/cplex/include/ilcplex 
+/opt/cplex/12.8/cplex/lib/x86-64_linux/static_pic/libcplex.a
