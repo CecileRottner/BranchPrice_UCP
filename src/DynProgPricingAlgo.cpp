@@ -63,11 +63,11 @@ bool DynProgPricingAlgo::findImprovingSolution(InstanceUCP* inst, const DualCost
 
     int T = inst->getT() ;
 
-    cout << "branching decisions: " ;
-    for (int t=0 ; t < T ; t++) {
-        cout << branchingDecisions.at(t) << " " ;
-    }
-    cout << endl ;
+    // cout << "branching decisions: " ;
+    // for (int t=0 ; t < T ; t++) {
+    //     cout << branchingDecisions.at(t) << " " ;
+    // }
+    // cout << endl ;
 
 
 
@@ -76,7 +76,7 @@ bool DynProgPricingAlgo::findImprovingSolution(InstanceUCP* inst, const DualCost
     int l = inst->getl(i);
     int L = inst->getL(i);
 
-    cout << "L: " << L << endl ;
+    //cout << "L: " << L << endl ;
 
     //initialisation
     for (int t=0; t < 2*T ; t++) {
@@ -262,17 +262,18 @@ bool DynProgPricingAlgo::findImprovingSolution(InstanceUCP* inst, const DualCost
     double V_up = Bellman.at(1*T+T-1) ;
     double V_down = Bellman.at(0*T+T-1) ;
 
-    cout << "Bellman: " ;
+    int print=0;
+    if (print) cout << "Bellman: " ;
     for (int i=0 ; i <= 1 ; i++) {
         for (int t=0 ; t  < T ; t++) {
-            cout << Bellman.at((!i)*T +t) << " " ;
-        }
-        cout << endl;
-    }
+           if (print) cout << Bellman.at((!i)*T +t) << " " ;
+       }
+       if (print) cout << endl;
+   }
 
 //    cout << "valeur sans sigma: " <<fmin(V_up, V_down) << endl ;
 
-    objvalue = fmin(V_up, V_down) - Dual.Sigma[Site] ;
+   objvalue = fmin(V_up, V_down) - Dual.Sigma[Site] ;
 
     if (objvalue < - Param.Epsilon) {
         return true ;

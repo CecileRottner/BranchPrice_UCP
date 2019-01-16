@@ -13,6 +13,22 @@
 using namespace std;
 using namespace scip;
 
+class DualCostsTime {
+public:
+    vector<double> Mu ;
+    vector<double> Nu ;
+    vector<double> Xi ;
+    vector<double> Sigma ;
+
+    //SSBI
+    vector<double> Epsilon ;
+    vector<double> Delta ;
+
+    vector<double> Omega ; // contraintes d'égalités time/site
+    DualCostsTime(InstanceUCP* inst) ;
+};
+
+
 class DualCosts {
 public:
     vector<double> Mu ;
@@ -40,7 +56,8 @@ public:
     DualCosts(InstanceUCP* inst, const Parameters & Param) ;
 
     //Computes objective coefficients of x and u once dual values are updated
-    void computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool Farkas) ;
+    // Depends on dualCostsTime in the case of double decomposition where min-up / min-down constraints are used for stabilization
+    void computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool Farkas, const DualCostsTime & dualTime) ;
 };
 
 
@@ -120,20 +137,6 @@ class DynProgPricingAlgo {
 ////////////////////////////////////////////////////
 
 
-class DualCostsTime {
-public:
-    vector<double> Mu ;
-    vector<double> Nu ;
-    vector<double> Xi ;
-    vector<double> Sigma ;
-
-    //SSBI
-    vector<double> Epsilon ;
-    vector<double> Delta ;
-
-    vector<double> Omega ; // contraintes d'égalités time/site
-    DualCostsTime(InstanceUCP* inst) ;
-};
 
 class CplexPricingAlgoTime {
  public:

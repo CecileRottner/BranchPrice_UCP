@@ -1,4 +1,4 @@
-﻿make  LPS=cpx ZIMPL=false GMP=false READLINE=false ZLIB=false
+make  LPS=cpx ZIMPL=false GMP=false READLINE=false ZLIB=false
 
 
 
@@ -34,3 +34,11 @@ v12.6
 v12.8
 /opt/cplex/12.8/cplex/include/ilcplex 
 /opt/cplex/12.8/cplex/lib/x86-64_linux/static_pic/libcplex.a
+
+
+Machine virtuelle Ubuntu
+
+/home/Cecile/Cplex/cplex/include/ilcplex
+/home/Cecile/Cplex/cplex/lib/x86-64_linux/static_pic/libcplex.a
+
+

@@ -7,6 +7,8 @@
 
 #include <ilcplex/ilocplex.h>
 
+
+#include <iomanip>
 /* scip includes */
 #include "objscip/objscip.h"
 #include "objscip/objscipdefplugins.h"
@@ -33,6 +35,7 @@ using namespace scip;
 int main(int argc, char** argv)
 {
     ofstream fichier("result.txt", std::ofstream::out | std::ofstream::app);
+    ofstream fichierDualCost("dualCost.csv", std::ofstream::out | std::ofstream::app);
 
 
     //////////////////////////////
@@ -110,7 +113,11 @@ int main(int argc, char** argv)
 
     bool DemandeResiduelle = 0 ;
 
+// double décompo
     bool doubleDecompo = 0 ;
+    bool minUpDownDouble = 0 ; // inégalités min-up/min-down dans le maître de la double décomposition, pour stabilisation
+    bool UnitGEQTime = 0 ; // contrainte d'inégalité entre point(time) et point(unit), dans le maître de la double décomposition
+    bool useUVar = 0 ;
 
     /////////////////////////////////////////
 
@@ -292,6 +299,19 @@ int main(int argc, char** argv)
     }
 
 
+    if (met== 300) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=true ;
+        minUpDownDouble = 0;
+        UnitGEQTime=0 ;
+    }
 
     if (met== 301) {
         doubleDecompo =true ;
@@ -303,6 +323,23 @@ int main(int argc, char** argv)
         DynProg=1 ;
 
         DynProgTime=true ;
+        minUpDownDouble = 0;
+        UnitGEQTime=1 ;
+    }
+
+        if (met== 302) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=true ;
+        minUpDownDouble = 1;
+        UnitGEQTime=1 ;
+        useUVar=1 ;
     }
 
     /// Branch & Price (& Cut)
@@ -340,7 +377,8 @@ int main(int argc, char** argv)
 
     Parameters const param(inst, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
-                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo,RSUonly);
+                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo,RSUonly,
+                           minUpDownDouble, UnitGEQTime, useUVar);
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -673,6 +711,13 @@ int main(int argc, char** argv)
 
         cout << "ici fin write" << endl ;
 
+        //ajout des couts réduits au fichier correspondant
+        list<double>::const_iterator itv;
+        for (itv = Master_ptr->totalDualCostList.begin(); itv!=Master_ptr->totalDualCostList.end(); itv++) {
+            fichierDualCost << fixed << (*itv) << " ";
+        }
+        fichierDualCost << endl ;
+        cout << scientific;
     }
 
 

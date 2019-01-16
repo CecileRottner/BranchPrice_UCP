@@ -31,6 +31,45 @@ void MasterDouble_Model::addCoefsToConstraints_siteVar(SCIP* scip, Master_Variab
         }
     }
 
+    if (Param.minUpDownDouble && !Param.useUVar) {
+
+        //Logical constraint coefs
+        for (int i=0 ; i < Param.nbUnits(s) ; i++) {
+            for (int t=1 ; t < T ; t++) {
+
+                if ( (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon)  && (lambda->UpDown_plan[i*T+t-1] < Param.Epsilon) ) {
+                    SCIPaddCoefLinear(scip, logical.at((first+i)*T+t), lambda->ptr, -1.0) ;
+                }
+            }
+        }
+        /* coef in min-up / min-down constraints */
+        for (int i=0 ; i < Param.nbUnits(s) ; i++) {
+
+            int L = inst->getL(first+i) ;
+            int l = inst->getl(first+i) ;
+            //min up
+            for (int t=L ; t < T ; t++) {
+                for (int k=t-L+1 ; k <= t ; k++) {
+
+
+                    if ( (lambda->UpDown_plan[i*T+k] > 1 - Param.Epsilon)  && (lambda->UpDown_plan[i*T+k-1] < Param.Epsilon) ) {
+                        SCIPaddCoefLinear(scip, min_up.at((first+i)*T+t), lambda->ptr, -1.0) ;                 
+                    }
+                }
+            }
+
+            //min-down
+            for (int t=l ; t < T ; t++) {
+                for (int k=t-l+1 ; k <= t ; k++) {
+                    if ( (lambda->UpDown_plan[i*T+k] > 1 - Param.Epsilon)  && (lambda->UpDown_plan[i*T+k-1] < Param.Epsilon) ) {
+                        SCIPaddCoefLinear(scip, min_down.at((first+i)*T+t), lambda->ptr, 1.0) ;                    
+                    }
+                }
+            }
+
+        }
+    }
+
 }
 
 void MasterDouble_Model::addCoefsToConstraints_timeVar(SCIP* scip, MasterTime_Variable* lambda) {
@@ -45,6 +84,34 @@ void MasterDouble_Model::addCoefsToConstraints_timeVar(SCIP* scip, MasterTime_Va
     for (int i=0 ; i < n ; i++) {
         if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
             SCIPaddCoefLinear(scip, eq_time_site.at(i*T+t), lambda->ptr, -1.0) ;
+        }
+    }
+
+    if (Param.minUpDownDouble) {
+        /* for each unit i, add coefficient 1 to logical constraint logical(i,t) if t >=1, add coefficient -1 to logical(i, t+1) if t < T-1*/
+
+        for (int i=0 ; i < n ; i++) {
+            if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
+                if (t>0) {
+                    SCIPaddCoefLinear(scip, logical.at(i*T+t), lambda->ptr, 1.0) ;
+                }
+                if (t < T-1) {
+                    SCIPaddCoefLinear(scip, logical.at(i*T+t+1), lambda->ptr, -1.0) ;
+                }
+            }
+        }
+
+        /* coef in min-up / min-down constraints */
+        for (int i=0 ; i < n ; i++) {
+            if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
+                if (t>=inst->getL(i)) {
+                    SCIPaddCoefLinear(scip, min_up.at(i*T+t), lambda->ptr, 1.0) ;
+                }
+                int l = inst->getl(i) ;
+                if (t < T - l) {
+                    SCIPaddCoefLinear(scip, min_down.at(i*T+t+l), lambda->ptr, 1.0) ;
+                }
+            }
         }
     }
 }
@@ -62,7 +129,7 @@ void MasterDouble_Model::initMasterSiteVariable(SCIP* scip, InstanceUCP* inst , 
     var->computeCost(inst, Param);
     double cost= var->cost;
 
-    cout << "cost: " << cost << endl ;
+    //cout << "cost: " << cost << endl ;
 
     SCIP_Vartype type ;
     if (Param.IP) {
@@ -117,10 +184,13 @@ void MasterDouble_Model::initMasterTimeVariable(SCIP* scip, MasterTime_Variable*
     //// Add new variable to the list
     L_var_time.push_back(var);
 
-    cout << "Variable " << var_name << " added, with plan: " << endl  ;
+    int print =0;
+    if (print) {
+        cout << "Variable " << var_name << " added, with plan: " << endl  ;
 
-    for (int i=0 ; i < inst->getn() ; i++) {
-        cout << var->UpDown_plan[i] << " "  ;
+        for (int i=0 ; i < inst->getn() ; i++) {
+            cout << var->UpDown_plan[i] << " "  ;
+        }
     }
 }
 
@@ -135,6 +205,10 @@ MasterDouble_Model::MasterDouble_Model(InstanceUCP* inst, const Parameters & Par
     conv_lambda_time.resize(T, (SCIP_CONS*) NULL) ;
     eq_time_site.resize(n*T, (SCIP_CONS*) NULL) ;
 
+    logical.resize(n*T, (SCIP_CONS*) NULL) ;
+    min_up.resize(n*T, (SCIP_CONS*) NULL) ;
+    min_down.resize(n*T, (SCIP_CONS*) NULL) ;
+
 }
 
 void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* inst) {
@@ -148,6 +222,10 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
 
     ///// Equality time/site constraint /////
     char con_name_eq_time_site[255];
+    SCIP_Real upper_bound =  SCIPinfinity(scip);
+    if (!Param.unitGEQTime) {
+        upper_bound=0;
+    }
     for (int i = 0 ; i <n ; i++)
     {
         for (int t = 0; t < T; t++)
@@ -156,7 +234,7 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
             (void) SCIPsnprintf(con_name_eq_time_site, 255, "EqTimeSite(%d,%d)", i, t); // nom de la contrainte
             SCIPcreateConsLinear( scip, &con, con_name_eq_time_site, 0, NULL, NULL,
                                   0.0,   // lhs
-                                  0.0,   // rhs  SCIPinfinity(scip) if >=1
+                                  upper_bound,   // rhs  SCIPinfinity(scip) if >=1
                                   true,  /* initial */
                                   false, /* separate */
                                   true,  /* enforce */
@@ -225,6 +303,154 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
     }
 
 
+///////////////// MIN-UP MIN-DOWN constraints for STABILIZATION ////////////////
+    ///// LOGICAL ////
+
+    if (Param.minUpDownDouble) {
+
+        ///// Logical constraint /////
+        char con_name_logical[255];
+        for (int t = 1; t < T; t++)
+        {
+            for (int i=0 ; i < n ; i++) {
+                SCIP_CONS* con = NULL;
+                (void) SCIPsnprintf(con_name_logical, 255, "Logical(%d,%d)", i,t); // nom de la contrainte
+                SCIPcreateConsLinear( scip, &con, con_name_logical, 0, NULL, NULL,
+                                      -SCIPinfinity(scip),   // lhs
+                                      0,   // rhs  SCIPinfinity(scip) if >=1
+                                      true,  /* initial */
+                                      false, /* separate */
+                                      true,  /* enforce */
+                                      true,  /* check */
+                                      true,  /* propagate */
+                                      false, /* local */
+                                      true,  /* modifiable */
+                                      false, /* dynamic */
+                                      false, /* removable */
+                                      false  /* stickingatnode */ );
+                SCIPaddCons(scip, con);
+                logical.at(i*T+t) = con;
+            }
+        }
+
+
+
+
+        ///// Min-up /////
+        char con_name_min_up[255];
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = inst->getL(i); t < T; t++)
+            {
+                SCIP_CONS* con = NULL;
+                (void) SCIPsnprintf(con_name_min_up, 255, "MinUp(%d,%d)", i, t); // nom de la contrainte
+                SCIPcreateConsLinear( scip, &con, con_name_min_up, 0, NULL, NULL,
+                                      0.0,   // lhs
+                                      SCIPinfinity(scip),   // rhs  SCIPinfinity(scip) if >=1
+                                      true,  /* initial */
+                                      false, /* separate */
+                                      true,  /* enforce */
+                                      true,  /* check */
+                                      true,  /* propagate */
+                                      false, /* local */
+                                      true,  /* modifiable */
+                                      false, /* dynamic */
+                                      false, /* removable */
+                                      false  /* stickingatnode */ );
+                SCIPaddCons(scip, con);
+                min_up.at(i*T + t) = con;
+            }
+        }
+
+        ///// Min-down /////
+        char con_name_min_down[255];
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = inst->getl(i); t < T; t++)
+            {
+                SCIP_CONS* con = NULL;
+                (void) SCIPsnprintf(con_name_min_down, 255, "MinDown(%d,%d)", i, t); // nom de la contrainte
+                SCIPcreateConsLinear( scip, &con, con_name_min_down, 0, NULL, NULL,
+                                      -SCIPinfinity(scip),   // lhs
+                                      1.0,   // rhs  SCIPinfinity(scip) if >=1
+                                      true,  /* initial */
+                                      false, /* separate */
+                                      true,  /* enforce */
+                                      true,  /* check */
+                                      true,  /* propagate */
+                                      false, /* local */
+                                      true,  /* modifiable */
+                                      false, /* dynamic */
+                                      false, /* removable */
+                                      false  /* stickingatnode */ );
+                SCIPaddCons(scip, con);
+                min_down.at(i*T + t) = con;
+            }
+        }
+
+        if (Param.useUVar) {
+
+            vector<SCIP_VAR*> u_var ;
+
+            u_var.resize(n*T, (SCIP_VAR*) NULL) ;
+
+            SCIP_Vartype type ;
+            if (Param.IP) {
+                type = SCIP_VARTYPE_INTEGER;
+            }
+            else {
+                type = SCIP_VARTYPE_CONTINUOUS ;
+            }
+
+            char var_name[255];
+
+            for (int i = 0 ; i <n ; i++)
+            {
+                for (int t = 1; t < T; t++)
+                {
+                    SCIP_VAR* var = NULL;
+
+                    SCIPsnprintf(var_name, 255, "u(%d,%d)",i,t);
+                    SCIPdebugMsg(scip, "Variable <%s>\n", var_name);
+
+
+                    SCIPcreateVar(scip, &var, var_name,
+                                  0.0,                     // lower bound
+                                  1.0,      // upper bound
+                                  0,                     // objective
+                                  type, // variable type
+                                  true, false, NULL, NULL, NULL, NULL, NULL);
+
+                    u_var.at(i*T+t) = var ;
+
+                    /* add new variable to scip */
+                    SCIPaddVar(scip, var);
+
+                    /* add coefficient to the logical constraint */
+
+                    SCIPaddCoefLinear(scip, logical.at(i*T+t), var, -1.0);
+
+                    /* add coefficients to the min up constraints */
+                    int max_min_up = fmin(T-1, t + inst->getL(i) - 1) ;
+                    int min_min_up = fmax(inst->getL(i), t) ;
+                    // u(i,t) apparait dans les contraintes de min-up de min_min_up à max_min_up :
+                    for (int k = min_min_up ; k <= max_min_up ; k++) {
+                        SCIPaddCoefLinear(scip, min_up.at(i*T + k), var, -1.0);
+                    }
+
+                    /* add coefficients to the min down constraints */
+                    int max_min_down = fmin(T-1, t + inst->getl(i) - 1) ;
+                    int min_min_down = fmax(inst->getl(i), t);
+                    // u(i,t) apparait dans les contraintes de min-down de t à max_min_down :
+                    for (int k = min_min_down ; k <= max_min_down ; k++) {
+                        SCIPaddCoefLinear(scip, min_down.at(i*T + k), var, 1.0);
+                    }
+                }
+            }
+        }
+    }
+
+
 
 
     ///////////////////////////////////////////////////////////////
@@ -238,6 +464,7 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
 
     for (int s=0 ; s<S; s++)
     {
+        cout << "s:" << s << endl ;
         IloNumArray plan = IloNumArray(env, Param.nbUnits(s)*T) ;
         for (int index=0 ; index < Param.nbUnits(s)*T ; index++) {
             plan[index]=1 ;
@@ -255,11 +482,11 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
             lambda->addPowerPlan(powerPlan);
         }
 
-
         initMasterSiteVariable(scip, inst, lambda);
         SCIPaddVar(scip, lambda->ptr);
         addCoefsToConstraints_siteVar(scip, lambda, inst) ;
     }
+
 
 
 

@@ -79,6 +79,7 @@ SCIP_DECL_PRICERINIT(ObjPricerDouble::scip_init)
     //cout<<"**************PRICER INIT************ "<<endl;
 
     int T = inst->getT() ;
+    int n = inst->getn() ;
 
 
     //site convexity constraints
@@ -94,8 +95,32 @@ SCIP_DECL_PRICERINIT(ObjPricerDouble::scip_init)
 
     // equality time / site
     for (int t = 0 ; t < T ; t++) {
-        for (int i = 0 ; i < inst->getn() ; i++) {
+        for (int i = 0 ; i < n ; i++) {
             SCIPgetTransformedCons(scip, Master->eq_time_site.at(i*T+t), &(Master->eq_time_site.at(i*T+t)));
+        }
+    }
+
+    if (Param.minUpDownDouble) {
+      // logical constraints
+        for (int i = 0 ; i < n ; i++) {
+            for (int t = 1 ; t < T ; t++) {
+                SCIPgetTransformedCons( scip, Master->logical.at(i*T+t), &(Master->logical.at(i*T+t)) );
+            }
+        }
+
+    // min-up constraints
+        for (int i = 0 ; i <n ; i++) {
+            int L = inst->getL(i) ;
+            for (int t = L ; t < T ; t++) {
+                SCIPgetTransformedCons( scip, Master->min_up.at(i*T+t), &(Master->min_up.at(i*T+t)) );
+            }
+        }
+    // min-down constraints
+        for (int i = 0 ; i <n ; i++) {
+            int l = inst->getl(i) ;
+            for (int t = l ; t < T ; t++) {
+                SCIPgetTransformedCons( scip, Master->min_down.at(i*T+t), &(Master->min_down.at(i*T+t)) );
+            }
         }
     }
 
@@ -187,6 +212,7 @@ SCIP_RETCODE ObjPricerDouble::scip_farkas( SCIP* scip, SCIP_PRICER* pricer, SCIP
 void ObjPricerDouble::updateDualCosts_site(SCIP* scip, DualCosts & dual_cost, bool Farkas) {
     ///// RECUPERATION DES COUTS DUAUX
 
+
     int print = 0 ;
     int n = inst->getn() ;
     int T = inst->getT() ;
@@ -202,6 +228,7 @@ void ObjPricerDouble::updateDualCosts_site(SCIP* scip, DualCosts & dual_cost, bo
             else{
                 dual_cost.Omega[i*T+t] = SCIPgetDualfarkasLinear(scip, Master->eq_time_site.at(i*T+t) );
             }
+
             if (print)
                 cout << "omega(" << i <<"," << t <<") = " << dual_cost.Omega[i*T+t] <<endl;
         }
@@ -210,6 +237,7 @@ void ObjPricerDouble::updateDualCosts_site(SCIP* scip, DualCosts & dual_cost, bo
 
     //couts duaux contrainte convexité site
     for (int s = 0 ; s < S ; s++) {
+
         if (!Farkas) {
             dual_cost.Sigma[s] = SCIPgetDualsolLinear(scip, Master->conv_lambda_site[s]);
         }
@@ -273,6 +301,51 @@ void ObjPricerDouble::updateDualCosts_time(SCIP* scip, DualCostsTime & dual_cost
             cout << "sigma(" << t <<") = " << dual_cost.Sigma[t] <<endl;
     }
 
+    if (Param.minUpDownDouble) {
+        for (int i = 0; i < n; i++) {
+            for (int t = 1 ; t < T ; t++) {
+                if (!Farkas) {
+                    dual_cost.Mu.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->logical.at(i*T+t));
+                }
+                else{
+                    dual_cost.Mu.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->logical.at(i*T+t));
+                }
+                if (print)
+                    cout << "mu(" << i <<"," << t <<") = " << dual_cost.Mu[i*T+t] <<endl;
+            }
+        }
+
+        //couts duaux "min-up constraint"
+        for (int i = 0; i < n; i++) {
+            int L = inst->getL(i) ;
+            for (int t = L ; t < T ; t++) {
+                if (!Farkas) {
+                    dual_cost.Nu.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->min_up.at(i*T+t));
+                }
+                else{
+                    dual_cost.Nu.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->min_up.at(i*T+t));
+                }
+                if (print)
+                    cout << "nu(" << i <<"," << t <<") = " << dual_cost.Nu.at(i*T+t) <<endl;
+            }
+        }
+
+        //couts duaux "min-down constraint"
+        for (int i = 0; i < n; i++) {
+            int l = inst->getl(i) ;
+            for (int t = l ; t < T ; t++) {
+                if (!Farkas) {
+                    dual_cost.Xi.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->min_down.at(i*T+t));
+                }
+                else{
+                    dual_cost.Xi.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->min_down.at(i*T+t));
+                }
+                if (print)
+                    cout << "xi(" << i <<"," << t <<") = " << dual_cost.Xi.at(i*T+t) <<endl;
+            }
+        }
+    }
+
 
 }
 
@@ -283,11 +356,11 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
     // SCIPprintBestSol(scip, NULL, FALSE);
 #endif
 
-
+    totalDualCost = 0;
     int T = inst->getT() ;
     int n = inst->getn() ;
 
-    int print = 1 ;
+    int print = 0;
     iteration++;
 
     //int iteration_limit=5 ;
@@ -303,13 +376,19 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
     //// Cout duaux
     int S = Param.nbDecGpes ;
 
+////////// MISE A JOUR DES COUTS DUAUX
+
+
+// Cout duaux de time à mettre à jour avant ceux de Site, car la méthode computeObjCoef prend en arg dual_cost_time 
+    DualCostsTime dual_cost_time = DualCostsTime(inst) ;
+    updateDualCosts_time(scip, dual_cost_time, Farkas);
+
     DualCosts dual_cost = DualCosts(inst,Param) ;
     updateDualCosts_site(scip, dual_cost, Farkas);
-    dual_cost.computeObjCoef(inst,Param,Farkas);
+    dual_cost.computeObjCoef(inst,Param,Farkas, dual_cost_time);
 
 
-    /////Recherche variable améliorante de type site
-
+    /////Recherche variable améliorante de type sites
     double epsilon= 0.0000001 ;
     for (int s = 0 ; s < S ; s++) {
 
@@ -351,7 +430,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
             (AlgoDynProg_site.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
             (AlgoDynProg_site.at(s))->getUpDownPlan(inst, upDownPlan) ;
 
-            cout << "DP resolution done" << endl ;
+            //cout << "DP resolution done" << endl ;
 
         }
 
@@ -369,21 +448,22 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 //cout << endl ;
             }
             cout << endl ;
+        cout << endl ;
         }
 
-        cout << endl ;
 
         //if (SCIPisNegative(scip, objvalue)) {
 
         if (objvalue < -epsilon ) {
 
             Master_Variable* lambda = new Master_Variable(s, upDownPlan);
-            cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " "  << endl ;
+            if (print) cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " "  << endl ;
+            totalDualCost += objvalue;
 
             if (Param.powerPlanGivenByLambda && !Param.DynProg) {
                 powerPlan = IloNumArray((AlgoCplex_site[s])->env, Param.nbUnits(s)*T) ;
                 (AlgoCplex_site[s]->cplex).getValues(AlgoCplex_site[s]->p, powerPlan) ;
-                cout << "power plan: " << powerPlan << endl;
+                if (print) cout << "power plan: " << powerPlan << endl;
                 lambda->addPowerPlan(powerPlan);
             }
 
@@ -398,15 +478,12 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
         }
     }
 
-    cout << "RECHERCHE SUR LES PAS DE TEMPS" << endl ;
+    if (print) cout << "RECHERCHE SUR LES PAS DE TEMPS" << endl ;
 
 
     /////Recherche variable améliorante de type time
 
     //// Cout duaux
-    DualCostsTime dual_cost_time = DualCostsTime(inst) ;
-
-    updateDualCosts_time(scip, dual_cost_time, Farkas);
 
 
     //cout << "cas: " << cas << endl ;
@@ -458,13 +535,15 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
             //cout << "total prod: " << totalProd << endl ;
 
-            // if (print) {
+             if (print) {
             cout << "Minimum reduced cost plan: "<< objvalue << "for time " << t << endl ;
             for (int i=0 ; i < n ; i++) {
                 cout << fabs(upDownPlan[i]) << " " ;
             }
             cout << endl ;
-            //}
+            }
+
+            totalDualCost += objvalue;
 
 
             /// AJOUT VARIABLE DANS LE MAITRE ////
@@ -484,6 +563,10 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
         }
     }
+
+    cout << "total: " << totalDualCost << endl;
+
+    Master->totalDualCostList.push_back(totalDualCost);
 
 
 #ifdef OUTPUT_PRICER

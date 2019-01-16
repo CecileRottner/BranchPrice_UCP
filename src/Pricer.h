@@ -24,6 +24,8 @@ public:
     InstanceUCP* inst ;
     const Parameters Param ;
 
+    double totalDualCost;
+
     ObjPricerUCP(
             SCIP*                               scip,
             const char*                         pp_name,

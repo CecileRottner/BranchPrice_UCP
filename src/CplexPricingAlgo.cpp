@@ -29,11 +29,13 @@ DualCosts::DualCosts(InstanceUCP* inst, const Parameters & Param) {
     ObjCoefU.resize(n*T, 0) ;
     ObjCoefP.resize(n*T, 0) ;
 
+
+
 }
 
 
 
-void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool Farkas) {
+void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool Farkas, const DualCostsTime & dualTime) {
 
     // dual values are up to date
     int n = inst->getn() ;
@@ -41,6 +43,8 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
 
    // int first = Param.firstUnit(Site) ;
     for (int i=0 ; i<n ; i++) {
+
+        int L = inst->getL(i);
 
         double RU = (inst->getPmax(i) - inst->getPmin(i))/3 ;
         double RD = (inst->getPmax(i) - inst->getPmin(i))/2 ;
@@ -53,6 +57,30 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
 
             if (Param.doubleDecompo) {
                 ObjCoefX.at(i*T+t) += - Omega.at(i*T+t);
+
+                if (Param.minUpDownDouble && !Param.useUVar) {
+
+                    //Couts duaux liés aux contraintes de min-up/min-down (valeurs duales dans dualTime)
+                    if (t>0) {
+                        ObjCoefU.at(i*T+t) += dualTime.Mu.at(i*T+t);
+                    }
+
+            // u(i,t) apparait dans les contraintes de min-up de min_min_up à max_min_up :
+                    int max_min_up = fmin(T-1, t + inst->getL(i) - 1) ;
+                    int min_min_up = fmax(inst->getL(i), t) ;
+                    for (int k = min_min_up ; k <= max_min_up ; k++) {
+                        ObjCoefU.at(i*T+t) += dualTime.Nu.at(i*T+k);
+                    }
+
+
+            // u(i,t) apparait dans les contraintes de min-down de min_min_down à max_min_down :
+                    int max_min_down = fmin(T-1, t + inst->getl(i) - 1) ;
+                    int min_min_down = fmax(inst->getl(i), t);
+
+                    for (int k = min_min_down ; k <= max_min_down ; k++) {
+                        ObjCoefU.at(i*T+t) -= dualTime.Xi.at(i*T+k);
+                    }
+                }
             }
 
             if (Param.UnitDecompo && Param.IntraSite && t>0) {
@@ -79,7 +107,7 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
 
             if (Param.StartUpDecompo && !Param.doubleDecompo) { // rajout des couts duaux lies aux contraintes supplémentaires, ie logical, mindown, z_lambda
 
-                int L = inst->getL(i);
+                
                 /// COEFS de X
                 //ksi
                 ObjCoefX.at(i*T+t)  -= Ksi[(i)*T+t] ;

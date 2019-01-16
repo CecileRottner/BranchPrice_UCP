@@ -36,11 +36,32 @@ void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Para
     int T = inst->getT() ;
 
     for (int i=0 ; i<n ; i++) {
+        
+        int L= inst->getL(i);
+        int l= inst->getl(i);
+
 
         ObjCoefX.at(i) = 0 ;
 
         if (Param.doubleDecompo) {
+
             ObjCoefX.at(i) += Dual.Omega.at(i*T+time);
+
+            if (Param.minUpDownDouble) {
+                if (time>0) {
+                    ObjCoefX.at(i) += - Dual.Mu.at(i*T + time) ;
+                }
+                if (time< T-1) {
+                    ObjCoefX.at(i) += Dual.Mu.at(i*T + time+1) ;
+                }
+                if (time>=L) {
+                    ObjCoefX.at(i) += - Dual.Nu.at(i*T+ time) ;
+                }
+
+                if (time<=T-l-1) {
+                    ObjCoefX.at(i) += - Dual.Xi.at(i*T + time + l) ;
+                }
+            }
         }
         else {
             //// Couts primaux de x[i]
@@ -48,8 +69,6 @@ void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Para
                 ObjCoefX.at(i) += BaseObjCoefX.at(i) ;
             }
 
-            int L= inst->getL(i);
-            int l= inst->getl(i);
 
             //// Calcul du cout réduit de x
             if (time>0) {

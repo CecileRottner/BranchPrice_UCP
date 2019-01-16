@@ -70,6 +70,7 @@ public:
     const Parameters Param ;
     InstanceUCP* inst ;
 
+    list<double> totalDualCostList;
 
     int nbIntUpSet ;
 
@@ -259,6 +260,11 @@ public:
     vector<SCIP_CONS*> conv_lambda_site;
     vector<SCIP_CONS*> conv_lambda_time;
     vector<SCIP_CONS*> eq_time_site;
+
+    //si option de stabilisation minUpDownDouble=1
+    vector<SCIP_CONS*> logical;
+    vector<SCIP_CONS*> min_up;
+    vector<SCIP_CONS*> min_down;
 
     // Keep informations on every variables of the Master program
     //NB: le fait d'utiliser une liste ne permet pas de supprimer des variables
