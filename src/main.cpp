@@ -641,7 +641,7 @@ int main(int argc, char** argv)
         fichier << "Time+I ";
     }
     //fichier << "met & n & T & id & nodes & IUP & Iter & Var & CPU & gap & RL & low & up & cplex heur \\\\ " << endl;
-    fichier << " & " << n << " & " << T << " & " << demande << " & " << id ;
+    fichier << met << " & " << n << " & " << T << " & " << demande << " & " << id ;
 
 
 
