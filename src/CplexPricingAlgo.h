@@ -116,9 +116,6 @@ class DynProgPricingAlgo {
 
   DynProgPricingAlgo(InstanceUCP* inst, Master_Model* Master, const Parameters & par, int Site); // initialise les vecteurs
 
-  void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCosts & Dual, bool Farkas);
-
-  // Launch Cplex solver and get back an optimal up/down plan
   bool findImprovingSolution(InstanceUCP* inst, const DualCosts & Dual, double& objvalue) ;
   //computes Bellman and Prec (predecessor) vectors
   // returns true if an improving solution has been found. objvalue is updated in this case
@@ -126,10 +123,20 @@ class DynProgPricingAlgo {
   void getUpDownPlan(InstanceUCP* inst, IloNumArray UpDownPlan) ;
   //updates UpDownPlan and realCost
 
-
   //checks that the dynamic programming transition given as argument can be used w.r.t. to the branching decisions
   //returns true if this is the case
   bool checkTransition(int prec_time, int current_time, int prec_status, int current_status) ;
+
+////// Start-up-shut-down dynamic programming algorithm ////
+
+  int time_prec_sink;
+  int status_prec_sink;
+  bool checkTransitionSUSD(InstanceUCP* inst, int prec_time, int current_time, int current_status) ;
+  double computeStartUpCosts(InstanceUCP* inst, int prec_time, int current_time);
+// checks that the transition exists in the graph (in particular wrt min up and down times) and that they are feasible wrt the branching decisions
+  bool findImprovingSolutionSUSD(InstanceUCP* inst, const DualCosts & Dual, double& objvalue) ;
+  void getUpDownPlanSUSD(InstanceUCP* inst, IloNumArray UpDownPlan) ;
+
 };
 
 ////////////////////////////////////////////////////

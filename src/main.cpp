@@ -110,6 +110,7 @@ int main(int argc, char** argv)
     bool TimeStepDec = 0 ;
     bool DynProgTime = 0 ; // implémenté pour Pmax=Pmin et décomposition par pas de temps
     bool DynProg = 0; // implémenté pour Pmax=Pmin et décomposition par unités
+    bool DynProgSUSD =0 ; //algo de programmation dynamique avec uniquement des arcs d'arrêt/démarrage. A utiliser avec l'option DynProg=1
 
     bool DemandeResiduelle = 0 ;
 
@@ -325,6 +326,21 @@ int main(int argc, char** argv)
         DynProgTime=true ;
         minUpDownDouble = 0;
         UnitGEQTime=1 ;
+    }    
+
+    if (met== 3001) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+        DynProgSUSD=1 ;
+
+        DynProgTime=true ;
+        minUpDownDouble = 0;
+        UnitGEQTime=1 ;
     }
 
         if (met== 302) {
@@ -373,12 +389,10 @@ int main(int argc, char** argv)
         DynProgTime = 0 ;
     }
 
-
-
     Parameters const param(inst, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
                            UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo,RSUonly,
-                           minUpDownDouble, UnitGEQTime, useUVar);
+                           minUpDownDouble, UnitGEQTime, useUVar, DynProgSUSD);
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -689,6 +703,7 @@ int main(int argc, char** argv)
 //        else {
 //            fichier << " & - "  ; // OPT
 //        }
+                fichier << " & " << checker.getLRCplex() ; // RL CPLEX
                 if (0 && (met*intra_cons==102) || (!intra_cons*met==103)) {
 
                     fichier << " & " << checker.getLRValue() ; // RL*/
@@ -709,12 +724,11 @@ int main(int argc, char** argv)
         fichier <<" \\\\ " << endl ;
        // checker.checkSolution(Master_ptr->x_frac);
 
-        cout << "ici fin write" << endl ;
 
         //ajout des couts réduits au fichier correspondant
         list<double>::const_iterator itv;
         for (itv = Master_ptr->totalDualCostList.begin(); itv!=Master_ptr->totalDualCostList.end(); itv++) {
-            fichierDualCost << fixed << (*itv) << " ";
+            fichierDualCost << fixed << (*itv) << endl;
         }
         fichierDualCost << endl ;
         cout << scientific;
@@ -744,7 +758,7 @@ int main(int argc, char** argv)
         fichier << " & " << checker.cpuTime ;
         fichier << " & " << checker.gap ;
         //   fichier << " & " << checker.getLRValue() ; // RL*/
-        //  fichier << " & " << checker.getLRCplex() ; // RL CPLEX
+        fichier << " & " << checker.getLRCplex() ; // RL CPLEX
         fichier << " & " << checker.DualBound ;
         fichier << " & " << checker.PrimalBound ; // OPT
         fichier << " & - " ;

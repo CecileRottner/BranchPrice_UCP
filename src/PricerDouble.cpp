@@ -426,10 +426,16 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
         }
 
         else { // résolution par programmation dynamique
-            upDownPlan = IloNumArray((AlgoDynProg_site[s])->env, Param.nbUnits(s)*T) ;
-            (AlgoDynProg_site.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
-            (AlgoDynProg_site.at(s))->getUpDownPlan(inst, upDownPlan) ;
 
+            upDownPlan = IloNumArray((AlgoDynProg_site[s])->env, Param.nbUnits(s)*T) ;
+            if (Param.DynProgSUSD) {
+                (AlgoDynProg_site.at(s))->findImprovingSolutionSUSD(inst, dual_cost, objvalue);
+                (AlgoDynProg_site.at(s))->getUpDownPlanSUSD(inst, upDownPlan) ;
+            }
+            else {
+                (AlgoDynProg_site.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
+                (AlgoDynProg_site.at(s))->getUpDownPlan(inst, upDownPlan) ;
+            }
             //cout << "DP resolution done" << endl ;
 
         }

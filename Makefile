@@ -62,6 +62,7 @@ MAINOBJ		=	main.o \
 			CplexPricingAlgo.o \
 			CplexPricingAlgoTime.o \
 			DynProgPricingAlgo.o \
+			DynProgSUSDPricingAlgo.o \
 			DynProgPricingAlgoTime.o \
 			Pricer.o \
 			PricerTime.o \

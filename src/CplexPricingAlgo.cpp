@@ -28,9 +28,6 @@ DualCosts::DualCosts(InstanceUCP* inst, const Parameters & Param) {
     ObjCoefX.resize(n*T, 0) ;
     ObjCoefU.resize(n*T, 0) ;
     ObjCoefP.resize(n*T, 0) ;
-
-
-
 }
 
 

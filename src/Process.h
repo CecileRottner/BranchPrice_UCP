@@ -44,6 +44,7 @@ struct Parameters
     bool minUpDownDouble ;
     bool unitGEQTime ;
     bool useUVar ;
+    bool DynProgSUSD;
 
 
     /// Sites (ou groupes) définis par Param: groupes d'unités de la décomposition (correspondant à des sousproblème)
@@ -62,7 +63,7 @@ struct Parameters
                bool unitdecomp, bool startupdec, bool useSSBISub,
                bool powerPlanGiven, bool rampMaster, bool rampSubpb,
                bool masterSSBI, bool doubleDecompo, bool RSUonly, bool minUpDownDouble,
-               bool unitgeqtime, bool useuvar) ;
+               bool unitgeqtime, bool useuvar, bool dpsusd) ;
 
     int nbUnits(int s) const ;
 
