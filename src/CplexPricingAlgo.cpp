@@ -139,7 +139,7 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
                 ObjCoefP.at(i*T+t) += inst->getcp(i) ;
             }
 
-        }
+        } 
     }
 
 

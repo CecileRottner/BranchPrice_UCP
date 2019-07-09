@@ -1,2 +1,8 @@
 data/Data_/ & n & T & D & id & IUP & Iter & Var & CPU & CPU(Master) & Gap & Dual b. & LR & LR(Cplex) & Opt \\ 
- 
+ 3001 & 20 & 24 & 3 & 1 &  1 & -  &  34928 & 3458 &  12.3 & 11.3 &  0.1430965 &  325889.2 &  372522.8 & 329089.6 & & &  \\ 
+\hline 
+\hline 
+
+
+
+

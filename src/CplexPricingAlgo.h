@@ -132,10 +132,10 @@ class DynProgPricingAlgo {
   int time_prec_sink;
   int status_prec_sink;
   bool checkTransitionSUSD(InstanceUCP* inst, int prec_time, int current_time, int current_status) ;
-  double computeStartUpCosts(InstanceUCP* inst, int prec_time, int current_time);
+  double computeStartUpCosts(InstanceUCP* inst,  const DualCosts & Dual, int prec_time, int current_time);
 // checks that the transition exists in the graph (in particular wrt min up and down times) and that they are feasible wrt the branching decisions
   bool findImprovingSolutionSUSD(InstanceUCP* inst, const DualCosts & Dual, double& objvalue) ;
-  void getUpDownPlanSUSD(InstanceUCP* inst, IloNumArray UpDownPlan) ;
+  void getUpDownPlanSUSD(InstanceUCP* inst,  IloNumArray UpDownPlan) ;
 
 };
 

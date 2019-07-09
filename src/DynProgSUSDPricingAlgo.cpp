@@ -84,10 +84,11 @@ bool DynProgPricingAlgo::checkTransitionSUSD(InstanceUCP* inst,int prec_time, in
     return true ;
 }
 
-double DynProgPricingAlgo::computeStartUpCosts(InstanceUCP* inst, int prec_time, int current_time) {
+double DynProgPricingAlgo::computeStartUpCosts(InstanceUCP* inst,  const DualCosts & Dual, int prec_time, int current_time) {
 
     int i = Param.firstUnit(Site) ;
-    return inst->getc0(i);
+    int T = inst->getT() ;
+    return (Dual.ObjCoefU).at(i*T + current_time);
 }
 
 bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const DualCosts & Dual, double& objvalue) {
@@ -107,6 +108,11 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
     int L = inst->getL(i);
 
     //cout << "L: " << L << endl ;
+    cout << "Dual coef X : " ;
+    for (int k=0 ; k < T ; k++) {
+        cout << " " <<  (Dual.ObjCoefX).at(i*T + k) ;
+    }
+    cout << endl ;
 
 
     //initialisation
@@ -135,7 +141,7 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
             for (int k=0 ; k < t ; k++) {
                 bell += (Dual.ObjCoefX).at(i*T + k);
             }
-
+            //cout << "bell: " << bell << endl ;
             Bellman.at(1*T+t) = bell;
             Prec.at(1*T+t) = -1;
         }
@@ -144,7 +150,7 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
 
             if (checkTransitionSUSD(inst, k, t, 1)) {
 
-                double bell=Bellman.at(0*T+k) + computeStartUpCosts(inst, k,t);
+                double bell=Bellman.at(0*T+k) + computeStartUpCosts(inst, Dual, k,t);
                 if (bell < Bellman.at(1*T+t) ) {
                     Bellman.at(1*T+t) = bell;
                     Prec.at(1*T+t) = k;
@@ -157,8 +163,8 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
         // arc de la source à V(t,down) vaut 0
 
         if (checkTransitionSUSD(inst,-1, t, 0)) {
-            Bellman.at(1*T+t) = 0;
-            Prec.at(1*T+t) = -1;
+            Bellman.at(0*T+t) = 0;
+            Prec.at(0*T+t) = -1;
         }
 
         for (int k = 0 ; k < t ; k++) {
@@ -210,15 +216,16 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
         }
     }
 
-    int print=0;
+
+
+    int print=1;
     if (print) cout << "Bellman: " ;
     for (int i=0 ; i <= 1 ; i++) {
         for (int t=0 ; t  < T ; t++) {
-           if (print) cout << Bellman.at((!i)*T +t) << " " ;
+           if (print) cout << Bellman.at((i)*T +t) << " " ;
        }
        if (print) cout << endl;
    }
-
 
 
 //    cout << "valeur sans sigma: " <<fmin(V_up, V_down) << endl ;
@@ -237,6 +244,9 @@ void DynProgPricingAlgo::getUpDownPlanSUSD(InstanceUCP* inst, IloNumArray UpDown
 
     int T = inst->getT() ;
 
+    cout << "time prec sink : " << time_prec_sink << endl ;
+    cout << "status: " << status_prec_sink << endl ;
+
     for (int t=fmax(time_prec_sink,0) ; t < T ; t++) {
         UpDownPlan[t] = status_prec_sink ;
     }
@@ -246,6 +256,7 @@ void DynProgPricingAlgo::getUpDownPlanSUSD(InstanceUCP* inst, IloNumArray UpDown
     while (prec > 0) {
 
         int precprec= Prec.at(status*T+ prec) ;
+        cout << "new prec: " << precprec << endl ;
         if (precprec >= 0) {
             for (int t=precprec ; t < prec ; t++) {
                 UpDownPlan[t] = !status;
