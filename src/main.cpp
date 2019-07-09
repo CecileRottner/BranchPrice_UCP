@@ -690,6 +690,8 @@ int main(int argc, char** argv)
         else {
         fichier << " &  " << SCIPgetDualbound(scip) ;
         fichier << " &  " << SCIPgetPrimalbound(scip) ;
+        fichier << " & " << checker.getLRValue() ; // RL*/
+        fichier << " & " << checker.getLRCplex() ; // RL CPLEX
         }
 
        // fichier << " &  " << SCIPgetPrimalbound(scip) ;
@@ -703,24 +705,24 @@ int main(int argc, char** argv)
 //        else {
 //            fichier << " & - "  ; // OPT
 //        }
-                fichier << " & " << checker.getLRCplex() ; // RL CPLEX
-                if (0 && (met*intra_cons==102) || (!intra_cons*met==103)) {
+                // fichier << " & " << checker.getLRCplex() ; // RL CPLEX
+                // if (0 && (met*intra_cons==102) || (!intra_cons*met==103)) {
 
-                    fichier << " & " << checker.getLRValue() ; // RL*/
-                    fichier << " & " << checker.getLRCplex() ; // RL CPLEX
+                //     fichier << " & " << checker.getLRValue() ; // RL*/
+                //     fichier << " & " << checker.getLRCplex() ; // RL CPLEX
 
-                    if (demande==4 || n < 20 || T < 48) {
-                        checker.getIntegerObjValue();
-                        fichier << " & " << checker.PrimalBound ; // OPT
-                    }
-                    else {
-                        fichier << " & {-} "  ; // OPT
-                    }
+                //     if (demande==4 || n < 20 || T < 48) {
+                //         checker.getIntegerObjValue();
+                //         fichier << " & " << checker.PrimalBound ; // OPT
+                //     }
+                //     else {
+                //         fichier << " & {-} "  ; // OPT
+                //     }
 
-                }
-                else{
-                    fichier << " & & & " ;
-                }
+                // }
+                // else{
+                //     fichier << " & & & " ;
+                // }
         fichier <<" \\\\ " << endl ;
        // checker.checkSolution(Master_ptr->x_frac);
 

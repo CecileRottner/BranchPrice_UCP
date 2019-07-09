@@ -56,7 +56,7 @@ bool DynProgPricingAlgo::checkTransitionSUSD(InstanceUCP* inst,int prec_time, in
         t_down_max= current_time;
     }
 
-    else if (current_status==0) { // dans ce cas on a une transition V(down, t0) à V(up, t1)
+    else if (current_status==1) { // dans ce cas on a une transition V(down, t0) à V(up, t1)
         if (prec_time>0) { // si prec_time = 0 on a le droit de faire une transition pour courte que l (on ne s'est pas éteint en 0)
             if (current_time - prec_time < inst->getl(i) ) {
                 return false;
@@ -106,13 +106,8 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
 
     int l = inst->getl(i);
     int L = inst->getL(i);
-
-    //cout << "L: " << L << endl ;
-    cout << "Dual coef X : " ;
-    for (int k=0 ; k < T ; k++) {
-        cout << " " <<  (Dual.ObjCoefX).at(i*T + k) ;
-    }
-    cout << endl ;
+    cout << "l : " << l << endl ; 
+    cout << "L : " << L << endl ;
 
 
     //initialisation
@@ -218,7 +213,7 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
 
 
 
-    int print=1;
+    int print=0;
     if (print) cout << "Bellman: " ;
     for (int i=0 ; i <= 1 ; i++) {
         for (int t=0 ; t  < T ; t++) {
@@ -244,9 +239,6 @@ void DynProgPricingAlgo::getUpDownPlanSUSD(InstanceUCP* inst, IloNumArray UpDown
 
     int T = inst->getT() ;
 
-    cout << "time prec sink : " << time_prec_sink << endl ;
-    cout << "status: " << status_prec_sink << endl ;
-
     for (int t=fmax(time_prec_sink,0) ; t < T ; t++) {
         UpDownPlan[t] = status_prec_sink ;
     }
@@ -256,7 +248,6 @@ void DynProgPricingAlgo::getUpDownPlanSUSD(InstanceUCP* inst, IloNumArray UpDown
     while (prec > 0) {
 
         int precprec= Prec.at(status*T+ prec) ;
-        cout << "new prec: " << precprec << endl ;
         if (precprec >= 0) {
             for (int t=precprec ; t < prec ; t++) {
                 UpDownPlan[t] = !status;
