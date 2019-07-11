@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 
     bool IntraSite = intra_cons ; // contraintes intrasites prises en compte ou pas
 
-
+    bool nonLinearStartUpCost = false ; 
     //// Paramètres: type de décomposition ////
     bool UnitDecompo = false ;
     bool StartUpDecompo = false;
@@ -343,7 +343,23 @@ int main(int argc, char** argv)
         UnitGEQTime=1 ;
     }
 
-        if (met== 302) {
+    if (met== 3002) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        nonLinearStartUpCost = true ; // attention, est remis à 0 à un moment.... fuite mémoire?
+        UnitDecompo=true;
+        DynProg=1 ;
+        DynProgSUSD=1 ;
+
+        DynProgTime=true ;
+        minUpDownDouble = 0;
+        UnitGEQTime=1 ;
+    }
+
+    if (met== 302) {
         doubleDecompo =true ;
         node_limit=1 ;
 
@@ -392,7 +408,7 @@ int main(int argc, char** argv)
     Parameters const param(inst, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
                            UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo,RSUonly,
-                           minUpDownDouble, UnitGEQTime, useUVar, DynProgSUSD);
+                           minUpDownDouble, UnitGEQTime, useUVar, DynProgSUSD, nonLinearStartUpCost);
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -661,6 +677,10 @@ int main(int argc, char** argv)
 
     ///// AFFICHAGE BRANCH AND PRICE
     if (Solve) {
+
+        //checker.getIntegerObjValue();
+        //checker.useLowBound(SCIPgetDualbound(scip));
+
         fichier << " &  " << SCIPgetNNodes(scip) ;
         if (param.IntervalUpSet) {
             fichier << " & " << Master_ptr->nbIntUpSet ;
@@ -668,8 +688,11 @@ int main(int argc, char** argv)
         else {
             fichier << " & - "  ;
         }
-        fichier << " &  " << SCIPgetNLPIterations(scip) ;
+        fichier << " &  " << Master_ptr->nbIter ;
         fichier << " & " << SCIPgetNPricevarsFound(scip) ;
+
+        fichier << " & " << Pricer->unitColumns ; // RL CPLEX
+        fichier << " & " << Pricer->timeColumns ; // RL CPLEX
         //fichier << " &  " << SCIPgetNNodes(scip) ;
         // fichier << " & " << Master_ptr->cumul_resolution_pricing ;
 
@@ -677,6 +700,8 @@ int main(int argc, char** argv)
         //        fichier << " & " << pricerTime->nbCallsToCplex ;
         //        fichier << " & " << MasterTime.cumul_resolution_pricing ;
         //    }
+
+
 
         double timeScip =  SCIPgetSolvingTime(scip) ;
         fichier << " &  " << timeScip;

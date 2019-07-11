@@ -24,6 +24,9 @@ public:
     InstanceUCP* inst ;
     const Parameters Param ;
 
+    int timeColumns;
+    int unitColumns;
+
     double totalDualCost;
 
     ObjPricerUCP(
@@ -170,6 +173,8 @@ public:
 
     vector<CplexPricingAlgoTime*> AlgoCplex_time;
     vector<DynProgPricingAlgoTime*> AlgoDynProg_time;
+
+
 
     int iteration;
    /** Constructs the pricer object with the data needed */

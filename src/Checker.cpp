@@ -18,9 +18,10 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
 
     pp = IloNumVarArray(env, n*T, 0.0, 1000);
 
+    cost = IloExpr(env) ;
 
     // Objective Function: Minimize Cost
-    IloExpr cost(env) ;
+    
     for (int t=0 ; t < T ; t++) {
         for (int i=0; i<n; i++) {
             cost += x[i*T + t]*inst->getcf(i) + inst->getc0(i)*u[i*T + t] + (pp[i*T + t]+inst->getPmin(i)*x[i*T + t])*(inst->getcp(i)) ;
@@ -187,7 +188,7 @@ double CplexChecker::getIntegerObjValue() {
     IloCplex IntegerObjCplex = IloCplex(IntegerModel) ; // ou juste valeur opt entière
     IntegerObjCplex.setParam(IloCplex::EpGap, Param.Epsilon) ;
     IntegerObjCplex.setParam(IloCplex::Param::ClockType, 1); //1 : CPU TIME
-    IntegerObjCplex.setParam(IloCplex::Param::TimeLimit, 30) ;
+    //IntegerObjCplex.setParam(IloCplex::Param::TimeLimit, 30) ;
 
 
     IntegerObjCplex.solve() ;
@@ -220,6 +221,37 @@ double CplexChecker::getIntegerObjValue() {
     }
 
     return PrimalBound;
+}
+
+double CplexChecker::useLowBound(double lowbound) {
+
+    int print=0 ;
+
+
+    clock_t start;
+    start = clock();
+
+    IloModel IntegerModel(env) ;
+    IntegerModel.add(model) ;
+    IntegerModel.add(cost >= lowbound);
+
+    IloCplex useLowBoundCplex = IloCplex(IntegerModel) ; // ou juste valeur opt entière
+    useLowBoundCplex.setParam(IloCplex::EpGap, Param.Epsilon) ;
+    useLowBoundCplex.setParam(IloCplex::Param::ClockType, 1); //1 : CPU TIME
+    //useLowBoundCplex.setParam(IloCplex::Param::TimeLimit, 30) ;
+
+
+
+    useLowBoundCplex.solve() ;
+
+    nbNodesLowBound = useLowBoundCplex.getNnodes() ;
+    cpuTimeLowBound = useLowBoundCplex.getCplexTime();
+    DualBoundLowBound = useLowBoundCplex.getBestObjValue() ;
+    PrimalBoundLowBound = useLowBoundCplex.getObjValue() ;
+
+    cpuTimeLowBound =  ( clock() - start ) / (double) CLOCKS_PER_SEC;
+
+    return cpuTimeLowBound;
 }
 
 double CplexChecker::getLRValue() {

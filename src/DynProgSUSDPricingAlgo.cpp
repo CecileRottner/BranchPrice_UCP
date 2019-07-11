@@ -1,6 +1,7 @@
 #include "CplexPricingAlgo.h"
 #include <iostream>
 #include <ctime>
+#include <cmath>
 
 using namespace std;
 
@@ -88,7 +89,12 @@ double DynProgPricingAlgo::computeStartUpCosts(InstanceUCP* inst,  const DualCos
 
     int i = Param.firstUnit(Site) ;
     int T = inst->getT() ;
-    return (Dual.ObjCoefU).at(i*T + current_time);
+    double cost = (Dual.ObjCoefU).at(i*T + current_time);
+    if (Param.nonLinearStartUpCost) {
+        double c0 = inst->getc0(i) ;
+        cost += c0*(1 - exp(-float(current_time - prec_time)/T));
+    }
+    return cost ;
 }
 
 bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const DualCosts & Dual, double& objvalue) {

@@ -32,6 +32,9 @@ ObjPricerDouble::ObjPricerDouble(
     AlgoDynProg_site = vector<DynProgPricingAlgo*>(Param.nbDecGpes, NULL) ;
     iteration=0;
 
+    unitColumns=0;
+    timeColumns=0;
+
     if (!Param.DynProg) {
         for (int s=0 ; s < Param.nbDecGpes ; s++) {
             AlgoCplex_site.at(s) = new CplexPricingAlgo(inst, param, s) ;
@@ -356,6 +359,8 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
     // SCIPprintBestSol(scip, NULL, FALSE);
 #endif
 
+    Master->nbIter++;
+
     totalDualCost = 0;
     int T = inst->getT() ;
     int n = inst->getn() ;
@@ -465,6 +470,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
             Master_Variable* lambda = new Master_Variable(s, upDownPlan);
             if (print) cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " "  << endl ;
             totalDualCost += objvalue;
+            unitColumns++;
 
             if (Param.powerPlanGivenByLambda && !Param.DynProg) {
                 powerPlan = IloNumArray((AlgoCplex_site[s])->env, Param.nbUnits(s)*T) ;
@@ -523,6 +529,8 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
         Master->cumul_resolution_pricing += temps ;
 
         if (ImprovingSolutionFound) {
+
+            timeColumns++;
 
             double realCost=0 ;
             double totalProd=0 ;

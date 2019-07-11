@@ -78,7 +78,7 @@ Parameters::Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ram
                        bool unitdecomp, bool startupdec, bool useSSBISub,
                        bool powerplanGiven, bool rampmaster, bool rampsub,
                        bool ssbi, bool doubledec, bool rsu, bool minupdowndouble,
-                       bool unitgeqtime, bool useuvar, bool dpsusd) :
+                       bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost) :
     IP(ip),
     ManageSubPbSym(managesubpbsym),
     Ramp(ramp),
@@ -107,7 +107,8 @@ Parameters::Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ram
     minUpDownDouble(minupdowndouble),
     unitGEQTime(unitgeqtime),
     useUVar(useuvar),
-    DynProgSUSD(dpsusd)
+    DynProgSUSD(dpsusd),
+    nonLinearStartUpCost(nlsucost)
 {
 
     n = inst->getn();

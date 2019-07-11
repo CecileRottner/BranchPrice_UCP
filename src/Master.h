@@ -67,6 +67,7 @@ public:
     int n ;
     int T ;
 
+
     const Parameters Param ;
     InstanceUCP* inst ;
 
@@ -80,6 +81,7 @@ public:
 
     vector<double> x_frac ;
     double cumul_resolution_pricing ;
+    int nbIter=0;
 
     Master_Model(const Parameters & Par, InstanceUCP* i) : Param(Par), inst(i) {
         n= inst->getn();

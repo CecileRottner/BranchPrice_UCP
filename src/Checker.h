@@ -21,14 +21,20 @@ class CplexChecker {
   IloModel model;
   IloCplex cplex;
 
+  IloExpr cost;
+
   IloBoolVarArray x;
   IloBoolVarArray u;
   IloNumVarArray pp ;
 
   double PrimalBound;
-  double DualBound ;
+  double DualBound ;  
+  double PrimalBoundLowBound;
+  double DualBoundLowBound ;
   double nbNodes;
+  double nbNodesLowBound;
   double cpuTime ;
+  double cpuTimeLowBound ;
   double gap ;
 
 
@@ -38,6 +44,7 @@ class CplexChecker {
 
   CplexChecker(InstanceUCP* inst, const Parameters & param) ;
   double getIntegerObjValue() ;
+  double useLowBound(double lowbound) ;
   double getLRValue() ;
   double getLRCplex() ;
   void CplexPrimalHeuristic(IloNumArray solution, IloNumArray solution_p) ;

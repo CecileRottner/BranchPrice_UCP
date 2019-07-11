@@ -328,7 +328,8 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
 
     cout<<"**************PRICER************ " << endl ;
 
-
+    
+    Master->nbIter++;
 
   // SCIPwriteTransProblem(scip, NULL, NULL, FALSE);
     //SCIPprintSol(scip, NULL, NULL, FALSE);
