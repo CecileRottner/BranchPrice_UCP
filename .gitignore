@@ -3,3 +3,4 @@ obj/
 cplex_scip_dir.mk
 Resultats/
 Divers/
+data/Thesis_data
