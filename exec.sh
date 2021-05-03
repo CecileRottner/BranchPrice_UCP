@@ -10,7 +10,7 @@ intra=1
 
 
 
-dossier=data/Data_/
+dossier=data/small_UCP_data/
 
 printf $dossier " \n" >> result.txt
 
@@ -23,7 +23,7 @@ UseIntraCons=1
 
 demand_type=3
 
-for n in 20 ; do
+for n in 10 ; do
   for T in 24 ; do
     for id in {1..10}; do
       for met in 301 3001; do
