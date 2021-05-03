@@ -1,4 +1,4 @@
-# Branch&Price for the UCP
+# Branch&Price for the Unit Commitment Problem
 
 Runs with SCIP 5.0.1 and Cplex
 
