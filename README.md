@@ -21,7 +21,7 @@ where :
 - demand : type of production demand (3 means the classical form "two peak per day")
 - sym : level of symmetry in the instance (0 means no symmetry, and x means there are in average n/x identical units)
 - bin : equals 1 if instances are such that Pmin=Pmax for all production units (production levels are then binary), equals 0 otherwise
-- intra : equals 1 if instances are subject to "intra site" constraints (ie units are grouped on geopgraphical sites and there is at most one start up per time period on each site)
+- intra : equals 1 if instances are subject to "intra site" constraints (ie units are grouped on geographical sites and there is at most one start up per time period on each site)
 - id : unique identifier of the instance
 
 ## Arguments
