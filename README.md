@@ -28,8 +28,11 @@ where :
 
 Command line 
 ```bash
-./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dir $n $T $p $demand $sym $cat01 $intra $id $met $UseIntraCons
+./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dir $n $T $p $demand $sym $bin $intra $id $met $intra
 ```
 in exec.sh uses the following arguments :
 
-- dir : directory containing the data file to use
+- dir : directory containing the instance to solve
+- Parameters "$n $T $p $demand $sym $bin $intra $id" refer to the instance characteristics as presented above
+- met : unique number referring to a particular tuple of parameters to be used for the resolution (see main.cpp)
+- intra : equals 1 if intra-site constraints must be taken into account
