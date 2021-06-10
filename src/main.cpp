@@ -113,6 +113,7 @@ int main(int argc, char** argv)
    // SCIPincludeDefaultPlugins(scip);
 
 
+    // include various SCIP features
     SCIPincludeConshdlrLinear(scip);
     SCIPincludeNodeselBfs(scip);
     SCIPincludeConshdlrIntegral(scip);
@@ -152,6 +153,8 @@ int main(int argc, char** argv)
     SCIPincludeHeurRootsoldiving(scip);
     SCIPincludeHeurRounding(scip);
 
+
+    // resolution parameters (time and node limits)
     SCIPsetLongintParam(scip, "limits/nodes", param.nodeLimit);
     SCIPsetRealParam(scip, "limits/time", 3600);
 
@@ -169,8 +172,10 @@ int main(int argc, char** argv)
     //////  MASTER & PRICER PROBLEMS INITIALIZATION    /////
     ////////////////////////////////////////////////////////
 
+    // frontal resolution with Cplex to verify results
     CplexChecker checker = CplexChecker(inst, param) ;
 
+    // create master and pricing classes
     Master_Model* Master_ptr;
     ObjPricerUCP* Pricer = NULL ;
 
