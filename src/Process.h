@@ -14,8 +14,12 @@
 #include "InstanceUCP.h"
 using namespace std ;
 
-struct Parameters
+class Parameters
 {
+public:
+    bool ColumnGeneration;
+    int nodeLimit;
+
     bool IP ;
     bool ManageSubPbSym;
     bool Ramp ;
@@ -57,7 +61,7 @@ struct Parameters
     IloIntArray firstUnitGpe ;
     IloIntArray siteOf ;
 
-    Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ramp,
+    Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, bool ip, bool managesubpbsym, bool ramp,
                bool time, bool intra, bool dr, bool iup, double eps,
                bool dont, bool h_init, bool dontgetpvalue, bool one,
                bool addColumn, bool dptime, bool dp, bool pandb,
@@ -112,5 +116,10 @@ public :
     string fileName() ;
 
 };
+
+
+
+// initializes Parameters class using met indicator
+Parameters init_parameters(InstanceUCP* inst, int met, int intra_const) ;
 
 #endif 
