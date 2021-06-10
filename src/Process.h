@@ -109,14 +109,7 @@ public :
 
     string createName() const ;
 
-    string fileName() {
-
-        string nom = createName() ;
-        string fileI = localisation + nom;
-        string fileS = fileI + ".txt" ;
-        cout << fileS << endl ;
-        return fileS ;
-    }
+    string fileName() ;
 
 };
 

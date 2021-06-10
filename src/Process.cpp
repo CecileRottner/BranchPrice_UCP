@@ -71,6 +71,15 @@ string InstanceProcessed::createName() const {
     return s_id ;
 }
 
+string InstanceProcessed::fileName() {
+
+        string nom = createName() ;
+        string fileI = localisation + nom;
+        string fileS = fileI + ".txt" ;
+        cout << fileS << endl ;
+        return fileS ;
+}
+
 Parameters::Parameters(InstanceUCP* inst, bool ip, bool managesubpbsym, bool ramp,
                        bool time, bool intra, bool dr, bool iup, double eps,
                        bool dont, bool h_init, bool dontgetpvalue, bool one,
