@@ -8,7 +8,7 @@
 
 - Initializes Master and Pricer problems via virtual classes Master_Model and ObjPricerUCP (inherited from SCIP pricer class ObjPricer) :
 
-Depending on the decomposition chosen (unit, time, overlapping...), classes Master_Model and ObjPricerUCP will be constructed as specific classes inheriting from Master_Model and ObjPricerUCP.
+Depending on the decomposition chosen (unit, time, overlapping...), classes implementing master and pricing problems will be constructed as specific classes inheriting from Master_Model and ObjPricerUCP.
   - for a unit/site decomposition, we use classes MasterSite_Model and ObjPricerSite
   - for a time decomposition, we use classes MasterTime_Model and ObjPricerTimeUCP
   - for an overlapping unit/site and time decomposition, we use classes MasterDouble_Model and ObjPricerDouble
