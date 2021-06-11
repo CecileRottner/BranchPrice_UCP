@@ -19,6 +19,16 @@ Pure virtual methods :
 
 ### MasterSite_Model
 
+Class MasterSite_Model represents the master problem of a unit/site decomposition.
+
+Various decomposition options are available in this framework :
+
+* classical unit or site decomposition 
+* start-up decomposition : only start-up and shut-down decisions are taken in the master problem
+* Residual demand decomposition : residual coupling demand constraints are added to subproblems corresponding to each site
+
+See Section 8.2.2 of https://hal.archives-ouvertes.fr/tel-02052101/document for more details on these decomposition options.
+
 ### MasterTime_Model
 
 
@@ -31,3 +41,8 @@ For each decomposition type, we also have a class representing extended variable
 - for unit/site decomposition : class __Master_Variable__
 
 - for time decompositon : class __MasterTime_Variable__
+
+Theses classes keep a pointer to one SCIP variable, as well as indicators regarding this variable : to which unit/site or time step it corresponds, the subproblem extreme point it stands for (eg: up/down plan for 1 unit) and its cost.
+
+
+
