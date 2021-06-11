@@ -21,13 +21,9 @@ Pure virtual methods :
 
 Class MasterSite_Model represents the master problem of a unit/site decomposition.
 
-Various decomposition options are available in this framework :
+Various decomposition options are handled through MasterSite_Model : classical unit or site decomposition, start-up decomposition, residual demand decomposition, power decomposition...
 
-* classical unit or site decomposition 
-* start-up decomposition : only start-up and shut-down decisions are taken in the master problem
-* Residual demand decomposition : residual coupling demand constraints are added to subproblems corresponding to each site
-
-See Section 8.2.2 of https://hal.archives-ouvertes.fr/tel-02052101/document for more details on these decomposition options.
+See [README](../README.md) or Chapter 8 of https://hal.archives-ouvertes.fr/tel-02052101/document for more details on these options.
 
 ### MasterTime_Model
 
