@@ -8,10 +8,11 @@ Runs with SCIP 5.0.1 and Cplex
 Several decomposition structures for the UCP are available in this framework :
 
 * Unit/site decompositions :
-  * classical unit decomposition : coupling constraints (demand and intra-site) are dualized and the unit's technical constraints remain in the subproblems (1 per unit)
-  * site decomposition : demand constraints are dualized, other constraints remain in the subproblems (1 per site)
-  * start-up decomposition : only start-up and shut-down decisions are taken in the master problem, other decisions remain in subproblems
+  * classical unit decomposition : coupling constraints (demand and intra-site) and production constraints are dualized and the unit's technical constraints remain in the subproblems (1 per unit)
+  * site decomposition : demand and production constraints are dualized , other constraints remain in the subproblems (1 per site)
+  * start-up decomposition : only start-up and shut-down decisions are taken in the subproblems, other decisions are made in the master problem
   * Residual demand decomposition : residual coupling demand constraints are added to subproblems corresponding to each site
+  * Power decomposition : only demand constraints are dualized, production constraints are put in the subproblem. Useful when the subproblems feature ramp-up/down constraints 
 
 * Time decomposition : 
 
