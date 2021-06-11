@@ -25,8 +25,9 @@ In particular :
 
 Pure virtual methods :
 - computeFracSol : from extended variables lambda, computes solution in original variables (depends on the type of decomposition chosen)
-- discardVar :
-- restoreVar :
+- discarVar(constraint) : "constraint" can be seen as a branching constraint. Function discardVar will set to 0 in the model the coeficients of lambda variables which does not satisfy this constraint.
+- restoreVar(constraint) : reverse operation, enables to restore previously discarded variables lambdas in the master
+
 
 ## Classes inherited from Master_Model
 
@@ -38,7 +39,14 @@ Pure virtual methods :
 * pointers to all dualized constraints
 * pointers to convexity constraints on extended variables
 * list of master variables generated
-* potential additional variables (non extended) used in the master problem, eg: start-up variable u in the time decomposition
+* potential additional variables (non extended) used in the master problem, eg: start-up variable u in the time decomposition.
+
+Methods :
+* InitScipMasterModel : initializes the constraints of the master model
+* initMasterVariable : adds initial lambda variables (computed with a primal heuristic) to the master model 
+* createColumns : from a solution x (given in original variables), creates corresponding lambda variables and adds them to the master (using initMasterVariable)
+* addCoefToConstraint(lambda) : after a new variable lambda is generated, this function updates master constraints to add lambda in them with the right coeficient.
+
 
 ### MasterSite_Model
 
