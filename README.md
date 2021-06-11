@@ -2,6 +2,30 @@
 
 Runs with SCIP 5.0.1 and Cplex
 
+
+## What does this code do?
+
+Several decomposition structures for the UCP are available in this framework :
+
+* Unit/site decompositions :
+  * classical unit decomposition : coupling constraints (demand and intra-site) are dualized and the unit's technical constraints remain in the subproblems (1 per unit)
+  * site decomposition : demand constraints are dualized, other constraints remain in the subproblems (1 per site)
+  * start-up decomposition : only start-up and shut-down decisions are taken in the master problem, other decisions remain in subproblems
+  * Residual demand decomposition : residual coupling demand constraints are added to subproblems corresponding to each site
+
+* Time decomposition : 
+
+* Unit+Time decomposition :
+
+See Chapter 8 of https://hal.archives-ouvertes.fr/tel-02052101/document for more details on these decomposition structures.
+
+Each of these decomposition structures can be used together with cut generation for the UCP (interval-up set inequalities) as well as some symmetry-breaking techniques.
+
+It can be run as:
+- a column generation algorithm
+- a Branch&Price algorithm
+- a Price&Branch algorithm
+
 ## Compile and execute
 - Update Cplex and SCIP directory paths in file cplex_scip_dir.mk
 - Launch script compil.sh
@@ -36,3 +60,6 @@ in exec.sh uses the following arguments :
 - Parameters "$n $T $p $demand $sym $bin $intra $id" refer to the instance characteristics as presented above
 - met : unique number referring to a particular tuple of parameters to be used for the resolution (see main.cpp)
 - intra : equals 1 if intra-site constraints must be taken into account
+
+
+
