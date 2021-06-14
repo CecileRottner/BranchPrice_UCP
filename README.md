@@ -49,6 +49,8 @@ where :
 - intra : equals 1 if instances are subject to "intra site" constraints (ie units are grouped on geographical sites and there is at most one start up per time period on each site)
 - id : unique identifier of the instance
 
+Details on instance format are [there](doc/instance_format.md)
+
 ## Arguments
 
 Command line 
