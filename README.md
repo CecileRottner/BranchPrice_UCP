@@ -27,6 +27,11 @@ It can be run as:
 - a Branch&Price algorithm
 - a Price&Branch algorithm
 
+See code doc on :
+- [Master problem](doc/master_model.md)
+- [Pricer problem](doc/pricer_problem.md)
+- [Pricing algorithms](doc/pricing_algo.md)
+
 ## Compile and execute
 - Update Cplex and SCIP directory paths in file cplex_scip_dir.mk
 - Launch script compil.sh
