@@ -1,8 +1,10 @@
 # Pricer problem
 
-## ObjPricerUCP (virtual)
+## Pricer classes
 
-Class __ObjPricerUCP__ (virtual) contains indicators common to all pricer problems, regardless of decomposition type / pricer solver :
+### ObjPricerUCP (virtual)
+
+Class __ObjPricerUCP__ (virtual) contains indicators common to all pricer problems, regardless of decomposition type / pricing solver :
 
 * number of columns of type "unit/site"
 * number of columns of type "time"
@@ -12,9 +14,9 @@ Two virtual functions are defined:
 * addVarBound(c) : adds constraint c to the subproblem (where c is a bound constraint on a given variable)
 * removeVarBound(c) : removes constraint c from the subproblem
 
-## Classes inherited from ObjPricerUCP
+### Classes inherited from ObjPricerUCP
 
- Classes inherited from ObjPricerUCP work similarly. Each corresponds to a given decomposition structure (unit/site, time, double)
+ All classes inherited from ObjPricerUCP are structured similarly. Each corresponds to a given decomposition structure (unit/site, time, double)
  
  They both contain the following attributes, depending on the decomposition type : 
  * pointer to the master model
@@ -22,21 +24,32 @@ Two virtual functions are defined:
  (for exemple, for each unit in a unit decomposition)
  
  and SCIP methods redefined specifically for each pricer class:
-* SCIP_DECL_PRICERINIT: initialization method of variable pricer (called after problem was transformed)
-* scip_redcost: appel aux algos de pricing, lorsque le problème maître est faisable
-* scip_farkas: quand le problème maître est infaisable, appel aux algos de pricing avec coûts modifiés afin de générer des colonnes qui rendent le master faisable
+* SCIP_DECL_PRICERINIT: initialization method of the pricer, called after problem was transformed. Gets new references to master constraints after presolve. 
+* scip_redcost: call to pricing algorithms (method pricingUCP) when master problem is feasible
+* scip_farkas: when master is infeasible, call pricing algorithms with modified costs, in order to generate columns making the master feasible
  
+ 
+ They also all define the following methods:
+ * **updateDualCost** : after master is solved, updates reduced costs (or Farkas costs if argument farkas=true) from SCIP and put them in the vector given as argument
+ * **pricingUCP** performs pricing:
+    * Calls updateDualCosts to obtain new duals costs, using DualCosts object
+    * Updates objective coefficients in subproblem, using dual costs
+    * Calls pricing algorithm chosen (frontal Cplex, dynamic programming) to find a minimum reduced cost column
+    * If the reduced cost of the optimal column is negative, then a new master variable is created, 
  
 
-### ObjPricerSite
+#### ObjPricerSite
 
 The pricer class used in a unit/site decomposition
 
-### ObjPricerTimeUCP
+#### ObjPricerTimeUCP
 
 The pricer class used in a time decomposition
 
-### ObjPricerDouble
+#### ObjPricerDouble
 
 The pricer class used in a double (unit/site + time) decomposition
+
+
+
 
