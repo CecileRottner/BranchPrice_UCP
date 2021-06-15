@@ -35,7 +35,10 @@ Two virtual functions are defined:
     * Calls updateDualCosts to obtain new duals costs, using DualCosts object
     * Updates objective coefficients in subproblem, using dual costs
     * Calls pricing algorithm chosen (frontal Cplex, dynamic programming) to find a minimum reduced cost column
-    * If the reduced cost of the optimal column is negative, then a new master variable is created, 
+    * If the reduced cost of the optimal column is negative, then :
+       * a new master variable is created (using constructor of corresponding master variable class)
+       * the new variable is added to the master problem (function SCIPaddPricedVar)
+       * the new variable is added to master constraints with coeficients depending on the column (with master method addCoefsToConstraints)
  
 
 #### ObjPricerSite
