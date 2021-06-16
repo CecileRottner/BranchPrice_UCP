@@ -7,3 +7,19 @@ Pricing algorithms/solvers classes declarations and definitions are located in f
 * DynProgPricingAlgo.cpp (dynamic programming for unit subproblems -- not implemented for site subproblems)
 * DynProgSUSDPricingAlgo.cpp (dynamic programming for unit subproblems where start-up costs depend on the unit's total down time)
 * DynProgPricingAlgoTime.cpp (dynamic programming for time subproblems)
+
+
+## Dual costs classes
+
+Classes representing dual costs of master problem are defined in CplexPricingAlgo.h:
+* DualCosts (for unit/site subproblems)
+* DualCostsTime (for time subproblems)
+
+Each class contains a vector of dual values associated to each master constraint.
+
+Note that double (unit/site + time) decompositions use both classes DualCosts and DualCostsTime : each class contains a vector Omega containing dual values of the (in)equality constraint linking time columns to unit/site columns. Other constraints in the master problem are either relative to a unit/site decomposition or to a time decomposition, thus the corresponding dual cost class is used to keep track of the dual costs.
+
+
+
+## Pricing algorithms classes
+
