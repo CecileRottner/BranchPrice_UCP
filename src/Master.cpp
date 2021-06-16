@@ -496,7 +496,6 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
     ////////   SLACK VARIABLES   //////////
     ///////////////////////////////////////
 
-    cout << "slack variables" << endl ;
     char slack_power_name[255];
 
     for (int i = 0 ; i <n ; i++)
@@ -550,7 +549,6 @@ void  MasterSite_Model::InitScipMasterModel(SCIP* scip, InstanceUCP* inst) {
         SCIPaddCoefLinear(scip, demand_cstr[t], var, -1.0);
     }
 
-    cout << "fin" << endl ;
 
 
 

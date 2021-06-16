@@ -67,21 +67,22 @@ public:
     int n ;
     int T ;
 
-
     const Parameters Param ;
     InstanceUCP* inst ;
 
+    //solution fractionnaire et valeurs duales associes
     list<double> totalDualCostList;
+    vector<double> x_frac ;
 
+    //compteur du nb d'appels au pricer
+    double cumul_resolution_pricing ;
+
+    int nbIter=0;
+
+    //Interval up set inequalities    
     int nbIntUpSet ;
-
-    //Interval up set inequalities
     vector< list<IneqIntUpSet*> > IUP_t0 ; // IUP_t0[t] : liste des interval-up-set telles que t0=t
     vector< list<IneqIntUpSet*> > IUP_t1 ; // IUP_t1[t] : liste des interval-up-set telles que t1=t. Redondant mais plus efficace
-
-    vector<double> x_frac ;
-    double cumul_resolution_pricing ;
-    int nbIter=0;
 
     Master_Model(const Parameters & Par, InstanceUCP* i) : Param(Par), inst(i) {
         n= inst->getn();
@@ -177,7 +178,7 @@ public:
     vector<SCIP_CONS*> z_lambda; //start up decomposition only
     vector<SCIP_CONS*> logical; //start up decomposition only
 
-    // Keep informations on every variables of the Master program
+    // Keep info on every variables of the Master program
     //NB: le fait d'utiliser une liste ne permet pas de supprimer des variables
     list<Master_Variable*> L_var;
 
@@ -208,14 +209,14 @@ public:
     IloEnv env;
 
     // Keep a pointer on every constraint of the MasterTime program (except intrasite constraints which do not depend on lambda variables)
-    vector<SCIP_CONS*> logical;
+    vector<SCIP_CONS*> logical; // link x and u variables
     vector<SCIP_CONS*> min_up;
     vector<SCIP_CONS*> min_down;
     vector<SCIP_CONS*> convexity_cstr;
     vector<SCIP_CONS*> intrasite;
 
+    // ramp up and down constraints
     vector<SCIP_CONS*> rsu;
-
     vector<SCIP_CONS*> rsd;
 
 
@@ -259,17 +260,20 @@ public:
 
     // Keep a pointer on every constraint of the Master program
 
+    // convexity constraints
     vector<SCIP_CONS*> conv_lambda_site;
     vector<SCIP_CONS*> conv_lambda_time;
+
+    // (in)equality between time and site solutions
     vector<SCIP_CONS*> eq_time_site;
 
-    //si option de stabilisation minUpDownDouble=1
+    //If stabilization option: minUpDownDouble=1
     vector<SCIP_CONS*> logical;
     vector<SCIP_CONS*> min_up;
     vector<SCIP_CONS*> min_down;
 
-    // Keep informations on every variables of the Master program
-    //NB: le fait d'utiliser une liste ne permet pas de supprimer des variables
+    // Keep info on every variables of the Master program
+    //NB: using a list does not allow to delete variables
     list<Master_Variable*> L_var_site;
     list<MasterTime_Variable*> L_var_time;
 
