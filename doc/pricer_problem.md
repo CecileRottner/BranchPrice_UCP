@@ -1,5 +1,11 @@
 # Pricer problem
 
+Pricer classes declarations and definitions are located in files :
+* Pricer.h
+* Pricer.cpp (for unit/site decompositions)
+* PricerTime.cpp (for time decompositions)
+* PricerDouble.cpp (for unit/site+time decompositions)
+
 ## Pricer classes
 
 ### ObjPricerUCP (virtual)
