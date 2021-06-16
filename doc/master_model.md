@@ -1,5 +1,11 @@
 # Master problem
 
+Master classes declarations and definitions are located in files :
+* Master.h
+* Master.cpp (for unit/site decompositions)
+* MasterTime.cpp (for time decompositions)
+* MasterDouble.cpp (for unit/site+time decompositions)
+
 
 ## Classes "Master Variables"
 
