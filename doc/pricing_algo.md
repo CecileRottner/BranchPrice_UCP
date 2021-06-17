@@ -23,7 +23,6 @@ Note that double (unit/site + time) decompositions uses both classes DualCosts a
 
 ## Pricing algorithm classes
 
-* CplexPricingAlgo : class for solving unit/site subproblems with frontal Cplex
-Defines the following methods:
+* CplexPricingAlgo : class for solving unit/site subproblems with frontal Cplex. It defines the following methods:
   * **updateObjCoeficients**: takes new dual costs as input and updates the subproblem objective function
   * **findUpDownPlan**: launches Cplex to find a minimum reduced cost column
