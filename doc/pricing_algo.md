@@ -1,6 +1,6 @@
 # Pricing algorithms
 
-Pricing algorithms/solvers classes declarations and definitions are located in files :
+Pricing algorithms/solvers functions are located in files :
 * CplexPricingAlgo.h (all declarations, should be renamed "PricingAlgo.h")
 * CplexPricingAlgo.cpp (frontal Cplex for unit/site subproblems)
 * CplexPricingAlgoTime.cpp (frontal Cplex for time subproblems)
@@ -23,6 +23,23 @@ Note that double (unit/site + time) decompositions uses both classes DualCosts a
 
 ## Pricing algorithm classes
 
-* CplexPricingAlgo : class for solving unit/site subproblems with frontal Cplex. It defines the following methods:
+### CplexPricingAlgo
+
+Class for solving unit/site subproblems with frontal Cplex. 
+
+It defines the following methods:
   * **updateObjCoeficients**: takes new dual costs as input and updates the subproblem objective function
-  * **findUpDownPlan**: launches Cplex to find a minimum reduced cost column
+  * **findUpDownPlan**: launches Cplex to find a minimum reduced cost column. If one is found, it is given in argument "UpDownPlan"
+  * **AddSSBI** (optional): adds symmetry-breaking to the subproblem (site subproblem with identical units) before it is solved by Cplex 
+
+
+### DynProgPricingAlgo
+
+Class for solving unit subproblems with dynamic programming algorithm (DP for site subproblems is not implemented yet). 
+
+2 algorithms are implemented in this class:
+   * DP algorithm for 1 unit with min-up/min-down constraints
+   * DP algorithm for 1 with min-up/min-down constraints and start-up costs depending on the unit's down time
+
+
+
