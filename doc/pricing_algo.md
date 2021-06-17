@@ -38,7 +38,9 @@ It defines the following methods:
 Class for solving unit subproblems with dynamic programming algorithm (DP for site subproblems is not implemented yet). 
 
 2 algorithms are implemented in this class:
+
    (1) DP algorithm for 1 unit with min-up/min-down constraints
+   
    (2) DP algorithm for 1 with min-up/min-down constraints and start-up costs depending on the unit's down time
 
 It defines the following methods for DP algorithm (1):
