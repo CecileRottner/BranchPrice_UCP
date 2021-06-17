@@ -17,9 +17,13 @@ Classes representing dual costs of master problem are defined in CplexPricingAlg
 
 Each class contains a vector of dual values associated to each master constraint.
 
-Note that double (unit/site + time) decompositions use both classes DualCosts and DualCostsTime : each class contains a vector Omega containing dual values of the (in)equality constraint linking time columns to unit/site columns. Other constraints in the master problem are either relative to a unit/site decomposition or to a time decomposition, thus the corresponding dual cost class is used to keep track of the dual costs.
+Note that double (unit/site + time) decompositions uses both classes DualCosts and DualCostsTime : each class contains a vector Omega containing dual values of the (in)equality constraint linking time columns to unit/site columns. Other constraints in the master problem are either relative to a unit/site decomposition or to a time decomposition, thus the corresponding dual cost class is used to keep track of the dual costs.
 
 
 
-## Pricing algorithms classes
+## Pricing algorithm classes
 
+* CplexPricingAlgo : class for solving unit/site subproblems with frontal Cplex
+Defines the following methods:
+  * **updateObjCoeficients**: takes new dual costs as input and updates the subproblem objective function
+  * **findUpDownPlan**: launches Cplex to find a minimum reduced cost column
