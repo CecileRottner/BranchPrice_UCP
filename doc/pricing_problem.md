@@ -1,4 +1,4 @@
-# Pricer problem
+# Pricing problem
 
 Pricer classes declarations and definitions are located in files :
 * Pricer.h
