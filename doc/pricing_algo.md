@@ -51,3 +51,20 @@ The same methods, suffixed by SUSD are defined for DP algorithm (2).
 
 
 
+### DynProgPricingAlgoTime
+
+Class for solving time subproblems with dynamic programming algorithm.
+It is implemented only for the case when production variables are in the master problem : therefore it is a DP algorithm for solving knapsack problems.
+
+Class **DynProgPricingAlgoTime** features attributes :
+* **W** : int, capacity of the knapsack to be solved
+* **totalBastCost** : double, 
+* **init** : vector of size n, indicating for each unit i, if i must be taken in the knapsack (init[i]=1) ou if i must not be taken in the knapsack (init[i] = 0). 
+If we are free to choose whether i is taken or not, then init[i]=-1. 
+
+Enables to take branching decisions into account inside dynamic programming.
+
+Similar methods are implemented :
+
+  * **findImprovingSolution**: runs DP algorithm and return Bellman values and predecessor vector
+  * **getUpDownPlan**: computes up/down plan from Bellman values and predecessor vector
