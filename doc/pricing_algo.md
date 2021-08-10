@@ -61,10 +61,12 @@ Class **DynProgPricingAlgoTime** features attributes :
 * **totalBastCost** : double, 
 * **init** : vector of size n, indicating for each unit i, if i must be taken in the knapsack (init[i]=1) ou if i must not be taken in the knapsack (init[i] = 0). 
 If we are free to choose whether i is taken or not, then init[i]=-1. 
-
 Enables to take branching decisions into account inside dynamic programming.
+* **BaseObjCoef** :
+* **ObjCoef** :
+* **Table** : matrix of size n x W, corresponds to the Bellman table computed by DP algorithm (function findImprovingSolution)
 
 Similar methods are implemented :
 
-  * **findImprovingSolution**: runs DP algorithm and return Bellman values and predecessor vector
-  * **getUpDownPlan**: computes up/down plan from Bellman values and predecessor vector
+  * **findImprovingSolution**: runs DP algorithm and fills Bellman values in **Table**
+  * **getUpDownPlan**: computes up/down plan from Bellman values in **Table**
