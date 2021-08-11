@@ -35,7 +35,8 @@ If we are free to choose whether i is taken or not, then init[i]=-1.
 This enables to take branching decisions into account inside dynamic programming.
 
 * **Table** : matrix of size (n+1) x (W+1), corresponds to the Bellman table computed by DP algorithm (function findImprovingSolution). 
-Note that Table(i,c) is obtained by Table[i*(W+1)+c]
+As in the [referenced algorithm](https://en.wikipedia.org/wiki/Knapsack_problem#0-1_knapsack_problem), Table(i,w) is the maximum value that can be attained with weight less than or equal to w using the first i items.
+Note that Table(i,w) is stored in Table[i*(W+1)+w].
 
 Methods implemented :
 
