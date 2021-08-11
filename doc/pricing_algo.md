@@ -46,7 +46,7 @@ The following attributes are defined :
 
 2 algorithms are implemented in this class:
 
-   (1) DP algorithm for 1 unit with min-up/min-down constraints : see details [here](doc/dyn_prog_unit.md)
+   (1) DP algorithm for 1 unit with min-up/min-down constraints : see details [here](dyn_prog_unit.md)
    
    (2) DP algorithm for 1 with min-up/min-down constraints and start-up costs depending on the unit's down time
 
@@ -57,4 +57,4 @@ The following attributes are defined :
 ### DynProgPricingAlgoTime
 
 Class for solving time subproblems with dynamic programming algorithm.
-See details [here](doc/dyn_prog_time.md)
+See details [here](dyn_prog_time.md)
