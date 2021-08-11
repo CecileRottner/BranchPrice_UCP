@@ -12,8 +12,19 @@ Pricing algorithms/solvers functions are located in files :
 ## Dual costs classes
 
 Classes representing dual costs of master problem are defined in CplexPricingAlgo.h:
+
 * DualCosts (for unit/site subproblems)
+
 * DualCostsTime (for time subproblems)
+
+
+Class **DualCosts** for **unit/site** subproblems features in particular the following attributes :
+
+  * **BaseObjCoef** : for each unit i, BaseObjCoef[i* T + t] corresponds to cost for unit i being up at time : <img src="https://render.githubusercontent.com/render/math?math=c^i_f %2B c_p^i P_{min}^i"> (computed in constructor)
+  * **ObjCoefX** : for each unit i, ObjCoefX[i* T + t] corresponds to the reduced cost of variable x(i,t) : BaseObjCoef[i] + costs coming from dual values (computed by method computeObjCoefficients)
+  * **ObjCoefX** : for each unit i, ObjCoefU[i* T + t] corresponds to the reduced cost of variable u(i,t) (computed by method computeObjCoefficients)
+
+Corresponding attributes for time subproblems are features in class DynProgPricingAlgoTime.
 
 Each class contains a vector of dual values associated to each master constraint.
 
