@@ -42,4 +42,4 @@ Methods implemented :
 
   * **updateObjCoefficients**: fills ObjCoef using BaseObjCoef and dual values from Master problem
   * **findImprovingSolution**: runs DP algorithm and fills Bellman values in Table
-  * **getUpDownPlan**: puts the knapsack optimal solution in vector upDownPlan given in argument, using Bellman values in Table
+  * **getUpDownPlan**: puts the knapsack optimal solution in vector upDownPlan given as argument, using Bellman values in Table
