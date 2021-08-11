@@ -39,15 +39,11 @@ Class for solving unit subproblems with dynamic programming algorithm (DP for si
 
 2 algorithms are implemented in this class:
 
-   (1) DP algorithm for 1 unit with min-up/min-down constraints
+   (1) DP algorithm for 1 unit with min-up/min-down constraints : see details [here](doc/dyn_prog_unit.md)
    
    (2) DP algorithm for 1 with min-up/min-down constraints and start-up costs depending on the unit's down time
 
-It defines the following methods for DP algorithm (1):
-  * **findImprovingSolution**: runs DP algorithm and return Bellman values and predecessor vector
-  * **getUpDownPlan**: computes up/down plan from Bellman values and predecessor vector
 
-The same methods, suffixed by SUSD are defined for DP algorithm (2).
 
 
 
