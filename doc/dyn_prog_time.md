@@ -36,6 +36,8 @@ This enables to take branching decisions into account inside dynamic programming
 
 * **Table** : matrix of size n x W, corresponds to the Bellman table computed by DP algorithm (function findImprovingSolution)
 
+Note that Table(i,c) is obtained by Table[i*(W+1)+c]
+
 Similar methods are implemented :
 
   * **updateObjCoefficients**: fills ObjCoef using BaseObjCoef and dual values from Master problem
