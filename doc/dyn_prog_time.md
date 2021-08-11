@@ -27,7 +27,7 @@ Class **DynProgPricingAlgoTime** features attributes :
 Defined here for time step t as <img src="https://render.githubusercontent.com/render/math?math=W = \sum_{i=1}^n P_{max}^i - D_t">
 
 * **BaseObjCoef** : for each unit i, BaseObjCoef[i] corresponds to the production cost of unit i at Pmax : <img src="https://render.githubusercontent.com/render/math?math=c^i_f %2B c_p^i P_{max}^i"> (computed in constructor)
-* **ObjCoef** : for each unit i, ObjCoef[i] = $c^i$ corresponds to the reduced cost of unit i : BaseObjCoef[i] + costs coming from dual values (computed by function updateObjCoefficients)
+* **ObjCoef** : for each unit i, ObjCoef[i] = <img src="https://render.githubusercontent.com/render/math?math=c^i"> corresponds to the reduced cost of unit i : BaseObjCoef[i] + costs coming from dual values (computed by function updateObjCoefficients)
 * **totalBastCost** : double, sum of BaseObjCoef[i] for all i (computed in constructor)
 
 * **init** : vector of size n, indicating for each unit i, if i must be taken in the knapsack (init[i]=1) ou if i must not be taken in the knapsack (init[i] = 0). 
