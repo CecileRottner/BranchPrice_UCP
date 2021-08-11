@@ -1,7 +1,7 @@
 # Pricing algorithms
 
 Pricing algorithms/solvers functions are located in files :
-* CplexPricingAlgo.h (all declarations, should be renamed "PricingAlgo.h")
+* CplexPricingAlgo.h (header for all pricing algorithms, should be renamed "PricingAlgo.h")
 * CplexPricingAlgo.cpp (frontal Cplex for unit/site subproblems)
 * CplexPricingAlgoTime.cpp (frontal Cplex for time subproblems)
 * DynProgPricingAlgo.cpp (dynamic programming for unit subproblems -- not implemented for site subproblems)
