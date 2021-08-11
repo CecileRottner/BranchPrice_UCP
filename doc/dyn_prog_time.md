@@ -36,7 +36,7 @@ This enables to take branching decisions into account inside dynamic programming
 
 * **Table** : matrix of size (n+1) x (W+1), corresponds to the Bellman table computed by DP algorithm (function findImprovingSolution). 
 As in the [referenced algorithm](https://en.wikipedia.org/wiki/Knapsack_problem#0-1_knapsack_problem), Table(i,w) is the maximum value that can be attained with weight less than or equal to w using the first i items.
-Note that Table(i,w) is stored in Table[i*(W+1)+w].
+Note that in the code, Table(i,w) is stored in Table[i*(W+1)+w].
 
 Methods implemented :
 
