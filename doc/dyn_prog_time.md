@@ -13,7 +13,7 @@ The subproblem to solve for a given time step t has the following form :
 
 <img src="https://render.githubusercontent.com/render/math?math=\sum_{i=1}^n P_{max}^i x^i \geq D_t">
 
-Note that a solution to this problem provides an up/down plan $x$ for which there exists a production plan satisfying the demand $D_t$.
+Note that a solution to this problem provides an up/down plan x for which there exists a production plan satisfying the demand Dt.
 
 We transform to a knapsack problem as follows using variable <img src="https://render.githubusercontent.com/render/math?math=\overline{x}^i = 1 - x^i">:
 
@@ -26,7 +26,7 @@ Class **DynProgPricingAlgoTime** features attributes :
 * **W** : int, capacity of the knapsack to be solved.
 Defined here for time step t as <img src="https://render.githubusercontent.com/render/math?math=W = \sum_{i=1}^n P_{max}^i - D_t">
 
-* **BaseObjCoef** : for each unit i, BaseObjCoef[i] corresponds to the production cost of unit i at Pmax : $c_f^i + c_p^i P_{max}^i$ (computed in constructor)
+* **BaseObjCoef** : for each unit i, BaseObjCoef[i] corresponds to the production cost of unit i at Pmax : <img src="https://render.githubusercontent.com/render/math?math=c^i_f %2B c_p^i P_{max}^i"> (computed in constructor)
 * **ObjCoef** : for each unit i, ObjCoef[i] = $c^i$ corresponds to the reduced cost of unit i : BaseObjCoef[i] + costs coming from dual values (computed by function updateObjCoefficients)
 * **totalBastCost** : double, sum of BaseObjCoef[i] for all i (computed in constructor)
 
