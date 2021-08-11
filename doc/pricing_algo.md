@@ -37,6 +37,13 @@ It defines the following methods:
 
 Class for solving unit subproblems with dynamic programming algorithm (DP for site subproblems is not implemented yet). 
 
+The following attributes are defined :
+
+* **s** : int, refers to the site concerned by the subproblem. Note that the DP algorithm is implemented only for sites composed of 1 unit, i.e. site s will correspond here to unit s
+
+* **branchingDecision**s : vector of size n. For time step t, branchingDecisions[t] = 0 (resp. 1) if unit s has been fixed to 0 (resp. 1) by branching at time t. If unit s is not fixed by branching at time t, then branchingDecisions[t] = 8.
+
+
 2 algorithms are implemented in this class:
 
    (1) DP algorithm for 1 unit with min-up/min-down constraints : see details [here](doc/dyn_prog_unit.md)
