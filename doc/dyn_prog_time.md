@@ -34,12 +34,11 @@ Defined here for time step t as <img src="https://render.githubusercontent.com/r
 If we are free to choose whether i is taken or not, then init[i]=-1. 
 This enables to take branching decisions into account inside dynamic programming.
 
-* **Table** : matrix of size n x W, corresponds to the Bellman table computed by DP algorithm (function findImprovingSolution)
-
+* **Table** : matrix of size (n+1) x (W+1), corresponds to the Bellman table computed by DP algorithm (function findImprovingSolution). 
 Note that Table(i,c) is obtained by Table[i*(W+1)+c]
 
-Similar methods are implemented :
+Methods implemented :
 
   * **updateObjCoefficients**: fills ObjCoef using BaseObjCoef and dual values from Master problem
   * **findImprovingSolution**: runs DP algorithm and fills Bellman values in Table
-  * **getUpDownPlan**: computes up/down plan from Bellman values in Table
+  * **getUpDownPlan**: puts the knapsack optimal solution in vector upDownPlan given in argument, using Bellman values in Table
