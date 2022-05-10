@@ -5,11 +5,8 @@
 using namespace std;
 
 
-DynProgPricingAlgoTime::DynProgPricingAlgoTime(InstanceUCP* inst, Master_Model* M, const Parameters & par, int t) : Param(par) {
-    //env=IloEnv() ;
-
-    Master=M ;
-    time=t;
+DynProgPricingAlgoTimeNoPower::DynProgPricingAlgoTimeNoPower(InstanceUCP* inst, Master_Model* M, const Parameters & par, int t) 
+: DynProgPricingAlgoTime(inst, M, par, t){
 
     int n = inst->getn() ;
 
@@ -23,20 +20,18 @@ DynProgPricingAlgoTime::DynProgPricingAlgoTime(InstanceUCP* inst, Master_Model* 
     BaseObjCoefX.resize(n, 0) ;
     totalBaseCost= 0 ;
     for (int i=0 ; i <n ; i++) {
-        BaseObjCoefX.at(i) = inst->getcf(i) + (inst->getPmin(i))*inst->getcp(i) ;
+        BaseObjCoefX.at(i) = inst->getcf(i) + (inst->getPmax(i))*inst->getcp(i) ;
         totalBaseCost += BaseObjCoefX.at(i) ;
     }
 
     ObjCoefX.resize(n, 0) ;
 }
 
-void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas) {
+void DynProgPricingAlgoTimeNoPower::updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas) {
 
     int n = inst->getn();
     int T = inst->getT() ;
-
     for (int i=0 ; i<n ; i++) {
-        
         int L= inst->getL(i);
         int l= inst->getl(i);
 
@@ -44,9 +39,9 @@ void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Para
         ObjCoefX.at(i) = 0 ;
 
         if (Param.doubleDecompo) {
-
+            
             ObjCoefX.at(i) += Dual.Omega.at(i*T+time);
-
+            
             if (Param.minUpDownDouble) {
                 if (time>0) {
                     ObjCoefX.at(i) += - Dual.Mu.at(i*T + time) ;
@@ -62,6 +57,14 @@ void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Para
                     ObjCoefX.at(i) += - Dual.Xi.at(i*T + time + l) ;
                 }
             }
+            
+            if (!Farkas) {
+                ObjCoefX.at(i) += (1 - Param.costBalancing) * BaseObjCoefX.at(i) ;
+                if (Param.PminDifferentPmax){
+                    ObjCoefX.at(i) -= (1 - Param.costBalancing) * (inst->getPmax(i)) * inst->getcp(i);
+                }
+            }
+
         }
         else {
             //// Couts primaux de x[i]
@@ -111,8 +114,7 @@ void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Para
         }
     }
 
-
-
+    cout << Master->nbIntUpSet << endl;
 
     //// ajouts des couts duaux des interval up-set ////
 
@@ -139,7 +141,7 @@ void DynProgPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Para
 
 
 
-bool DynProgPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) {
+bool DynProgPricingAlgoTimeNoPower::findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) {
     //returns True if an improving Up/Down plan has been found
 
     int n = inst->getn();
@@ -149,7 +151,7 @@ bool DynProgPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const Dual
     }
     for (int i =1 ; i <=n ; i++) {
         for (int c=0 ; c <= W ; c++) {
-            int pi = inst->getPmin(i-1) ;
+            int pi = inst->getPmax(i-1) ;
             if (c >= pi && (init.at(i-1) == -1) ) {
                 Table.at(i*(W+1)+c) = fmax(Table.at((i-1)*(W+1)+c), Table.at((i-1)*(W+1)+c-pi) + ObjCoefX.at(i-1));
             }
@@ -178,7 +180,7 @@ bool DynProgPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const Dual
 
 }
 
-void DynProgPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, double & totalProd, bool Farkas) {
+void DynProgPricingAlgoTimeNoPower::getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, IloNumArray PowerPlan, double& realCost, double & totalProd, bool Farkas) {
 
     int n = inst->getn();
     realCost=totalBaseCost;
@@ -193,9 +195,9 @@ void DynProgPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTim
     while (c>0 && i>0) {
         if (  fabs( Table.at(i*(W+1)+c) - Table.at((i-1)*(W+1)+c) ) > Param.Epsilon ) {
             UpDownPlan[i-1] = 0 ;
-            c= c - inst->getPmin(i-1) ;
+            c= c - inst->getPmax(i-1) ;
             realCost -= BaseObjCoefX.at(i-1) ;
-            totalProd -= inst->getPmin(i-1) ;
+            totalProd -= inst->getPmax(i-1) ;
         }
         i-- ;
     }
@@ -207,7 +209,7 @@ void DynProgPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTim
         if (init[i] == 0) {
             UpDownPlan[i] = 0 ;
             realCost -= BaseObjCoefX.at(i) ;
-            totalProd -= inst->getPmin(i) ;
+            totalProd -= inst->getPmax(i) ;
         }
     }
 

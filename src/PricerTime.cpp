@@ -38,8 +38,15 @@ ObjPricerTimeUCP::ObjPricerTimeUCP(
         }
     }
     else {
-        for (int t=0 ; t < T ; t++) {
-            AlgoDynProg[t] = new DynProgPricingAlgoTime(inst, M, param, t) ;
+        if (Param.powerPlanGivenByMu) {
+            for (int t=0 ; t < T ; t++) {
+                AlgoDynProg.at(t) = new DynProgPricingAlgoTimePower(inst, Master, param, t) ;
+            }
+        }
+        else {
+            for (int t=0 ; t < T ; t++) {
+                AlgoDynProg.at(t) = new DynProgPricingAlgoTimeNoPower(inst, Master, param, t) ;
+            }
         }
     }
 
@@ -423,7 +430,8 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
                     }
                     else {
                         upDownPlan = IloNumArray((AlgoDynProg.at(t))->env, n) ;
-                        (AlgoDynProg.at(t))->getUpDownPlan(inst, dual_cost, upDownPlan, realCost, totalProd, Farkas) ;
+                        IloNumArray powerPlan = IloNumArray((AlgoDynProg.at(t))->env, n) ;
+                        (AlgoDynProg.at(t))->getUpDownPlan(inst, dual_cost, upDownPlan, powerPlan, realCost, totalProd, Farkas) ;
                     }
 
                      //
@@ -461,20 +469,20 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
 
                         if (inst->getD(k) <= totalProd) {
 
-                          //  cout << "ajout maitre" << endl;
+                            //  cout << "ajout maitre" << endl;
 
-                        /// AJOUT VARIABLE DANS LE MAITRE ////
+                            /// AJOUT VARIABLE DANS LE MAITRE ////
 
-                        MasterTime_Variable* lambda = new MasterTime_Variable(k, upDownPlan, realCost);
-                        // cout << "Plan found for time " << t << " with reduced cost = " << objvalue << " ";
-                        //// CREATION D'UNE NOUVELLE VARIABLE
-                        Master->initMasterTimeVariable(scip, lambda) ;
+                            MasterTime_Variable* lambda = new MasterTime_Variable(k, upDownPlan);
+                            // cout << "Plan found for time " << t << " with reduced cost = " << objvalue << " ";
+                            //// CREATION D'UNE NOUVELLE VARIABLE
+                            Master->initMasterTimeVariable(scip, lambda) ;
 
-                        /* add new variable to the list of variables to price into LP (score: leave 1 here) */
-                        SCIPaddPricedVar(scip, lambda->ptr, 1.0);
+                            /* add new variable to the list of variables to price into LP (score: leave 1 here) */
+                            SCIPaddPricedVar(scip, lambda->ptr, 1.0);
 
-                        ///// ADD COEFFICIENTS TO DEMAND, POWER LIMITS and CONVEXITY CONSTRAINTS
-                        Master->addCoefsToConstraints(scip, lambda) ;
+                            ///// ADD COEFFICIENTS TO DEMAND, POWER LIMITS and CONVEXITY CONSTRAINTS
+                            Master->addCoefsToConstraints(scip, lambda) ;
                         }
 
                     }
@@ -505,7 +513,9 @@ void ObjPricerTimeUCP::addVarBound(SCIP_ConsData* consdata) {
 
     if (AlgoDynProg.at(t) != NULL) {
         if (consdata->bound == 0) {
-            (AlgoDynProg.at(t))->W -= inst->getPmax(i) ;
+            if (!Param.powerPlanGivenByMu) {
+                (AlgoDynProg.at(t))->W -= inst->getPmax(i) ;
+            }
             (AlgoDynProg.at(t))->init.at(i) = 0 ;
         }
         else {

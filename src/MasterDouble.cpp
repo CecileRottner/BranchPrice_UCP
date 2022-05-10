@@ -23,6 +23,12 @@ void MasterDouble_Model::addCoefsToConstraints_siteVar(SCIP* scip, Master_Variab
             if (!Param.powerPlanGivenByLambda) {
                 if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
                     SCIPaddCoefLinear(scip, eq_time_site.at((first+i)*T+t), lambda->ptr, 1.0) ;
+                    if (Param.PminDifferentPmax && !Param.powerPlanGivenByMu){
+                        SCIPaddCoefLinear(scip, power_limits[(first+i)*T+t], lambda->ptr, inst->getPmax(first+i) - inst->getPmin(first+i)) ;
+                        if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
+                            SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(first+i)) ;
+                        }
+                    }
                 }
             }
 
@@ -144,11 +150,24 @@ void MasterDouble_Model::initMasterSiteVariable(SCIP* scip, InstanceUCP* inst , 
                   cost,                     // objective
                   type,    // variable type
                   false, false, NULL, NULL, NULL, NULL, NULL);
-
     //// Add new variable to the list
     L_var_site.push_back(var);
 
 
+    int print =1;
+    if (print) {
+        cout << "Variable " << var_name << " added, with plan: " << endl  ;
+        int first = Param.firstUnit(var->Site) ;
+        int last = Param.firstUnit(var->Site) + Param.nbUnits(var->Site) - 1 ;
+        for (int i = first ; i <= last ; i++) {
+            for (int t=0 ; t < inst->getT() ; t++) {
+                cout << var->UpDown_plan[(i-first)*T + t] << " "  ;
+            }
+            cout << endl;
+        }
+        cout << "and cost : " << endl;
+        cout << cost << endl;
+    }
 }
 
 //////// Initialisation d'une variable lambda(time) /////////////
@@ -163,7 +182,7 @@ void MasterDouble_Model::initMasterTimeVariable(SCIP* scip, MasterTime_Variable*
      * due to the set partitioning constraints.
      */
 
-    // Dans ce cas le coût est initialisé dès la déclaration de la variable
+    var->computeCost(inst, Param);
     double cost= var->cost;
     //cout << var_name << ", cost: " << cost << endl ;
 
@@ -184,13 +203,23 @@ void MasterDouble_Model::initMasterTimeVariable(SCIP* scip, MasterTime_Variable*
     //// Add new variable to the list
     L_var_time.push_back(var);
 
-    int print =0;
+    int print =1;
     if (print) {
         cout << "Variable " << var_name << " added, with plan: " << endl  ;
 
         for (int i=0 ; i < inst->getn() ; i++) {
             cout << var->UpDown_plan[i] << " "  ;
         }
+        cout << endl;
+        if (Param.powerPlanGivenByMu){
+            cout << "and power plan: " << endl;
+            for (int i=0 ; i < inst->getn() ; i++) {
+                cout << var->Power_plan[i] << " "  ;
+            }
+            cout << endl;
+        }
+        cout << "and cost: " << endl;
+        cout << cost << endl;
     }
 }
 
@@ -209,6 +238,8 @@ MasterDouble_Model::MasterDouble_Model(InstanceUCP* inst, const Parameters & Par
     min_up.resize(n*T, (SCIP_CONS*) NULL) ;
     min_down.resize(n*T, (SCIP_CONS*) NULL) ;
 
+    power_limits.resize(n*T, (SCIP_CONS*) NULL) ;
+    demand_cstr.resize(T, (SCIP_CONS*) NULL);
 }
 
 void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* inst) {
@@ -302,8 +333,156 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
         conv_lambda_time.at(t) = con;
     }
 
+    if (Param.PminDifferentPmax && !Param.powerPlanGivenByMu){
+        ///// Power limits /////
+        char con_name_power_limit[255];
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = 0; t < T; t++)
+            {
+                SCIP_CONS* con = NULL;
+                (void) SCIPsnprintf(con_name_power_limit, 255, "PowerLimit(%d,%d)", i, t); // nom de la contrainte
+                SCIPcreateConsLinear( scip, &con, con_name_power_limit, 0, NULL, NULL,
+                                    0.0,   // lhs
+                                    0.0,   // rhs  SCIPinfinity(scip) if >=1
+                                    true,  /* initial */
+                                    false, /* separate */
+                                    true,  /* enforce */
+                                    true,  /* check */
+                                    true,  /* propagate */
+                                    false, /* local */
+                                    true,  /* modifiable */
+                                    false, /* dynamic */
+                                    false, /* removable */
+                                    false  /* stickingatnode */ );
+                SCIPaddCons(scip, con);
+                power_limits[i*T + t] = con;
+            }
+        }
 
-///////////////// MIN-UP MIN-DOWN constraints for STABILIZATION ////////////////
+        ///// Demand constraint /////
+        char con_name_demand[255];
+        for (int t = 0; t < T; t++)
+        {
+            SCIP_CONS* con = NULL;
+            (void) SCIPsnprintf(con_name_demand, 255, "Demand(%d)", t); // nom de la contrainte
+            SCIPcreateConsLinear( scip, &con, con_name_demand, 0, NULL, NULL,
+                                inst->getD(t),   // lhs
+                                inst->getD(t),   // rhs  SCIPinfinity(scip) if >=1
+                                true,  /* initial */
+                                false, /* separate */
+                                true,  /* enforce */
+                                true,  /* check */
+                                true,  /* propagate */
+                                false, /* local */
+                                true,  /* modifiable */
+                                false, /* dynamic */
+                                false, /* removable */
+                                false  /* stickingatnode */ );
+            SCIPaddCons(scip, con);
+            demand_cstr[t] = con;
+        }
+
+        /////////////////////////////////////////////////////////////
+        ////////   MASTER POWER VARIABLES INITIALIZATION   //////////
+        /////////////////////////////////////////////////////////////
+
+        cout << "power var init" << endl ;
+        char var_name[255];
+
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = 0; t < T; t++)
+            {
+                SCIP_VAR* var = NULL;
+
+                SCIPsnprintf(var_name, 255, "p(%d,%d)",i,t);
+                SCIPdebugMsg(scip, "Variable <%s>\n", var_name);
+
+
+                SCIPcreateVar(scip, &var, var_name,
+                            0.0,                     // lower bound
+                            inst->getPmax(i) - inst->getPmin(i),      // upper bound
+                            inst->getcp(i),                     // objective
+                            SCIP_VARTYPE_CONTINUOUS, // variable type
+                            true, false, NULL, NULL, NULL, NULL, NULL);
+
+
+                /* add new variable to scip */
+                if (!Param.powerPlanGivenByLambda) {
+                    SCIPaddVar(scip, var);
+
+                    /* add coefficient to the demand constraint */
+                    SCIPaddCoefLinear(scip, demand_cstr[t], var, 1.0);
+
+                    /* add coefficient to the power limit constraint */
+                    SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);
+                }
+            }
+        }
+
+        cout << "fin" << endl ;
+
+
+        ///////////////////////////////////////
+        ////////   SLACK VARIABLES   //////////
+        ///////////////////////////////////////
+
+        char slack_power_name[255];
+
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = 0; t < T; t++)
+            {
+                SCIP_VAR* var = NULL;
+
+                SCIPsnprintf(slack_power_name, 255, "slack_power(%d,%d)",i,t);
+                SCIPdebugMsg(scip, "Variable <%s>\n", slack_power_name);
+
+
+                SCIPcreateVar(scip, &var, slack_power_name,
+                            0.0,                     // lower bound
+                            inst->getPmax(i) - inst->getPmin(i),      // upper bound
+                            0.0,                     // objective
+                            SCIP_VARTYPE_CONTINUOUS, // variable type
+                            true, false, NULL, NULL, NULL, NULL, NULL);
+
+
+                /* add new variable to scip */
+                SCIPaddVar(scip, var);
+
+                /* add coefficient to the power limit constraint */
+                SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);
+            }
+        }
+
+        char slack_demand_name[255];
+
+        for (int t = 0; t < T; t++)
+        {
+            SCIP_VAR* var = NULL;
+
+            SCIPsnprintf(slack_demand_name, 255, "slack_demand(%d)",t);
+            SCIPdebugMsg(scip, "Variable <%s>\n", slack_demand_name);
+
+
+            SCIPcreateVar(scip, &var, slack_demand_name,
+                        0.0,                     // lower bound
+                        10000,      // upper bound
+                        0.0,                     // objective
+                        SCIP_VARTYPE_CONTINUOUS, // variable type
+                        true, false, NULL, NULL, NULL, NULL, NULL);
+
+
+            /* add new variable to scip */
+            SCIPaddVar(scip, var);
+
+            /* add coefficient to the demand constraint */
+            SCIPaddCoefLinear(scip, demand_cstr[t], var, -1.0);
+        }
+    }
+
+    ///////////////// MIN-UP MIN-DOWN constraints for STABILIZATION ////////////////
     ///// LOGICAL ////
 
     if (Param.minUpDownDouble) {
@@ -452,7 +631,6 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
 
 
 
-
     ///////////////////////////////////////////////////////////////
     //////////   SITE LAMBDA VARIABLES INITIALIZATION   /////////
     ///////////////////////////////////////////////////////////////
@@ -464,13 +642,14 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
 
     for (int s=0 ; s<S; s++)
     {
-        cout << "s:" << s << endl ;
+        //cout << "s:" << s << endl ;
         IloNumArray plan = IloNumArray(env, Param.nbUnits(s)*T) ;
         for (int index=0 ; index < Param.nbUnits(s)*T ; index++) {
             plan[index]=1 ;
         }
 
         int first = Param.firstUnit(s);
+        //cout << "first = " << first << endl;
         Master_Variable* lambda = new Master_Variable(s, plan);
         if (Param.powerPlanGivenByLambda) {
             IloNumArray powerPlan = IloNumArray(env, Param.nbUnits(s)*T) ;
@@ -487,7 +666,7 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
         addCoefsToConstraints_siteVar(scip, lambda, inst) ;
     }
 
-
+    cout << "site vars created" << endl;
 
 
     ///////////////////////////////////////////////////////////////
@@ -504,13 +683,14 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
         for (int index=0 ; index < n ; index++) {
             plan[index]=1 ;
         }
-
-        double cost=0 ;
-        for (int i=0 ; i <n ; i++) {
-            cost += (inst->getPmax(i) - inst->getPmin(i))*inst->getcp(i) ;
+        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan);
+        if (Param.powerPlanGivenByMu) {
+            IloNumArray powerPlan = IloNumArray(env, n) ;
+            for (int i=0 ; i < n ; i++) {
+                powerPlan[i] = inst->getPmax(i);
+            }
+            lambda->addPowerPlan(powerPlan);
         }
-
-        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan, cost);
         initMasterTimeVariable(scip, lambda);
 
         SCIPaddVar(scip, lambda->ptr);
@@ -631,9 +811,7 @@ void MasterDouble_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p)
             }
         }
 
-        double cost = 0 ;
-
-        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan, cost) ;
+        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan) ;
         initMasterTimeVariable(scip, lambda);
 
         SCIPaddVar(scip, lambda->ptr);

@@ -1,5 +1,5 @@
-VARSCIPDIR       := /home/Cecile/scipoptsuite-5.0.1/scip
-VARCPLEXDIR      := /home/Cecile/Cplex/cplex
-VARCONCERTDIR    := /home/Cecile/Cplex/concert
+VARSCIPDIR       := /home/thibault/Downloads/scipoptsuite-8.0.0/scip
+VARCPLEXDIR      := /home/thibault/Downloads/IBM/ILOG/CPLEX_Studio128/cplex
+VARCONCERTDIR    := /home/thibault/Downloads/IBM/ILOG/CPLEX_Studio128/concert
 
 

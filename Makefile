@@ -64,6 +64,7 @@ MAINOBJ		=	main.o \
 			DynProgPricingAlgo.o \
 			DynProgSUSDPricingAlgo.o \
 			DynProgPricingAlgoTime.o \
+			DynProgPricingAlgoTimePower.o \
 			Pricer.o \
 			PricerTime.o \
 			PricerDouble.o \

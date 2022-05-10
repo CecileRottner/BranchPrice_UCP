@@ -28,6 +28,7 @@ ObjPricerDouble::ObjPricerDouble(
     ObjPricerUCP(scip, pp_name, instance, param)
 {
     Master=M ;
+    //cout<<Master->S<<endl;
     AlgoCplex_site = vector<CplexPricingAlgo*>(Param.nbDecGpes, NULL) ;
     AlgoDynProg_site = vector<DynProgPricingAlgo*>(Param.nbDecGpes, NULL) ;
     iteration=0;
@@ -43,6 +44,8 @@ ObjPricerDouble::ObjPricerDouble(
     else {
         for (int s=0 ; s < Param.nbDecGpes ; s++) {
             AlgoDynProg_site.at(s) = new DynProgPricingAlgo(inst, Master, param, s) ;
+            // cout << "s = " << s << endl;
+            // cout << AlgoDynProg_site.at(s)->Site << endl;
         }
     }
 
@@ -57,11 +60,17 @@ ObjPricerDouble::ObjPricerDouble(
         }
     }
     else {
-        for (int t=0 ; t < T ; t++) {
-            AlgoDynProg_time.at(t) = new DynProgPricingAlgoTime(inst, Master, param, t) ;
+        if (Param.powerPlanGivenByMu) {
+            for (int t=0 ; t < T ; t++) {
+                AlgoDynProg_time.at(t) = new DynProgPricingAlgoTimePower(inst, Master, param, t) ;
+            }
+        }
+        else {
+            for (int t=0 ; t < T ; t++) {
+                AlgoDynProg_time.at(t) = new DynProgPricingAlgoTimeNoPower(inst, Master, param, t) ;
+            }
         }
     }
-
 }
 
 
@@ -79,23 +88,25 @@ ObjPricerDouble::~ObjPricerDouble()
  */
 SCIP_DECL_PRICERINIT(ObjPricerDouble::scip_init)
 {
-    //cout<<"**************PRICER INIT************ "<<endl;
+    cout<<"**************PRICER INIT************ "<<endl;
 
     int T = inst->getT() ;
     int n = inst->getn() ;
 
-
+    //cout<<"site convexity"<<endl;
+    //cout<<Master->S<<endl;
     //site convexity constraints
     for (int s = 0 ; s < Param.nbDecGpes ; s++) {
+        //cout<<Master->conv_lambda_site.at(s)<<endl;
         SCIPgetTransformedCons(scip, Master->conv_lambda_site.at(s), &(Master->conv_lambda_site.at(s)));
     }
 
-
+    //cout<<"time convexity"<<endl;
     // time convexity constraints
     for (int t = 0 ; t < T ; t++) {
         SCIPgetTransformedCons(scip, Master->conv_lambda_time.at(t), &(Master->conv_lambda_time.at(t)));
     }
-
+    //cout<<"equality"<<endl;
     // equality time / site
     for (int t = 0 ; t < T ; t++) {
         for (int i = 0 ; i < n ; i++) {
@@ -250,6 +261,21 @@ void ObjPricerDouble::updateDualCosts_site(SCIP* scip, DualCosts & dual_cost, bo
         if (print) cout << "sigma: " << dual_cost.Sigma[s] <<endl;
     }
 
+    if (Param.PminDifferentPmax && !Param.powerPlanGivenByMu){
+        //couts duaux power limits
+        for (int i = 0; i < n; i++) {
+            for (int t = 0 ; t < T ; t++) {
+                if (!Farkas) {
+                    dual_cost.Nu.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->power_limits.at(i*T+t));
+                }
+                else{
+                    dual_cost.Nu.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->power_limits.at(i*T+t));
+                }
+                if (print)
+                    cout << "nu(" << i <<"," << t <<") = " << dual_cost.Nu.at(i*T+t) <<endl;
+            }
+        }
+    }
 
     //couts duaux intrasite
     if (Param.IntraSite && Param.UnitDecompo) {
@@ -383,15 +409,12 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
 ////////// MISE A JOUR DES COUTS DUAUX
 
-
 // Cout duaux de time à mettre à jour avant ceux de Site, car la méthode computeObjCoef prend en arg dual_cost_time 
     DualCostsTime dual_cost_time = DualCostsTime(inst) ;
     updateDualCosts_time(scip, dual_cost_time, Farkas);
-
     DualCosts dual_cost = DualCosts(inst,Param) ;
     updateDualCosts_site(scip, dual_cost, Farkas);
     dual_cost.computeObjCoef(inst,Param,Farkas, dual_cost_time);
-
 
     /////Recherche variable améliorante de type sites
     double epsilon= 0.0000001 ;
@@ -431,8 +454,11 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
         }
 
         else { // résolution par programmation dynamique
-
+            cout << "début dynprogsite" << endl;
+            cout << "s = " << s << endl;
+            cout << AlgoDynProg_site[s]->Site << endl;
             upDownPlan = IloNumArray((AlgoDynProg_site[s])->env, Param.nbUnits(s)*T) ;
+            cout << "updownplan initialisé" << endl;
             if (Param.DynProgSUSD) {
                 (AlgoDynProg_site.at(s))->findImprovingSolutionSUSD(inst, dual_cost, objvalue);
                 (AlgoDynProg_site.at(s))->getUpDownPlanSUSD(inst, upDownPlan) ;
@@ -441,7 +467,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 (AlgoDynProg_site.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
                 (AlgoDynProg_site.at(s))->getUpDownPlan(inst, upDownPlan) ;
             }
-            //cout << "DP resolution done" << endl ;
+            cout << "DP resolution done" << endl ;
 
         }
 
@@ -479,14 +505,21 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 lambda->addPowerPlan(powerPlan);
             }
 
+            SCIPwriteOrigProblem(scip, "debug.lp", "lp", FALSE);
+
             //// CREATION D'UNE NOUVELLE VARIABLE DANS LE MASTER
             Master->initMasterSiteVariable(scip, inst, lambda) ;
 
             /* add new variable to the list of variables to price into LP (score: leave 1 here) */
-            SCIPaddPricedVar(scip, lambda->ptr, 1.0);
+            SCIP_RETCODE ajout = SCIPaddPricedVar(scip, lambda->ptr, 1.0);
+            cout << "ajout var par unité: " << ajout << endl;
 
             ///// ADD COEFFICIENTS TO CONVEXITY and TIME/SITE EQUALITY CONSTRAINTS
             Master->addCoefsToConstraints_siteVar(scip, lambda, inst) ;
+
+            SCIPwriteOrigProblem(scip, "debug.lp", "lp", FALSE);
+
+            cout << "redcost: " << SCIPgetVarRedcost(scip, lambda->ptr) << endl;
         }
     }
 
@@ -512,6 +545,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
            // (AlgoCplex_time.at(t))->updateObjCoefficients(inst, Param, dual_cost, Farkas) ;
         }
         else {
+            cout << "début updateobjcoeff" << endl;
             (AlgoDynProg_time.at(t))->updateObjCoefficients(inst, Param, dual_cost_time, Farkas) ;
         }
 
@@ -524,6 +558,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
            // ImprovingSolutionFound = (AlgoCplex.at(t))->findImprovingSolution(inst, dual_cost, objvalue, temps, cas-1);
         }
         else {
+            cout << "début findimprovingsol" << endl;
             ImprovingSolutionFound = (AlgoDynProg_time.at(t))->findImprovingSolution(inst, dual_cost_time, objvalue, temps, 1);
         }
         Master->cumul_resolution_pricing += temps ;
@@ -535,46 +570,47 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
             double realCost=0 ;
             double totalProd=0 ;
 
-            IloNumArray upDownPlan ;
-            if (!Param.DynProgTime) {
-                //upDownPlan = IloNumArray((AlgoCplex.at(t))->env, n) ;
-                //(AlgoCplex.at(t))->getUpDownPlan(inst, dual_cost, upDownPlan, realCost, totalProd, Farkas) ;
-            }
-            else {
-                upDownPlan = IloNumArray((AlgoDynProg_time.at(t))->env, n) ;
-                (AlgoDynProg_time.at(t))->getUpDownPlan(inst, dual_cost_time, upDownPlan, realCost, totalProd, Farkas) ;
-            }
+            IloNumArray upDownPlan = IloNumArray((AlgoDynProg_time.at(t))->env, n) ;
+            IloNumArray powerPlan = IloNumArray((AlgoDynProg_time.at(t))->env, n) ;
 
-            //
+            (AlgoDynProg_time.at(t))->getUpDownPlan(inst, dual_cost_time, upDownPlan, powerPlan, realCost, totalProd, Farkas) ;
 
-            //cout << "total prod: " << totalProd << endl ;
-
-             if (print) {
-            cout << "Minimum reduced cost plan: "<< objvalue << "for time " << t << endl ;
-            for (int i=0 ; i < n ; i++) {
-                cout << fabs(upDownPlan[i]) << " " ;
-            }
-            cout << endl ;
+            if (print) {
+                cout << "Minimum reduced cost plan: "<< objvalue << "for time " << t << endl ;
+                for (int i=0 ; i < n ; i++) {
+                    cout << fabs(upDownPlan[i]) << " " ;
+                }
+                cout << endl ;
             }
 
             totalDualCost += objvalue;
 
+            //cout << "total prod: " << totalProd << endl ;
 
             /// AJOUT VARIABLE DANS LE MAITRE ////
 
-            realCost=0 ; // tant que Pmin=Pmax
-
-            MasterTime_Variable* lambda = new MasterTime_Variable(t, upDownPlan, realCost);
+            MasterTime_Variable* lambda = new MasterTime_Variable(t, upDownPlan);
             // cout << "Plan found for time " << t << " with reduced cost = " << objvalue << " ";
+
+            if (Param.powerPlanGivenByMu) {
+                lambda->addPowerPlan(powerPlan);
+            }
+
+            SCIPwriteOrigProblem(scip, "debug.lp", "lp", FALSE);
+
             //// CREATION D'UNE NOUVELLE VARIABLE
             Master->initMasterTimeVariable(scip, lambda) ;
 
             /* add new variable to the list of variables to price into LP (score: leave 1 here) */
-            SCIPaddPricedVar(scip, lambda->ptr, 1.0);
+            SCIP_RETCODE ajout = SCIPaddPricedVar(scip, lambda->ptr, 1.0);
+            cout << "ajout var par temps: " << ajout << endl;
 
             ///// ADD COEFFICIENTS TO DEMAND, POWER LIMITS and CONVEXITY CONSTRAINTS
             Master->addCoefsToConstraints_timeVar(scip, lambda) ;
 
+            SCIPwriteOrigProblem(scip, "debug.lp", "lp", FALSE);
+
+            cout << "redcost: " << SCIPgetVarRedcost(scip, lambda->ptr) << endl;
         }
     }
 

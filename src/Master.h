@@ -148,9 +148,14 @@ public:
     //// up/down plan corresponding to ptr
     IloNumArray UpDown_plan ;
 
+    //// power production plan (if given by master variable lambda)
+    IloNumArray Power_plan;
+
     double cost ;
 
-    MasterTime_Variable(int site, IloNumArray UpDown, double costFromSubPb) ;
+    MasterTime_Variable(int site, IloNumArray UpDown) ;
+    void addPowerPlan(IloNumArray PowerPlan);
+    void computeCost(InstanceUCP* inst, const Parameters & Param) ;
 
 };
 
@@ -271,6 +276,10 @@ public:
     vector<SCIP_CONS*> logical;
     vector<SCIP_CONS*> min_up;
     vector<SCIP_CONS*> min_down;
+
+    //If we have power variables in the master: PminDifferentPmax = 1 and powerPlanGivenByMu = 0
+    vector<SCIP_CONS*> demand_cstr;
+    vector<SCIP_CONS*> power_limits;
 
     // Keep info on every variables of the Master program
     //NB: using a list does not allow to delete variables

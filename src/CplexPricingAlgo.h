@@ -25,6 +25,7 @@ public:
     vector<double> Delta ;
 
     vector<double> Omega ; // contraintes d'égalités time/site
+
     DualCostsTime(InstanceUCP* inst) ;
 };
 
@@ -32,7 +33,7 @@ public:
 class DualCosts {
 public:
     vector<double> Mu ;
-    vector<double> Nu ;
+    vector<double> Nu ; // power limits
     vector<double> Sigma ;
     vector<double> Eta ; // intra site dual cost
     vector<double> Phi ; // ramp dual cost
@@ -169,7 +170,6 @@ class CplexPricingAlgoTime {
   void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, double & totalProd, bool Farkas) ; //updates UpDownPlan and realCost
 };
 
-
 class DynProgPricingAlgoTime { // codé dans le cas Pmin=Pmax pour voir si c'est intéressant. Cas où D et les puissances sont entiers
  public:
 
@@ -178,16 +178,38 @@ class DynProgPricingAlgoTime { // codé dans le cas Pmin=Pmax pour voir si c'est
   int time ;
   IloEnv   env;
 
-  int W ;
-  double totalBaseCost ;
+  int W ; // sum of Pmax - demand, used by DynProgPricingAlgoTimeNoPower
 
   vector<int> init ; // init[i]==0 si i pas pris dans le sac à dos, init[i]=1 si i pris dans le sac à dos, si ça reste à déterminer: -1
 
   vector<double> BaseObjCoefX ;
   vector<double> ObjCoefX ;
+
+  DynProgPricingAlgoTime(InstanceUCP* inst, Master_Model* M, const Parameters & par, int t) : Param (par){
+    Master=M ;
+    time=t;
+  }; 
+
+  virtual void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas) = 0;
+
+  virtual bool findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) = 0 ;
+  // computes Bellman table (vector Table)
+  // returns true if an improving solution has been found. objvalue is updated in this case
+
+  virtual void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, IloNumArray PowerPlan, double& realCost, double & totalProd, bool Farkas) = 0;
+  //updates UpDownPlan and realCost
+
+};
+
+
+class DynProgPricingAlgoTimeNoPower : public DynProgPricingAlgoTime { // codé dans le cas Pmin=Pmax pour voir si c'est intéressant. Cas où D et les puissances sont entiers
+ public:
+
+  double totalBaseCost ;
+
   vector<double> Table ;
 
-  DynProgPricingAlgoTime(InstanceUCP* inst, Master_Model* Master, const Parameters & par, int t); // initialise les vecteurs, et W
+  DynProgPricingAlgoTimeNoPower(InstanceUCP* inst, Master_Model* Master, const Parameters & par, int t); // initialise les vecteurs, et W
 
   void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas);
 
@@ -195,10 +217,35 @@ class DynProgPricingAlgoTime { // codé dans le cas Pmin=Pmax pour voir si c'est
   // computes Bellman table (vector Table)
   // returns true if an improving solution has been found. objvalue is updated in this case
 
-  void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, double & totalProd, bool Farkas) ;
+  void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, IloNumArray PowerPlan, double& realCost, double & totalProd, bool Farkas) ;
   //updates UpDownPlan and realCost
 
 };
 
+class DynProgPricingAlgoTimePower : public DynProgPricingAlgoTime { // dans le cas où l'on considère les knapsacks continus en temps
+ public:
+
+  vector<double> power; // power[i] représente la production associée à l'unité
+
+  int Dt ; //demande au temps time
+
+  vector<double> BaseObjCoefP ;
+  vector<double> ObjCoefP ;
+
+  vector<vector<double>> Table ;
+
+  int pivotUnit ; // unité dont la production ne vaut pas Pmin ou Pmax ; vaut -1 si ca reste à déterminer
+
+  DynProgPricingAlgoTimePower(InstanceUCP* inst, Master_Model* Master, const Parameters & par, int t); // initialise les vecteurs, et W
+
+  void updateObjCoefficients(InstanceUCP* inst, const Parameters & Param, const DualCostsTime & Dual, bool Farkas);
+
+  bool findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) ;
+  // returns true if an improving solution has been found. objvalue is updated in this case
+
+  void getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, IloNumArray PowerPlan, double& realCost, double & totalProd, bool Farkas) ;
+  //updates UpDownPlan and realCost
+
+};
 
 #endif

@@ -94,6 +94,10 @@ int main(int argc, char** argv)
     ///////////////////////////
 
     Parameters param = init_parameters(inst, met, intra_cons);
+    cout << "met = " << met << endl;
+    cout << "PowerPlanGivenByMu = " << param.powerPlanGivenByMu << endl;
+    cout << "SUSD = " << param.DynProgSUSD << endl;
+    cout << "doubleDecompo = " << param.doubleDecompo << endl;
 
     ////////////////////////////////////
     //////  SCIP INITIALIZATION    /////
@@ -118,7 +122,7 @@ int main(int argc, char** argv)
     SCIPincludeNodeselBfs(scip);
     SCIPincludeConshdlrIntegral(scip);
     SCIPincludeDispDefault(scip);
-    SCIPincludeDialogDefault(scip);
+    //SCIPincludeDialogDefault(scip);
     SCIPincludeHeurActconsdiving(scip);
     SCIPincludeHeurClique(scip);
     SCIPincludeHeurCoefdiving(scip);
@@ -158,8 +162,10 @@ int main(int argc, char** argv)
     SCIPsetLongintParam(scip, "limits/nodes", param.nodeLimit);
     SCIPsetRealParam(scip, "limits/time", 3600);
 
-    SCIPincludeDispDefault(scip) ;
-    SCIPincludeDialogDefault(scip) ;
+    // Changements pour rendre le code compatible avec scip-8.0.0
+    SCIPincludeDialogDefaultBasic(scip) ;
+    SCIPincludeDialogDefaultSet(scip) ;
+    SCIPincludeDialogDefaultFix(scip) ;
 
     /* set verbosity parameter */
     SCIPsetIntParam(scip, "display/verblevel", 5);
@@ -369,7 +375,7 @@ int main(int argc, char** argv)
         //checker.getIntegerObjValue();
         //checker.useLowBound(SCIPgetDualbound(scip));
 
-        fichier << " &  " << SCIPgetNNodes(scip) ;
+        //fichier << " &  " << SCIPgetNNodes(scip) ;
         if (param.IntervalUpSet) {
             fichier << " & " << Master_ptr->nbIntUpSet ;
         }

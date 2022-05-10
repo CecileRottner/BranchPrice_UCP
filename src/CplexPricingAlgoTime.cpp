@@ -94,7 +94,12 @@ void CplexPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Parame
 
         /// Mise à jour de la fonction objectif
         if (!Farkas) {
-            obj.setLinearCoef(x[i],BaseObjCoefX.at(i)  + dual_coef );
+            if (Param.doubleDecompo) {
+                obj.setLinearCoef(x[i], (1 - Param.costBalancing) * BaseObjCoefX.at(i)  + dual_coef );
+            }
+            else {
+                obj.setLinearCoef(x[i],BaseObjCoefX.at(i)  + dual_coef );
+            }
             obj.setLinearCoef(p[i], inst->getcp(i)) ;
         }
         else {

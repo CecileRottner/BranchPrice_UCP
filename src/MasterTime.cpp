@@ -100,13 +100,39 @@ void MasterTime_Model::addIntUpSet(SCIP* scip, IneqIntUpSet* Iup) {
 
 
 ////// Constructeur //////
-MasterTime_Variable::MasterTime_Variable(int t, IloNumArray UpDown, double costFromSubPb) {
+MasterTime_Variable::MasterTime_Variable(int t, IloNumArray UpDown) {
     ptr = NULL ;
     time = t ;
     UpDown_plan = UpDown  ;
-    cost= costFromSubPb ;
 }
 
+void MasterTime_Variable::addPowerPlan(IloNumArray PowerPlan) {
+
+    Power_plan = PowerPlan  ;
+}
+
+void MasterTime_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
+    cost = 0;
+
+    int n = inst->getn() ;
+
+    for (int i=0 ; i < n ; i++) {
+        if (Param.powerPlanGivenByMu){
+            cost += Power_plan[i] * inst->getcp(i) ;
+            if (UpDown_plan[i] > 1 - Param.Epsilon){
+                cost += (1 - Param.costBalancing) * inst->getcf(i) ;
+                if (Param.PminOnLambda ) {
+                    cost -= Param.costBalancing * inst->getPmin(i) * inst->getcp(i) ;
+                }
+            }
+        }
+        else {
+            if (UpDown_plan[i] > 1 - Param.Epsilon){
+                cost += (1 - Param.costBalancing) * (inst->getcf(i) + inst->getPmax(i) * inst->getcp(i));
+            }
+        }
+    }
+}
 
 /////// ajout des coefficients dans chaque contrainte pour variable lambda //////////
 void MasterTime_Model::addCoefsToConstraints(SCIP* scip, MasterTime_Variable* lambda) {
@@ -281,12 +307,7 @@ void MasterTime_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p) {
             }
         }
 
-        double cost = 0 ;
-        for (int i=0 ; i <n ; i++) {
-            cost += inst->getcf(i)*plan[i] + (inst->getPmin(i)*plan[i] + p[i*T+t])*inst->getcp(i) ;
-        }
-
-        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan, cost) ;
+        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan) ;
         initMasterTimeVariable(scip, lambda);
 
         SCIPaddVar(scip, lambda->ptr);
@@ -648,12 +669,7 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
             plan[index]=1 ;
         }
 
-        double cost=0 ;
-        for (int i=0 ; i <n ; i++) {
-            cost += (inst->getcf(i) + inst->getPmax(i)*inst->getcp(i)) ;
-        }
-
-        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan, cost);
+        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan);
         initMasterTimeVariable(scip, lambda);
 
         SCIPaddVar(scip, lambda->ptr);

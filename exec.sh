@@ -25,8 +25,8 @@ demand_type=3
 
 for n in 10 ; do
   for T in 24 ; do
-    for id in {1..10}; do
-      for met in 301 3001; do
+    for id in {1..10} ; do
+      for met in 301 3011 3012 3013 ; do
         ./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dossier $n $T 1 $demand_type $sym $cat01 $intra $id $met $UseIntraCons
       done
       printf "\\hline \n" >> result.txt	

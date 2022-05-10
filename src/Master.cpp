@@ -20,7 +20,6 @@ void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
     //compute cost of up/down plan lambda: fixed cost (including minimum power output cost) and start up cost
     //init à prendre en compte plus tard
     cost=0 ;
-
     int T= inst->getT() ;
 
     int first = Param.firstUnit(Site) ;
@@ -40,7 +39,10 @@ void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
                 down_t_1=1;
             }
             else { // l'unité i est up en t
-                cost+= inst->getcf(i) + inst->getcp(i)*inst->getPmin(i) ;
+                cost+= Param.costBalancing * inst->getcf(i);
+                if (Param.PminOnLambda){
+                    cost += Param.costBalancing * inst->getcp(i) * inst->getPmin(i) ;
+                }
                 down_t_1=0;
             }
         }
