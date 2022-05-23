@@ -108,6 +108,10 @@ void CplexPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Parame
         }
 
     }
+
+    if(time == 0){
+        cplex.exportModel( ( std::to_string(Param.PminDifferentPmax) + "_bug.lp" ).c_str() );
+    }
 }
 
 
@@ -123,6 +127,8 @@ bool CplexPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCo
     else {
         cplex.setParam(IloCplex::EpGap, 0.1) ;
     }
+
+    cplex.setParam(IloCplex::Param::Threads, 1);
 
     clock_t start;
     start = clock();
@@ -149,8 +155,8 @@ bool CplexPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCo
     return false;
 }
 
-void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, double& realCost, double & totalProd, bool Farkas) {
-
+void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, IloNumArray PowerPlan, double& realCost, double & totalProd, bool Farkas) {
+    
 
     int n = inst->getn();
     int T = inst->getT() ;
@@ -200,8 +206,5 @@ void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTime 
             }
         }
     }
-
-
-
 
 }

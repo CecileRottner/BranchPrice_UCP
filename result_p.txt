@@ -1,0 +1,3 @@
+data/other_data/ & n & T & D & id & IUP & Iter & Var & cols U & cols T & CPU & CPU(Master) & Gap & Dual b. & Primal b. & LR & LR(Cplex) \\ 
+ \hline 
+\hline 

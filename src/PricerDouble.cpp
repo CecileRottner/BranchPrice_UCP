@@ -54,6 +54,8 @@ ObjPricerDouble::ObjPricerDouble(
     AlgoCplex_time = vector<CplexPricingAlgoTime*>(T, NULL) ;
     AlgoDynProg_time = vector<DynProgPricingAlgoTime*>(T, NULL) ;
 
+    timeStepColumns = vector<int>(T,0);
+
     if (!Param.DynProgTime) {
         for (int t=0 ; t < T ; t++) {
             AlgoCplex_time.at(t) = new CplexPricingAlgoTime(inst, param, t) ;
@@ -541,8 +543,8 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
         ///// MISE A JOUR DES OBJECTIFS DES SOUS PROBLEMES
         // cout << "mise à jour des couts, farkas=" << Farkas << endl;
         if (!Param.DynProgTime) {
-            //not implemented
-           // (AlgoCplex_time.at(t))->updateObjCoefficients(inst, Param, dual_cost, Farkas) ;
+            cout << "début updateobjcoeff" << endl;
+            (AlgoCplex_time.at(t))->updateObjCoefficients(inst, Param, dual_cost_time, Farkas) ;
         }
         else {
             cout << "début updateobjcoeff" << endl;
@@ -555,11 +557,12 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
         bool ImprovingSolutionFound;
 
         if (!Param.DynProgTime) {
-           // ImprovingSolutionFound = (AlgoCplex.at(t))->findImprovingSolution(inst, dual_cost, objvalue, temps, cas-1);
+            cout << "début findimprovingsol" << endl;
+            ImprovingSolutionFound = (AlgoCplex_time.at(t))->findImprovingSolution(inst, dual_cost_time, objvalue, temps, 1);
         }
         else {
             cout << "début findimprovingsol" << endl;
-            ImprovingSolutionFound = (AlgoDynProg_time.at(t))->findImprovingSolution(inst, dual_cost_time, objvalue, temps, 1);
+            ImprovingSolutionFound = (AlgoDynProg_time.at(t))->findImprovingSolution(inst, dual_cost_time, objvalue, temps, Param.heurPricingTime);
         }
         Master->cumul_resolution_pricing += temps ;
 
@@ -567,13 +570,28 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
             timeColumns++;
 
+            timeStepColumns.at(t) += 1;
+
             double realCost=0 ;
             double totalProd=0 ;
 
-            IloNumArray upDownPlan = IloNumArray((AlgoDynProg_time.at(t))->env, n) ;
-            IloNumArray powerPlan = IloNumArray((AlgoDynProg_time.at(t))->env, n) ;
+            IloNumArray upDownPlan  ;
+            IloNumArray powerPlan  ;
 
-            (AlgoDynProg_time.at(t))->getUpDownPlan(inst, dual_cost_time, upDownPlan, powerPlan, realCost, totalProd, Farkas) ;
+            if (Param.DynProgTime){
+                upDownPlan = IloNumArray((AlgoDynProg_time.at(t))->env, n) ;
+                powerPlan = IloNumArray((AlgoDynProg_time.at(t))->env, n) ;
+
+                (AlgoDynProg_time.at(t))->getUpDownPlan(inst, dual_cost_time, upDownPlan, powerPlan, realCost, totalProd, Farkas) ;
+            }
+
+            else{
+                upDownPlan = IloNumArray((AlgoCplex_time.at(t))->env, n) ;
+                powerPlan = IloNumArray((AlgoCplex_time.at(t))->env, n) ;
+
+                (AlgoCplex_time.at(t))->getUpDownPlan(inst, dual_cost_time, upDownPlan, powerPlan, realCost, totalProd, Farkas) ;
+            }
+
 
             if (print) {
                 cout << "Minimum reduced cost plan: "<< objvalue << "for time " << t << endl ;

@@ -24,11 +24,12 @@ UseIntraCons=1
 demand_type=3
 
 for n in 10 ; do
-  for T in 24 ; do
+  for T in 10 ; do
     for id in 1 ; do
-      for met in 301 3011 3012 ; do
-        rm $met.txt
-        ./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dossier $n $T 1 $demand_type $sym $cat01 $intra $id $met $UseIntraCons >> $met.txt
+      for met in 401 4014 ; do
+        rm logs/$met.txt
+        rm colonnes.csv
+        ./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dossier $n $T 1 $demand_type $sym $cat01 $intra $id $met $UseIntraCons >> logs/$met.txt
       done
       printf "\\hline \n" >> result.txt	
     done

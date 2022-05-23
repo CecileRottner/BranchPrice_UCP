@@ -22,7 +22,13 @@ DualCosts::DualCosts(InstanceUCP* inst, const Parameters & Param) {
     BaseObjCoefX.resize(n, 0) ;
 
     for (int i=0 ; i <n ; i++) {
-        BaseObjCoefX.at(i) = inst->getcf(i) + (inst->getPmin(i))*inst->getcp(i) ;
+        BaseObjCoefX.at(i) = inst->getcf(i);
+        if (Param.PminOnLambda){
+            BaseObjCoefX.at(i) += (inst->getPmin(i))*inst->getcp(i) ;
+        }
+        if (Param.PmaxOnLambda){
+            BaseObjCoefX.at(i) += (inst->getPmax(i))*inst->getcp(i) ;
+        }
     }
 
     ObjCoefX.resize(n*T, 0) ;
@@ -77,6 +83,9 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
                     for (int k = min_min_down ; k <= max_min_down ; k++) {
                         ObjCoefU.at(i*T+t) -= dualTime.Xi.at(i*T+k);
                     }
+                }
+                if (!Param.powerPlanGivenByMu && Param.PminDifferentPmax){
+                    ObjCoefX.at(i*T+t) += - Nu.at(i*T+t) * (inst->getPmax(i) - inst->getPmin(i));
                 }
             }
 

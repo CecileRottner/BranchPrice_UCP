@@ -20,7 +20,7 @@ DynProgPricingAlgoTimeNoPower::DynProgPricingAlgoTimeNoPower(InstanceUCP* inst, 
     BaseObjCoefX.resize(n, 0) ;
     totalBaseCost= 0 ;
     for (int i=0 ; i <n ; i++) {
-        BaseObjCoefX.at(i) = inst->getcf(i) + (inst->getPmax(i))*inst->getcp(i) ;
+        BaseObjCoefX.at(i) = inst->getcf(i) + (inst->getPmin(i))*inst->getcp(i) ;
         totalBaseCost += BaseObjCoefX.at(i) ;
     }
 
@@ -60,9 +60,6 @@ void DynProgPricingAlgoTimeNoPower::updateObjCoefficients(InstanceUCP* inst, con
             
             if (!Farkas) {
                 ObjCoefX.at(i) += (1 - Param.costBalancing) * BaseObjCoefX.at(i) ;
-                if (Param.PminDifferentPmax){
-                    ObjCoefX.at(i) -= (1 - Param.costBalancing) * (inst->getPmax(i)) * inst->getcp(i);
-                }
             }
 
         }
@@ -188,6 +185,7 @@ void DynProgPricingAlgoTimeNoPower::getUpDownPlan(InstanceUCP* inst, const DualC
 
     for (int i=0 ; i <n ; i++) {
         UpDownPlan[i] = 1 ;
+        PowerPlan[i] = inst->getPmin(i);
     }
 
     int c=W ;
@@ -195,6 +193,7 @@ void DynProgPricingAlgoTimeNoPower::getUpDownPlan(InstanceUCP* inst, const DualC
     while (c>0 && i>0) {
         if (  fabs( Table.at(i*(W+1)+c) - Table.at((i-1)*(W+1)+c) ) > Param.Epsilon ) {
             UpDownPlan[i-1] = 0 ;
+            PowerPlan[i-1] = 0;
             c= c - inst->getPmax(i-1) ;
             realCost -= BaseObjCoefX.at(i-1) ;
             totalProd -= inst->getPmax(i-1) ;
@@ -208,9 +207,12 @@ void DynProgPricingAlgoTimeNoPower::getUpDownPlan(InstanceUCP* inst, const DualC
         /// UpDownPlan[i] est forcément à 1
         if (init[i] == 0) {
             UpDownPlan[i] = 0 ;
+            PowerPlan[i] = 0;
             realCost -= BaseObjCoefX.at(i) ;
             totalProd -= inst->getPmax(i) ;
         }
     }
+    cout << "prod: " << totalProd << endl;
+    cout << "cost: " << realCost << endl;
 
 }

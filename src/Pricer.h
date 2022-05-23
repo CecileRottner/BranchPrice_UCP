@@ -27,6 +27,8 @@ public:
     int timeColumns;
     int unitColumns;
 
+    vector<int> timeStepColumns;
+
     double totalDualCost;
 
     ObjPricerUCP(

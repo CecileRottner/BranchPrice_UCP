@@ -37,6 +37,8 @@ int main(int argc, char** argv)
     ofstream fichier("result.txt", std::ofstream::out | std::ofstream::app);
     ofstream fichierDualCost("dualCost.csv", std::ofstream::out | std::ofstream::app);
 
+    ofstream fichierColonnes("colonnes.csv", std::ofstream::out | std::ofstream::app);
+    fichierColonnes << "Demande,colsT" << endl;
 
     //////////////////////////////
     //////  INSTANCE DATA    /////
@@ -79,6 +81,8 @@ int main(int argc, char** argv)
         met = atoi(argv[11]);
         intra_cons = atoi(argv[12]) ;
     }
+
+    ofstream fichierHeur("thresholds/" + std::to_string(met) + ".csv", std::ofstream::out | std::ofstream::app);
 
     InstanceProcessed Instance = InstanceProcessed(n, T, bloc, demande, sym, cat01, intra, id, localisation) ;
 
@@ -411,6 +415,7 @@ int main(int argc, char** argv)
         fichier << " &  " << SCIPgetPrimalbound(scip) ;
         fichier << " & " << checker.getLRValue() ; // RL*/
         fichier << " & " << checker.getLRCplex() ; // RL CPLEX
+        SCIPprintSol(scip, SCIPgetBestSol(scip), NULL, FALSE);
         }
 
        // fichier << " &  " << SCIPgetPrimalbound(scip) ;
@@ -444,6 +449,15 @@ int main(int argc, char** argv)
                 // }
         fichier <<" \\\\ " << endl ;
        // checker.checkSolution(Master_ptr->x_frac);
+        if(param.doubleDecompo){
+            for (int t = 0; t < T; t++) {
+                fichierColonnes << inst->getD(t) << "," << Pricer->timeStepColumns.at(t) << endl;
+            }
+
+            if (param.heurPricingTime){
+                fichierHeur <<  inst->getn() << "," << inst->getT() << "," << param.heurPricingThreshold << "," << SCIPpricerGetTime(scippricer[0]) << endl;
+            }
+        }
 
 
         //ajout des couts réduits au fichier correspondant
@@ -452,7 +466,7 @@ int main(int argc, char** argv)
             fichierDualCost << fixed << (*itv) << endl;
         }
         fichierDualCost << endl ;
-        cout << scientific;
+        cout << scientific; 
     }
 
 

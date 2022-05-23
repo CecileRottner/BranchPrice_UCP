@@ -407,7 +407,7 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
                 bool ImprovingSolutionFound;
 
                 if (!Param.DynProgTime) {
-                     ImprovingSolutionFound = (AlgoCplex.at(t))->findImprovingSolution(inst, dual_cost, objvalue, temps, cas-1);
+                     ImprovingSolutionFound = (AlgoCplex.at(t))->findImprovingSolution(inst, dual_cost, objvalue, temps, 1);
                 }
                 else {
                     ImprovingSolutionFound = (AlgoDynProg.at(t))->findImprovingSolution(inst, dual_cost, objvalue, temps, cas-1);
@@ -424,13 +424,15 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
                     double totalProd=0 ;
 
                     IloNumArray upDownPlan ;
+                    IloNumArray powerPlan ;
                     if (!Param.DynProgTime) {
                         upDownPlan = IloNumArray((AlgoCplex.at(t))->env, n) ;
-                        (AlgoCplex.at(t))->getUpDownPlan(inst, dual_cost, upDownPlan, realCost, totalProd, Farkas) ;
+                        powerPlan = IloNumArray((AlgoCplex.at(t))->env, n) ;
+                        (AlgoCplex.at(t))->getUpDownPlan(inst, dual_cost, upDownPlan, powerPlan,realCost, totalProd, Farkas) ;
                     }
                     else {
                         upDownPlan = IloNumArray((AlgoDynProg.at(t))->env, n) ;
-                        IloNumArray powerPlan = IloNumArray((AlgoDynProg.at(t))->env, n) ;
+                        powerPlan = IloNumArray((AlgoDynProg.at(t))->env, n) ;
                         (AlgoDynProg.at(t))->getUpDownPlan(inst, dual_cost, upDownPlan, powerPlan, realCost, totalProd, Farkas) ;
                     }
 
@@ -474,6 +476,7 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
                             /// AJOUT VARIABLE DANS LE MAITRE ////
 
                             MasterTime_Variable* lambda = new MasterTime_Variable(k, upDownPlan);
+                            lambda->addPowerPlan(powerPlan);
                             // cout << "Plan found for time " << t << " with reduced cost = " << objvalue << " ";
                             //// CREATION D'UNE NOUVELLE VARIABLE
                             Master->initMasterTimeVariable(scip, lambda) ;

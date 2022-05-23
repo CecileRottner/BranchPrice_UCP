@@ -115,20 +115,32 @@ void MasterTime_Variable::computeCost(InstanceUCP* inst, const Parameters & Para
     cost = 0;
 
     int n = inst->getn() ;
-
-    for (int i=0 ; i < n ; i++) {
-        if (Param.powerPlanGivenByMu){
-            cost += Power_plan[i] * inst->getcp(i) ;
-            if (UpDown_plan[i] > 1 - Param.Epsilon){
-                cost += (1 - Param.costBalancing) * inst->getcf(i) ;
-                if (Param.PminOnLambda ) {
-                    cost -= Param.costBalancing * inst->getPmin(i) * inst->getcp(i) ;
+    if (Param.doubleDecompo){
+        for (int i=0 ; i < n ; i++) {
+            if (Param.powerPlanGivenByMu){
+                cost += Power_plan[i] * inst->getcp(i) ;
+                if (UpDown_plan[i] > 1 - Param.Epsilon){
+                    cost += (1 - Param.costBalancing) * inst->getcf(i) ;
+                    if (Param.PminOnLambda ) {
+                        cost -= Param.costBalancing * inst->getPmin(i) * inst->getcp(i) ;
+                    }
+                    if (Param.PmaxOnLambda ) {
+                        cost -= Param.costBalancing * inst->getPmax(i) * inst->getcp(i) ;
+                    } 
+                }
+            }
+            else {
+                if (UpDown_plan[i] > 1 - Param.Epsilon){
+                    cost += (1 - Param.costBalancing) * (inst->getcf(i) + inst->getPmax(i) * inst->getcp(i));
                 }
             }
         }
-        else {
+    }
+    else{
+        for (int i=0 ; i < n ; i++) {
             if (UpDown_plan[i] > 1 - Param.Epsilon){
-                cost += (1 - Param.costBalancing) * (inst->getcf(i) + inst->getPmax(i) * inst->getcp(i));
+                cost += inst->getcf(i) ;
+                cost += Power_plan[i] * inst->getcp(i) ;
             }
         }
     }
@@ -259,7 +271,7 @@ void MasterTime_Model::initMasterTimeVariable(SCIP* scip, MasterTime_Variable* v
      * due to the set partitioning constraints.
      */
 
-    // Dans ce cas le coûts est initialisé dès la déclaration de la variable
+    var->computeCost(inst, Param);
     double cost= var->cost;
     //cout << var_name << ", cost: " << cost << endl ;
 
@@ -308,6 +320,7 @@ void MasterTime_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p) {
         }
 
         MasterTime_Variable* lambda = new MasterTime_Variable(t, plan) ;
+        lambda->addPowerPlan(p);
         initMasterTimeVariable(scip, lambda);
 
         SCIPaddVar(scip, lambda->ptr);
@@ -665,11 +678,14 @@ void  MasterTime_Model::initScipMasterTimeModel(SCIP* scip) {
     for (int t = 0 ; t<T ; t++)
     {
         IloNumArray plan = IloNumArray(env, n) ;
+        IloNumArray powerplan = IloNumArray(env, n) ;
         for (int index=0 ; index < n ; index++) {
             plan[index]=1 ;
+            powerplan[index]=inst->getPmax(index);
         }
 
         MasterTime_Variable* lambda = new MasterTime_Variable(t, plan);
+        lambda->addPowerPlan(powerplan);
         initMasterTimeVariable(scip, lambda);
 
         SCIPaddVar(scip, lambda->ptr);

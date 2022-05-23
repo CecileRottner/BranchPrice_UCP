@@ -22,9 +22,12 @@ DynProgPricingAlgoTimePower::DynProgPricingAlgoTimePower(InstanceUCP* inst, Mast
     for (int i=0 ; i <n ; i++) {
         Table[i].resize(n*(Dt+1), 0) ;
         BaseObjCoefX.at(i) = (1 - Param.costBalancing) * inst->getcf(i) ;
-        /*if (par.PminOnLambda){
+        if (par.PminOnLambda){
             BaseObjCoefX.at(i) -= Param.costBalancing * inst->getcp(i) * inst->getPmin(i);
-        }*/
+        }
+        if (par.PmaxOnLambda){
+            BaseObjCoefX.at(i) -= Param.costBalancing * inst->getcp(i) * inst->getPmax(i);
+        }
         BaseObjCoefP.at(i) = inst->getcp(i) ;
     }
 
@@ -46,11 +49,12 @@ void DynProgPricingAlgoTimePower::updateObjCoefficients(InstanceUCP* inst, const
 
 
         ObjCoefX.at(i) = 0 ;
+        ObjCoefP.at(i) = 0 ;
 
         if (Param.doubleDecompo) {
             
             ObjCoefX.at(i) += Dual.Omega.at(i*T+time);
-            cout << "avant: " << ObjCoefX.at(0) << endl;
+
             if (Param.minUpDownDouble) {
                 if (time>0) {
                     ObjCoefX.at(i) += - Dual.Mu.at(i*T + time) ;
@@ -72,7 +76,6 @@ void DynProgPricingAlgoTimePower::updateObjCoefficients(InstanceUCP* inst, const
                 ObjCoefP.at(i) += BaseObjCoefP.at(i) ;
             }
 
-            cout << "apres: " << ObjCoefX.at(0) << endl;
         }
 
 
@@ -200,15 +203,33 @@ bool DynProgPricingAlgoTimePower::findImprovingSolution(InstanceUCP* inst, const
             }
         }
 
-    }
-
-    for (int i = 0 ; i < n ; i++) {
-        cout << Table[i].at(Dt) << endl;
         if ( Table[i].at( (n-1) *(Dt+1) + Dt) - Dual.Sigma[time] < objvalue - Param.Epsilon ){
             objvalue = Table[i].at( (n-1) *(Dt+1) + Dt) - Dual.Sigma[time] ;
             pivotUnit = i;
+            if (exact > 0.5){
+                if (objvalue < - Param.heurPricingThreshold * fabs(Dual.Sigma[time])){
+                    return true ;
+                }
+            }
         }
+
     }
+
+
+    /*
+    for (int i = 0 ; i < n ; i++) {
+        cout << "i: " << i << endl;
+        cout << endl;
+        for (int j = 0 ; j < n ; j++) {
+            cout << "j: " << j << endl;
+            for (int c = 0 ; c <= Dt  ; c++) {
+                cout << Table[i].at(j * (Dt+1) + c) << " " ;
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
+    */
 
     if (pivotUnit >= 0) {
         return true ;
@@ -229,8 +250,7 @@ void DynProgPricingAlgoTimePower::getUpDownPlan(InstanceUCP* inst, const DualCos
     int i = n - 1;
 
     int avantI = 0;
-
-    while (c > 0 && i > 0) {
+    while (c > 0 && i >= 0) {
 
         if (i == pivotUnit){
             avantI = 1;
@@ -259,11 +279,9 @@ void DynProgPricingAlgoTimePower::getUpDownPlan(InstanceUCP* inst, const DualCos
         
     }
 
-    if (i == 0) {
-        if (c > 0) {
-            UpDownPlan[pivotUnit] = 1 ;
-            PowerPlan[pivotUnit] = fmax(c, inst->getPmin(pivotUnit)) ;
-        }
+    if (c > 0) {
+        UpDownPlan[pivotUnit] = 1 ;
+        PowerPlan[pivotUnit] = fmax(c, inst->getPmin(pivotUnit)) ;
     }
 
 }

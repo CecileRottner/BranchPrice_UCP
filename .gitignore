@@ -4,3 +4,9 @@ Resultats/
 Divers/
 data/Thesis_data
 Scripts/
+plots/
+.vscode/
+*.lp
+logs/
+thresholds/moyennes/
+thresholds/*.csv
