@@ -653,26 +653,58 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
 void ObjPricerDouble::addVarBound(SCIP_ConsData* consdata) {
 
-       cout << "Enter addVarBound:" << endl;
+    int t = consdata->time ;
+    int i = consdata->unit ;
 
-       if (!Param.DynProg) {
-           AlgoCplex[consdata->site]->model.add(consdata->BranchConstraint) ;
-       }
-       else {
-           (AlgoDynProg_time[consdata->site])->branchingDecisions.at(consdata->time) = consdata->bound ;
-           cout << "for unit " << consdata->site << ", at time " << consdata->time <<", bound set to " << consdata->bound << endl ;
-           cout << "End addVarBound" << endl ;
-       }
+    cout << "Enter addVarBound:" << endl;
+
+    if (!Param.DynProg) {
+        AlgoCplex_site[consdata->site]->model.add(consdata->BranchConstraint) ;
+    }
+    else {
+        (AlgoDynProg_site[consdata->site])->branchingDecisions.at(t) = consdata->bound ;
+        cout << "for unit " << consdata->site << ", at time " << t <<", bound set to " << consdata->bound << endl ;
+        cout << "End addVarBound" << endl ;
+    }
+
+    if (AlgoDynProg_time.at(t) != NULL) {
+        if (consdata->bound == 0) {
+            if (!Param.powerPlanGivenByMu) {
+                (AlgoDynProg_time.at(t))->W -= inst->getPmax(i) ;
+            }
+            (AlgoDynProg_time.at(t))->init.at(i) = 0 ;
+        }
+        else {
+            (AlgoDynProg_time.at(t))->init.at(i) = 1 ;
+        }
+    }
+    else {
+        cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
+    }
 }
 
 void ObjPricerDouble::removeVarBound(SCIP_ConsData* consdata) {
 
-       if (!Param.DynProg) {
-           AlgoCplex[consdata->site]->model.remove(consdata->BranchConstraint) ;
-       }
-       else {
-           (AlgoDynProg_time[consdata->site])->branchingDecisions.at(consdata->time) = 8 ;
-       }
+    int t = consdata->time ;
+    int i = consdata->unit ;
+
+    if (!Param.DynProg) {
+        AlgoCplex_site[consdata->site]->model.remove(consdata->BranchConstraint) ;
+    }
+    else {
+        (AlgoDynProg_site[consdata->site])->branchingDecisions.at(t) = 8 ;
+    }
+
+    if (AlgoDynProg_time.at(t) != NULL) {
+        if (consdata->bound == 0 && !Param.powerPlanGivenByMu) {
+            (AlgoDynProg_time.at(t))->W += inst->getPmax(i) ;
+        }
+
+        (AlgoDynProg_time.at(t))->init.at(i) = -1 ;
+    }
+    else {
+        cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
+    }
 }
 
 
