@@ -659,7 +659,7 @@ void ObjPricerDouble::addVarBound(SCIP_ConsData* consdata) {
     cout << "Enter addVarBound:" << endl;
 
     if (!Param.DynProg) {
-        AlgoCplex_site[consdata->site]->model.add(consdata->BranchConstraint) ;
+        cout << "branchement non supporté pour sous-problèmes par unité résolus par Cplex en double décomposition" << endl;
     }
     else {
         (AlgoDynProg_site[consdata->site])->branchingDecisions.at(t) = consdata->bound ;
@@ -679,7 +679,9 @@ void ObjPricerDouble::addVarBound(SCIP_ConsData* consdata) {
         }
     }
     else {
-        cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
+        //cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
+        //vérifier avec Cécile que c'est bon
+        (AlgoCplex_time.at(t))->model.add(x[i] == consdata->bound);
     }
 }
 
@@ -689,7 +691,7 @@ void ObjPricerDouble::removeVarBound(SCIP_ConsData* consdata) {
     int i = consdata->unit ;
 
     if (!Param.DynProg) {
-        AlgoCplex_site[consdata->site]->model.remove(consdata->BranchConstraint) ;
+        cout << "branchement non supporté pour sous-problèmes par unité résolus par Cplex en double décomposition" << endl;
     }
     else {
         (AlgoDynProg_site[consdata->site])->branchingDecisions.at(t) = 8 ;
@@ -703,7 +705,9 @@ void ObjPricerDouble::removeVarBound(SCIP_ConsData* consdata) {
         (AlgoDynProg_time.at(t))->init.at(i) = -1 ;
     }
     else {
-        cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
+        //cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
+        //vérifier avec Cécile que c'est bon
+        (AlgoCplex_time.at(t))->model.remove(x[i] == consdata->bound);
     }
 }
 
