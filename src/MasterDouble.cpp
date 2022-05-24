@@ -59,7 +59,7 @@ void MasterDouble_Model::addCoefsToConstraints_siteVar(SCIP* scip, Master_Variab
 
 
                     if ( (lambda->UpDown_plan[i*T+k] > 1 - Param.Epsilon)  && (lambda->UpDown_plan[i*T+k-1] < Param.Epsilon) ) {
-                        SCIPaddCoefLinear(scip, min_up.at((first+i)*T+t), lambda->ptr, -1.0) ;                 
+                        SCIPaddCoefLinear(scip, min_up.at((first+i)*T+t), lambda->ptr, -1.0) ;
                     }
                 }
             }
@@ -68,7 +68,7 @@ void MasterDouble_Model::addCoefsToConstraints_siteVar(SCIP* scip, Master_Variab
             for (int t=l ; t < T ; t++) {
                 for (int k=t-l+1 ; k <= t ; k++) {
                     if ( (lambda->UpDown_plan[i*T+k] > 1 - Param.Epsilon)  && (lambda->UpDown_plan[i*T+k-1] < Param.Epsilon) ) {
-                        SCIPaddCoefLinear(scip, min_down.at((first+i)*T+t), lambda->ptr, 1.0) ;                    
+                        SCIPaddCoefLinear(scip, min_down.at((first+i)*T+t), lambda->ptr, 1.0) ;
                     }
                 }
             }
@@ -731,36 +731,53 @@ void MasterDouble_Model::discardVar(SCIP* scip, SCIP_ConsData* consdata) {
 
 //    /////On met à 0 les lambda incompatibles avec la contrainte
 
-//    consdata->L_var_bound.clear() ; // L_var_bound stocke les variables scip dont la borne a été effectivement changée (ie elle n'était pas déjà à 0)
+   consdata->L_var_bound.clear() ; // L_var_bound stocke les variables scip dont la borne a été effectivement changée (ie elle n'était pas déjà à 0)
 
-//    list<Master_Variable*>::const_iterator itv;
+   list<Master_Variable*>::const_iterator itv_site;
 
-//    for (itv = L_var.begin(); itv!=L_var.end(); itv++) {
-//        if ((*itv)->Site == consdata->site) {
-//            if ((*itv)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
+   for (itv_site = L_var_site.begin(); itv_site!=L_var_site.end(); itv_site++) {
+       if ((*itv_site)->Site == consdata->site) {
+           if ((*itv_site)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
 
-//                SCIP_Real old_bound =  SCIPgetVarUbAtIndex(scip, (*itv)->ptr, NULL, 0) ;
+               SCIP_Real old_bound =  SCIPgetVarUbAtIndex(scip, (*itv_site)->ptr, NULL, 0) ;
 
-//                ///  L_var_bound est mis à jour
-//                if (!SCIPisZero(scip,old_bound)) {
-//                    SCIPchgVarUbNode(scip, NULL, (*itv)->ptr, 0) ;
-//                    consdata->L_var_bound.push_back((*itv)->ptr) ;
-//                }
-//            }
-//        }
-//    }
+               ///  L_var_bound est mis à jour
+               if (!SCIPisZero(scip,old_bound)) {
+                   SCIPchgVarUbNode(scip, NULL, (*itv_site)->ptr, 0) ;
+                   consdata->L_var_bound.push_back((*itv_site)->ptr) ;
+               }
+           }
+       }
+   }
+
+   list<MasterTime_Variable*>::const_iterator itv_time;
+
+     for (itv_time = L_var_time.begin(); itv_time!=L_var_time.end(); itv_time++) {
+         if ((*itv_time)->time == consdata->time) {
+             if ((*itv_time)->UpDown_plan[consdata->unit] != consdata->bound ) {
+
+                 SCIP_Real old_bound =  SCIPgetVarUbAtIndex(scip, (*itv_time)->ptr, NULL, 0) ;
+
+                 ///  L_var_bound est mis à jour
+                 if (!SCIPisZero(scip,old_bound)) {
+                     SCIPchgVarUbNode(scip, NULL, (*itv_time)->ptr, 0) ;
+                     consdata->L_var_bound.push_back((*itv_time)->ptr) ;
+                 }
+             }
+         }
+     }
 }
 
 void MasterDouble_Model::restoreVar(SCIP* scip, SCIP_ConsData* consdata) {
 
-//    ////On remet à +inf les lambda qui étaient incompatibles avec la contrainte de branchement
+   ////On remet à +inf les lambda qui étaient incompatibles avec la contrainte de branchement
 
-//    list<SCIP_VAR*>::const_iterator itv;
+   list<SCIP_VAR*>::const_iterator itv;
 
-//    for (itv = consdata->L_var_bound.begin(); itv!=consdata->L_var_bound.end(); itv++) {
-//        SCIPchgVarUbNode(scip, NULL, (*itv), SCIPinfinity(scip)) ;
-//    }
-//    consdata->L_var_bound.clear() ;
+   for (itv = consdata->L_var_bound.begin(); itv!=consdata->L_var_bound.end(); itv++) {
+       SCIPchgVarUbNode(scip, NULL, (*itv), SCIPinfinity(scip)) ;
+   }
+    consdata->L_var_bound.clear() ;
 
 }
 

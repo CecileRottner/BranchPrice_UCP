@@ -734,7 +734,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
         DynProgTime=false ;
         minUpDownDouble = 0;
-        UnitGEQTime=1 ;
+        //UnitGEQTime=1 ;
         PminOnLambda = true;
         PminDifferentPmax = true;
 

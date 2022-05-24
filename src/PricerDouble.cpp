@@ -545,6 +545,13 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
         if (!Param.DynProgTime) {
             cout << "début updateobjcoeff" << endl;
             (AlgoCplex_time.at(t))->updateObjCoefficients(inst, Param, dual_cost_time, Farkas) ;
+            if(t == 0 && Master->nbIter == 2){
+                (AlgoCplex_time.at(t))->cplex.exportModel( ( std::to_string(Param.PminDifferentPmax) + "_bug.lp" ).c_str() );
+                for (int i=0 ; i<n ; i++) {
+                    cout << "i:" << i << endl;
+                    cout << dual_cost_time.Omega.at(i*T+t) << endl;
+                }
+            }
         }
         else {
             cout << "début updateobjcoeff" << endl;
@@ -646,26 +653,26 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
 void ObjPricerDouble::addVarBound(SCIP_ConsData* consdata) {
 
-    //    cout << "Enter addVarBound:" << endl;
+       cout << "Enter addVarBound:" << endl;
 
-    //    if (!Param.DynProg) {
-    //        AlgoCplex[consdata->site]->model.add(consdata->BranchConstraint) ;
-    //    }
-    //    else {
-    //        (AlgoDynProg_time[consdata->site])->branchingDecisions.at(consdata->time) = consdata->bound ;
-    //        cout << "for unit " << consdata->site << ", at time " << consdata->time <<", bound set to " << consdata->bound << endl ;
-    //        cout << "End addVarBound" << endl ;
-    //    }
+       if (!Param.DynProg) {
+           AlgoCplex[consdata->site]->model.add(consdata->BranchConstraint) ;
+       }
+       else {
+           (AlgoDynProg_time[consdata->site])->branchingDecisions.at(consdata->time) = consdata->bound ;
+           cout << "for unit " << consdata->site << ", at time " << consdata->time <<", bound set to " << consdata->bound << endl ;
+           cout << "End addVarBound" << endl ;
+       }
 }
 
 void ObjPricerDouble::removeVarBound(SCIP_ConsData* consdata) {
 
-    //    if (!Param.DynProg) {
-    //        AlgoCplex[consdata->site]->model.remove(consdata->BranchConstraint) ;
-    //    }
-    //    else {
-    //        (AlgoDynProg_time[consdata->site])->branchingDecisions.at(consdata->time) = 8 ;
-    //    }
+       if (!Param.DynProg) {
+           AlgoCplex[consdata->site]->model.remove(consdata->BranchConstraint) ;
+       }
+       else {
+           (AlgoDynProg_time[consdata->site])->branchingDecisions.at(consdata->time) = 8 ;
+       }
 }
 
 
