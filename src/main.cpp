@@ -375,47 +375,63 @@ int main(int argc, char** argv)
 
     ///// AFFICHAGE BRANCH AND PRICE
     if (param.ColumnGeneration) {
+        if (param.nodeLimit == 1){
+            //checker.getIntegerObjValue();
+            //checker.useLowBound(SCIPgetDualbound(scip));
 
-        //checker.getIntegerObjValue();
-        //checker.useLowBound(SCIPgetDualbound(scip));
+            //fichier << " &  " << SCIPgetNNodes(scip) ;
+            if (param.IntervalUpSet) {
+                fichier << " & " << Master_ptr->nbIntUpSet ;
+            }
+            else {
+                fichier << " & - "  ;
+            }
+            fichier << " &  " << Master_ptr->nbIter ;
+            fichier << " & " << SCIPgetNPricevarsFound(scip) ;
 
-        //fichier << " &  " << SCIPgetNNodes(scip) ;
-        if (param.IntervalUpSet) {
-            fichier << " & " << Master_ptr->nbIntUpSet ;
+            fichier << " & " << Pricer->unitColumns ; // RL CPLEX
+            fichier << " & " << Pricer->timeColumns ; // RL CPLEX
+            //fichier << " &  " << SCIPgetNNodes(scip) ;
+            // fichier << " & " << Master_ptr->cumul_resolution_pricing ;
+
+            //    if (param.TimeStepDec && !param.DynProgTime) {
+            //        fichier << " & " << pricerTime->nbCallsToCplex ;
+            //        fichier << " & " << MasterTime.cumul_resolution_pricing ;
+            //    }
+
+
+
+            double timeScip =  SCIPgetSolvingTime(scip) ;
+            fichier << " &  " << timeScip;
+            fichier << " & " <<  timeScip - SCIPpricerGetTime(scippricer[0]); // MASTER TIME
+            //fichier << " & " << temps_scip  ;
+            fichier << " &  " << SCIPgetGap(scip);
+            // fichier << " &  " << SCIPgetDualboundRoot(scip) ;
+            if (met==100) {
+            fichier << " &  " << SCIPgetPrimalbound(scip) ;
+            }
+            else {
+            fichier << " &  " << SCIPgetDualbound(scip) ;
+            fichier << " &  " << SCIPgetPrimalbound(scip) ;
+            fichier << " & " << checker.getLRValue() ; // RL*/
+            fichier << " & " << checker.getLRCplex() ; // RL CPLEX
+            SCIPprintSol(scip, SCIPgetBestSol(scip), NULL, FALSE);
+            }
         }
-        else {
-            fichier << " & - "  ;
-        }
-        fichier << " &  " << Master_ptr->nbIter ;
-        fichier << " & " << SCIPgetNPricevarsFound(scip) ;
 
-        fichier << " & " << Pricer->unitColumns ; // RL CPLEX
-        fichier << " & " << Pricer->timeColumns ; // RL CPLEX
-        //fichier << " &  " << SCIPgetNNodes(scip) ;
-        // fichier << " & " << Master_ptr->cumul_resolution_pricing ;
+        else{
+            fichier << " &  " << SCIPgetNNodes(scip) ;
+            double timeScip =  SCIPgetSolvingTime(scip) ;
+            fichier << " &  " << timeScip;
+            fichier << " & " <<  timeScip - SCIPpricerGetTime(scippricer[0]); // MASTER TIME
+            fichier << " &  " << SCIPgetDualbound(scip) ;
+            fichier << " &  " << SCIPgetPrimalbound(scip) ;
 
-        //    if (param.TimeStepDec && !param.DynProgTime) {
-        //        fichier << " & " << pricerTime->nbCallsToCplex ;
-        //        fichier << " & " << MasterTime.cumul_resolution_pricing ;
-        //    }
-
-
-
-        double timeScip =  SCIPgetSolvingTime(scip) ;
-        fichier << " &  " << timeScip;
-        fichier << " & " <<  timeScip - SCIPpricerGetTime(scippricer[0]); // MASTER TIME
-        //fichier << " & " << temps_scip  ;
-        fichier << " &  " << SCIPgetGap(scip);
-        // fichier << " &  " << SCIPgetDualboundRoot(scip) ;
-        if (met==100) {
-        fichier << " &  " << SCIPgetPrimalbound(scip) ;
-        }
-        else {
-        fichier << " &  " << SCIPgetDualbound(scip) ;
-        fichier << " &  " << SCIPgetPrimalbound(scip) ;
-        fichier << " & " << checker.getLRValue() ; // RL*/
-        fichier << " & " << checker.getLRCplex() ; // RL CPLEX
-        SCIPprintSol(scip, SCIPgetBestSol(scip), NULL, FALSE);
+            checker.getIntegerObjValue();
+            fichier << " & " << checker.DualBound ;
+            fichier << " & " << checker.nbNodes ;
+            fichier << " & " << checker.cpuTime ;
+            fichier << " & " << checker.gap ;
         }
 
        // fichier << " &  " << SCIPgetPrimalbound(scip) ;

@@ -829,6 +829,15 @@ void MasterDouble_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p)
         }
 
         MasterTime_Variable* lambda = new MasterTime_Variable(t, plan) ;
+
+        if (Param.powerPlanGivenByMu){
+            IloNumArray powerPlan = IloNumArray(env, n) ;
+            for (int i=0 ; i < n ; i++) {
+                powerPlan[i] = p[i*T+t];
+            }
+            lambda->addPowerPlan(powerPlan);
+        }
+
         initMasterTimeVariable(scip, lambda);
 
         SCIPaddVar(scip, lambda->ptr);

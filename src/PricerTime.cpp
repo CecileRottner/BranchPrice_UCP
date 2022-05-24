@@ -528,7 +528,7 @@ void ObjPricerTimeUCP::addVarBound(SCIP_ConsData* consdata) {
     else {
         //cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
         //vérifier avec Cécile que c'est bon
-        (AlgoCplex_time.at(t))->model.add(x[i] == consdata->bound);
+        (AlgoCplex.at(t))->model.add((AlgoCplex.at(t))->x[i] == consdata->bound);
     }
 }
 
@@ -547,7 +547,7 @@ void ObjPricerTimeUCP::removeVarBound(SCIP_ConsData* consdata) {
     else {
         //cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
         //vérifier avec Cécile que c'est bon
-        (AlgoCplex_time.at(t))->model.remove(x[i] == consdata->bound);
+        (AlgoCplex.at(t))->model.remove((AlgoCplex.at(t))->x[i] == consdata->bound);
     }
 }
 

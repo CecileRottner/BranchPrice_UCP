@@ -450,6 +450,25 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         costBalancing = 1;
     }
 
+    if (met== 501) {
+        heuristicInit=1 ;
+
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=true ;
+        minUpDownDouble = 0;
+        UnitGEQTime=1 ;
+        PminOnLambda = true;
+
+        costBalancing = 1;
+    }
+
     if (met== 3011) {
         doubleDecompo =true ;
         node_limit=1 ;
