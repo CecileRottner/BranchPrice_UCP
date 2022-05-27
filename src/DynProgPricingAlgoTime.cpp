@@ -111,8 +111,6 @@ void DynProgPricingAlgoTimeNoPower::updateObjCoefficients(InstanceUCP* inst, con
         }
     }
 
-    cout << Master->nbIntUpSet << endl;
-
     //// ajouts des couts duaux des interval up-set ////
 
     if (Master->nbIntUpSet>0) {
@@ -169,7 +167,14 @@ bool DynProgPricingAlgoTimeNoPower::findImprovingSolution(InstanceUCP* inst, con
     for (int i=0 ; i <n ; i++) {
         SumCosts += ObjCoefX.at(i) ;
     }
-    objvalue = SumCosts - Table.at(n*(W+1)+W) - extraKPCost - Dual.Sigma[time] ;
+
+    if (W >= 0){
+        objvalue = SumCosts - Table.at(n*(W+1)+W) - extraKPCost - Dual.Sigma[time] ;
+    }
+    else{
+        return false ;
+    }
+
     if (objvalue < - Param.Epsilon) {
         return true ;
     }
@@ -212,7 +217,5 @@ void DynProgPricingAlgoTimeNoPower::getUpDownPlan(InstanceUCP* inst, const DualC
             totalProd -= inst->getPmax(i) ;
         }
     }
-    cout << "prod: " << totalProd << endl;
-    cout << "cost: " << realCost << endl;
 
 }

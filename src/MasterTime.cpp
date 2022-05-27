@@ -131,7 +131,13 @@ void MasterTime_Variable::computeCost(InstanceUCP* inst, const Parameters & Para
             }
             else {
                 if (UpDown_plan[i] > 1 - Param.Epsilon){
-                    cost += (1 - Param.costBalancing) * (inst->getcf(i) + inst->getPmax(i) * inst->getcp(i));
+                    cost += (1 - Param.costBalancing) * inst->getcf(i) ;
+                    if (Param.PminOnLambda ) {
+                        cost += (1 - Param.costBalancing) * inst->getPmin(i) * inst->getcp(i) ;
+                    }
+                    if (Param.PmaxOnLambda ) {
+                        cost += (1 - Param.costBalancing) * inst->getPmax(i) * inst->getcp(i) ;
+                    }
                 }
             }
         }

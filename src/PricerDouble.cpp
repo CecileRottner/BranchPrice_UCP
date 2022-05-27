@@ -277,6 +277,16 @@ void ObjPricerDouble::updateDualCosts_site(SCIP* scip, DualCosts & dual_cost, bo
                     cout << "nu(" << i <<"," << t <<") = " << dual_cost.Nu.at(i*T+t) <<endl;
             }
         }
+        //couts duaux demande
+        for (int t = 0 ; t < T ; t++) {
+            if (!Farkas) {
+                dual_cost.Mu[t] = SCIPgetDualsolLinear(scip, Master->demand_cstr[t]);
+            }
+            else{
+                dual_cost.Mu[t] = SCIPgetDualfarkasLinear(scip, Master->demand_cstr[t]);
+            }
+            if (print) cout << "mu: " << dual_cost.Mu[t] <<endl;
+        }
     }
 
     //couts duaux intrasite
@@ -672,7 +682,7 @@ void ObjPricerDouble::addVarBound(SCIP_ConsData* consdata) {
             if (!Param.powerPlanGivenByMu) {
                 (AlgoDynProg_time.at(t))->W -= inst->getPmax(i) ;
             }
-            (AlgoDynProg_time.at(t))->init.at(i) = 0 ;
+            (AlgoDynProg_time.at(t))->init.at(i) = 0 ; 
         }
         else {
             (AlgoDynProg_time.at(t))->init.at(i) = 1 ;

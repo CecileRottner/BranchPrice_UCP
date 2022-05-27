@@ -413,7 +413,7 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
                     SCIPaddVar(scip, var);
 
                     /* add coefficient to the demand constraint */
-                    SCIPaddCoefLinear(scip, demand_cstr[t], var, 1.0);
+                    //SCIPaddCoefLinear(scip, demand_cstr[t], var, 1.0);
 
                     /* add coefficient to the power limit constraint */
                     SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);

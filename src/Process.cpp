@@ -357,12 +357,13 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         TimeStepDec = true ;
         DynProgTime = true ;
         heuristicInit=1 ;
+        node_limit=1 ;
     }
 
     if (met == 201) {
         TimeStepDec = true ;
         DynProgTime = true ;
-        node_limit=1 ;
+        //node_limit=1 ;
     }
 
     if (met == 2011) {
@@ -420,7 +421,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
     if (met== 300) {
         doubleDecompo =true ;
-        node_limit=1 ;
+        //node_limit=1 ;
 
         IntraSite=0 ;
 
@@ -435,7 +436,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
     if (met== 301) {
         doubleDecompo =true ;
-        node_limit=1 ;
+        //node_limit=1 ;
 
         IntraSite=0 ;
 
@@ -602,7 +603,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
     if (met== 3015) {
         doubleDecompo =true ;
-        node_limit=1 ;
+        //node_limit=1 ;
 
         IntraSite=0 ;
 
@@ -706,7 +707,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
     if (met== 4013) {
         doubleDecompo =true ;
-        node_limit=1 ;
+        //node_limit=1 ;
 
         IntraSite=0 ;
 

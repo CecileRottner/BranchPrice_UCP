@@ -85,7 +85,9 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
                     }
                 }
                 if (!Param.powerPlanGivenByMu && Param.PminDifferentPmax){
-                    ObjCoefX.at(i*T+t) += - Nu.at(i*T+t) * (inst->getPmax(i) - inst->getPmin(i));
+                    ObjCoefX.at(i*T+t) += - inst->getPmin(i)*Mu[t] - (inst->getPmax(i) - inst->getPmin(i))*Nu[(i)*T+t] ;
+                    cout << "mu " << Mu[t] << endl;
+                    cout << "nu " << Nu[(i)*T+t] << endl;
                 }
             }
 
