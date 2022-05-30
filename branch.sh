@@ -24,8 +24,8 @@ UseIntraCons=1
 demand_type=3
 
 for n in 10 ; do
-  for T in 10 ; do
-    for id in 1 2 3 ; do
+  for T in 24 ; do
+    for id in 1 2 3 4 5 6 7 8 9 10 ; do
       for met in 301 ; do
         rm logs/$met.txt
         rm colonnes.csv

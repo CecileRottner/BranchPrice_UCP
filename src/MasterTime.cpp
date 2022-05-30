@@ -120,23 +120,23 @@ void MasterTime_Variable::computeCost(InstanceUCP* inst, const Parameters & Para
             if (Param.powerPlanGivenByMu){
                 cost += Power_plan[i] * inst->getcp(i) ;
                 if (UpDown_plan[i] > 1 - Param.Epsilon){
-                    cost += (1 - Param.costBalancing) * inst->getcf(i) ;
+                    cost += (1 - Param.costBalancing.at(i)) * inst->getcf(i) ;
                     if (Param.PminOnLambda ) {
-                        cost -= Param.costBalancing * inst->getPmin(i) * inst->getcp(i) ;
+                        cost -= Param.costBalancing.at(i) * inst->getPmin(i) * inst->getcp(i) ;
                     }
                     if (Param.PmaxOnLambda ) {
-                        cost -= Param.costBalancing * inst->getPmax(i) * inst->getcp(i) ;
+                        cost -= Param.costBalancing.at(i) * inst->getPmax(i) * inst->getcp(i) ;
                     } 
                 }
             }
             else {
                 if (UpDown_plan[i] > 1 - Param.Epsilon){
-                    cost += (1 - Param.costBalancing) * inst->getcf(i) ;
+                    cost += (1 - Param.costBalancing.at(i)) * inst->getcf(i) ;
                     if (Param.PminOnLambda ) {
-                        cost += (1 - Param.costBalancing) * inst->getPmin(i) * inst->getcp(i) ;
+                        cost += (1 - Param.costBalancing.at(i)) * inst->getPmin(i) * inst->getcp(i) ;
                     }
                     if (Param.PmaxOnLambda ) {
-                        cost += (1 - Param.costBalancing) * inst->getPmax(i) * inst->getcp(i) ;
+                        cost += (1 - Param.costBalancing.at(i)) * inst->getPmax(i) * inst->getcp(i) ;
                     }
                 }
             }

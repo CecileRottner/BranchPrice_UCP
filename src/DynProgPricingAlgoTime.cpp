@@ -59,7 +59,7 @@ void DynProgPricingAlgoTimeNoPower::updateObjCoefficients(InstanceUCP* inst, con
             }
             
             if (!Farkas) {
-                ObjCoefX.at(i) += (1 - Param.costBalancing) * BaseObjCoefX.at(i) ;
+                ObjCoefX.at(i) += (1 - Param.costBalancing.at(i)) * BaseObjCoefX.at(i) ;
             }
 
         }

@@ -10,6 +10,7 @@
 #include <math.h>
 #include <ctime>
 #include <list>
+#include <vector>
 
 #include "InstanceUCP.h"
 using namespace std ;
@@ -45,7 +46,7 @@ public:
     bool PmaxOnLambda;
     bool heurPricingTime;
     double heurPricingThreshold;
-    double costBalancing;
+    vector<double> costBalancing;
     bool PminDifferentPmax;
     bool rampInMaster;
     bool rampInSubPb ;
@@ -73,7 +74,7 @@ public:
                bool dont, bool h_init, bool dontgetpvalue, bool one,
                bool addColumn, bool dptime, bool dp, bool pandb,
                bool unitdecomp, bool startupdec, bool useSSBISub,
-               bool PowerPlanGivenByLambda, bool PowerPlanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool heurPricingTime, double heurPricingThreshold, double CostBalancing, bool PminDifferentPmax, bool rampMaster, bool rampSubpb,
+               bool PowerPlanGivenByLambda, bool PowerPlanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool heurPricingTime, double heurPricingThreshold, bool PminDifferentPmax, bool rampMaster, bool rampSubpb,
                bool masterSSBI, bool doubleDecompo, bool RSUonly, bool minUpDownDouble,
                bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost) ;
 

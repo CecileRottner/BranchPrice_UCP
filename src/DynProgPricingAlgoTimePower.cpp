@@ -21,12 +21,12 @@ DynProgPricingAlgoTimePower::DynProgPricingAlgoTimePower(InstanceUCP* inst, Mast
 
     for (int i=0 ; i <n ; i++) {
         Table[i].resize(n*(Dt+1), 0) ;
-        BaseObjCoefX.at(i) = (1 - Param.costBalancing) * inst->getcf(i) ;
+        BaseObjCoefX.at(i) = (1 - Param.costBalancing.at(i)) * inst->getcf(i) ;
         if (par.PminOnLambda){
-            BaseObjCoefX.at(i) -= Param.costBalancing * inst->getcp(i) * inst->getPmin(i);
+            BaseObjCoefX.at(i) -= Param.costBalancing.at(i) * inst->getcp(i) * inst->getPmin(i);
         }
         if (par.PmaxOnLambda){
-            BaseObjCoefX.at(i) -= Param.costBalancing * inst->getcp(i) * inst->getPmax(i);
+            BaseObjCoefX.at(i) -= Param.costBalancing.at(i) * inst->getcp(i) * inst->getPmax(i);
         }
         BaseObjCoefP.at(i) = inst->getcp(i) ;
     }

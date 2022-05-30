@@ -25,8 +25,8 @@ demand_type=3
 
 for n in 10 ; do
   for T in 10 ; do
-    for id in 2 ; do
-      for met in 300 3014 ; do
+    for id in 1 2 3 ; do
+      for met in 300 3011 3012 3013 3014 ; do
         rm logs/$met.txt
         rm colonnes.csv
         ./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dossier $n $T 1 $demand_type $sym $cat01 $intra $id $met $UseIntraCons >> logs/$met.txt

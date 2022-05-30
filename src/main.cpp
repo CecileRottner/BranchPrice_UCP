@@ -516,7 +516,7 @@ int main(int argc, char** argv)
         fichier <<" \\\\ " << endl ;
     }
 
-
+        cout << "unitgeqtime: " << param.unitGEQTime << endl;
 
 //    ////// AFFICHAGE PRICE AND BRANCH
 //    if (param.ColumnGeneration) {

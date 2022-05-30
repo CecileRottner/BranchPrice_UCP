@@ -146,7 +146,7 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
 
             if (!Farkas) {
                 ObjCoefU.at(i*T+t) += inst->getc0(i) ;
-                ObjCoefX.at(i*T+t) += Param.costBalancing * BaseObjCoefX.at(i) ;
+                ObjCoefX.at(i*T+t) += Param.costBalancing.at(i) * BaseObjCoefX.at(i) ;
                 ObjCoefP.at(i*T+t) += inst->getcp(i) ;
             }
 
