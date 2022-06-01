@@ -58,7 +58,7 @@ public:
     bool useUVar ;
     bool DynProgSUSD;
     bool nonLinearStartUpCost ;
-
+    bool Farkas ;
 
     /// Sites (ou groupes) définis par Param: groupes d'unités de la décomposition (correspondant à des sousproblème)
     /// Sites définis dans inst: sites sur lesquels vaut la contrainte d'intrasite
@@ -76,7 +76,7 @@ public:
                bool unitdecomp, bool startupdec, bool useSSBISub,
                bool PowerPlanGivenByLambda, bool PowerPlanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool heurPricingTime, double heurPricingThreshold, bool PminDifferentPmax, bool rampMaster, bool rampSubpb,
                bool masterSSBI, bool doubleDecompo, bool RSUonly, bool minUpDownDouble,
-               bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost) ;
+               bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost, bool Farkas) ;
 
     int nbUnits(int s) const ;
 

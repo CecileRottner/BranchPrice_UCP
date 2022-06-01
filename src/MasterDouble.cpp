@@ -639,35 +639,35 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
 
     L_var_site.clear();
 
-
-    for (int s=0 ; s<S; s++)
-    {
-        //cout << "s:" << s << endl ;
-        IloNumArray plan = IloNumArray(env, Param.nbUnits(s)*T) ;
-        for (int index=0 ; index < Param.nbUnits(s)*T ; index++) {
-            plan[index]=1 ;
-        }
-
-        int first = Param.firstUnit(s);
-        //cout << "first = " << first << endl;
-        Master_Variable* lambda = new Master_Variable(s, plan);
-        if (Param.powerPlanGivenByLambda) {
-            IloNumArray powerPlan = IloNumArray(env, Param.nbUnits(s)*T) ;
-            for (int i=0 ; i< Param.nbUnits(s) ; i++) {
-                for (int t=0 ; t < T ; t++) {
-                    powerPlan[i*T + t]= inst->getPmax(first+i) -  inst->getPmin(first+i);
-                }
+    if (!Param.Farkas){
+        for (int s=0 ; s<S; s++)
+        {
+            //cout << "s:" << s << endl ;
+            IloNumArray plan = IloNumArray(env, Param.nbUnits(s)*T) ;
+            for (int index=0 ; index < Param.nbUnits(s)*T ; index++) {
+                plan[index]=1 ;
             }
-            lambda->addPowerPlan(powerPlan);
+
+            int first = Param.firstUnit(s);
+            //cout << "first = " << first << endl;
+            Master_Variable* lambda = new Master_Variable(s, plan);
+            if (Param.powerPlanGivenByLambda) {
+                IloNumArray powerPlan = IloNumArray(env, Param.nbUnits(s)*T) ;
+                for (int i=0 ; i< Param.nbUnits(s) ; i++) {
+                    for (int t=0 ; t < T ; t++) {
+                        powerPlan[i*T + t]= inst->getPmax(first+i) -  inst->getPmin(first+i);
+                    }
+                }
+                lambda->addPowerPlan(powerPlan);
+            }
+
+            initMasterSiteVariable(scip, inst, lambda);
+            SCIPaddVar(scip, lambda->ptr);
+            addCoefsToConstraints_siteVar(scip, lambda, inst) ;
         }
 
-        initMasterSiteVariable(scip, inst, lambda);
-        SCIPaddVar(scip, lambda->ptr);
-        addCoefsToConstraints_siteVar(scip, lambda, inst) ;
+        cout << "site vars created" << endl;
     }
-
-    cout << "site vars created" << endl;
-
 
     ///////////////////////////////////////////////////////////////
     //////////   TIME LAMBDA VARIABLES INITIALIZATION   /////////
@@ -677,27 +677,28 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
 
     L_var_time.clear();
 
-    for (int t = 0 ; t<T ; t++)
-    {
-        IloNumArray plan = IloNumArray(env, n) ;
-        for (int index=0 ; index < n ; index++) {
-            plan[index]=1 ;
-        }
-        MasterTime_Variable* lambda = new MasterTime_Variable(t, plan);
-        if (Param.powerPlanGivenByMu) {
-            IloNumArray powerPlan = IloNumArray(env, n) ;
-            for (int i=0 ; i < n ; i++) {
-                powerPlan[i] = inst->getPmax(i);
+    if (!Param.Farkas){
+        for (int t = 0 ; t<T ; t++)
+        {
+            IloNumArray plan = IloNumArray(env, n) ;
+            for (int index=0 ; index < n ; index++) {
+                plan[index]=1 ;
             }
-            lambda->addPowerPlan(powerPlan);
+            MasterTime_Variable* lambda = new MasterTime_Variable(t, plan);
+            if (Param.powerPlanGivenByMu) {
+                IloNumArray powerPlan = IloNumArray(env, n) ;
+                for (int i=0 ; i < n ; i++) {
+                    powerPlan[i] = inst->getPmax(i);
+                }
+                lambda->addPowerPlan(powerPlan);
+            }
+            initMasterTimeVariable(scip, lambda);
+
+            SCIPaddVar(scip, lambda->ptr);
+
+            addCoefsToConstraints_timeVar(scip, lambda) ;
         }
-        initMasterTimeVariable(scip, lambda);
-
-        SCIPaddVar(scip, lambda->ptr);
-
-        addCoefsToConstraints_timeVar(scip, lambda) ;
     }
-
 
 }
 
@@ -833,7 +834,7 @@ void MasterDouble_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p)
         if (Param.powerPlanGivenByMu){
             IloNumArray powerPlan = IloNumArray(env, n) ;
             for (int i=0 ; i < n ; i++) {
-                powerPlan[i] = p[i*T+t];
+                powerPlan[i] = p[i*T+t] + inst->getPmin(i);
             }
             lambda->addPowerPlan(powerPlan);
         }
