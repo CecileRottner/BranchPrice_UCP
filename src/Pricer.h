@@ -176,7 +176,7 @@ public:
     vector<CplexPricingAlgoTime*> AlgoCplex_time;
     vector<DynProgPricingAlgoTime*> AlgoDynProg_time;
 
-
+    int lastTimeStep;
 
     int iteration;
    /** Constructs the pricer object with the data needed */

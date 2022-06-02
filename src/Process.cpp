@@ -87,7 +87,7 @@ Parameters::Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, 
                        bool unitdecomp, bool startupdec, bool useSSBISub,
                        bool PowerplanGivenByLambda, bool PowerplanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool heurPricingTime, double heurPricingThreshold, bool PminDifferentPmax, bool rampmaster, bool rampsub,
                        bool ssbi, bool doubledec, bool rsu, bool minupdowndouble,
-                       bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost, bool Farkas) :
+                       bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost, bool Farkas, bool stopFirstSite, bool stopFirstTime, bool oneRoundTime) :
     ColumnGeneration(ColumnGeneration),
     nodeLimit(nodeLimit),
     IP(ip),
@@ -126,7 +126,10 @@ Parameters::Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, 
     useUVar(useuvar),
     DynProgSUSD(dpsusd),
     nonLinearStartUpCost(nlsucost),
-    Farkas(Farkas)
+    Farkas(Farkas),
+    stopFirstSite(stopFirstSite),
+    stopFirstTime(stopFirstTime),
+    oneRoundTime(oneRoundTime)
 {
 
 
@@ -175,23 +178,17 @@ Parameters::Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, 
         if (unitGEQTime && powerPlanGivenByMu){
             for (int i=0 ; i < n ; i++) {
                 if (PmaxOnLambda){
-                    // costBalancing.at(i) = fmax( 
-                            //(inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)), 
-                    //         inst->getc0(i) / (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) 
-                    //     ) 
-                    // );
                     costBalancing.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) ;
                 }
                 else if (PminOnLambda){
-                    //costBalancing.at(i) = fmax(inst->getc0(i) / (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) , 1);
+                    //costBalancing stays at 1
                 }
                 else {
-                    //costBalancing.at(i) = fmax( inst->getc0(i) / inst->getcf(i) , 1 + inst->getcp(i) * inst->getPmin(i) / inst->getcf(i) );
                     costBalancing.at(i) = 1 + inst->getcp(i) * inst->getPmin(i) / inst->getcf(i) ;
                 }
             }
         }
-        else if (powerPlanGivenByMu || !unitGEQTime) {
+        if (!unitGEQTime) {
             for (int i=0 ; i < n ; i++) {
                 if (PmaxOnLambda){
                     costBalancing.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );
@@ -313,6 +310,9 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
     bool OneTimeStepPerIter = 0;
     bool addColumnToOtherTimeSteps = 0 ;
     ////////////////////////////////////////////////////////////////
+    bool stopFirstSite = false ;
+    bool stopFirstTime = false ;
+    bool oneRoundTime = false ;
 
     bool Farkas = false ;
 
@@ -487,24 +487,6 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         //heuristicInit = true ;
     }
 
-    if (met== 501) {
-        heuristicInit=1 ;
-
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = true;
-
-    }
-
     if (met== 3011) {
         doubleDecompo =true ;
         node_limit=1 ;
@@ -519,6 +501,26 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         UnitGEQTime=1 ;
         PminOnLambda = true;
 
+        heuristicInit = true;
+    }
+
+    if (met== 30111) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=true ;
+        minUpDownDouble = 0;
+        UnitGEQTime=1 ;
+        PminOnLambda = true;
+
+        //heuristicInit = true;
+
+        oneRoundTime = true;
     }
 
     if (met== 3012) {
@@ -537,7 +539,33 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         PminOnLambda = false;
         PminDifferentPmax = true;
 
-    }       
+    }    
+
+    if (met== 30121) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=true ;
+        powerPlanGivenByMu=true;
+        minUpDownDouble = 0;
+        UnitGEQTime=1 ;
+        PminOnLambda = false;
+        PminDifferentPmax = true;
+
+        heuristicInit = true;
+
+        //Farkas = true ;
+
+        // stopFirstSite = true;
+        // stopFirstTime = true;
+        //OneTimeStepPerIter = true;
+        oneRoundTime = true;
+    }      
 
     if (met== 3013) {
         doubleDecompo =true ;
@@ -618,11 +646,10 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         UnitDecompo=true;
         DynProg=1 ;
 
-        DynProgTime=false ;
+        DynProgTime=true ;
         minUpDownDouble = 0;
-        UnitGEQTime=1 ;
+        UnitGEQTime=0 ;
         PminOnLambda = true;
-
     }
 
     if (met== 4011) {
@@ -634,11 +661,12 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         UnitDecompo=true;
         DynProg=1 ;
 
-        DynProgTime=false ;
+        DynProgTime=true ;
         minUpDownDouble = 0;
-        UnitGEQTime=1 ;
+        UnitGEQTime=0 ;
         PminOnLambda = true;
 
+        oneRoundTime = true ;
     }
 
     if (met== 4012) {
@@ -653,7 +681,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         DynProgTime=false ;
         powerPlanGivenByMu=true;
         minUpDownDouble = 0;
-        UnitGEQTime=1 ;
+        //UnitGEQTime=1 ;
         PminOnLambda = false;
         PminDifferentPmax = true;
 
@@ -674,7 +702,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         DynProgTime=false ;
         powerPlanGivenByMu=true;
         minUpDownDouble = 0;
-        UnitGEQTime=1 ;
+        //UnitGEQTime=1 ;
         PminOnLambda = true;
         PminDifferentPmax = true;
 
@@ -695,7 +723,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         DynProgTime=false ;
         powerPlanGivenByMu=true;
         minUpDownDouble = 0;
-        UnitGEQTime=1 ;
+        //UnitGEQTime=1 ;
         PmaxOnLambda = true;
         PminDifferentPmax = true;
 
@@ -720,6 +748,69 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         PminDifferentPmax = true;
 
     }     
+
+    if (met== 5012) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=true ;
+        powerPlanGivenByMu=true;
+        minUpDownDouble = 0;
+        //UnitGEQTime=1 ;
+        PminOnLambda = false;
+        PminDifferentPmax = true;
+
+        heuristicInit = true;
+
+        //Farkas = true ;
+    }     
+
+    if (met== 5013) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=true ;
+        powerPlanGivenByMu=true;
+        minUpDownDouble = 0;
+        //UnitGEQTime=1 ;
+        PminOnLambda = true;
+        PminDifferentPmax = true;
+
+        heuristicInit = true;
+
+        //Farkas = true ;
+    }    
+
+    if (met== 5014) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=true ;
+        powerPlanGivenByMu=true;
+        minUpDownDouble = 0;
+        //UnitGEQTime=1 ;
+        PmaxOnLambda = true;
+        PminDifferentPmax = true;
+
+        heuristicInit = true;
+
+        //Farkas = true ;
+    }    
 
     if (met== 3001) {
         doubleDecompo =true ;
@@ -802,7 +893,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
     Parameters param(inst, ColumnGeneration, node_limit, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
                            UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, powerPlanGivenByMu, PminOnLambda, PmaxOnLambda, heurPricingTime, heurPricingThreshold, PminDifferentPmax, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo,RSUonly,
-                           minUpDownDouble, UnitGEQTime, useUVar, DynProgSUSD, nonLinearStartUpCost, Farkas);
+                           minUpDownDouble, UnitGEQTime, useUVar, DynProgSUSD, nonLinearStartUpCost, Farkas, stopFirstSite, stopFirstTime, oneRoundTime);
 
 
     return param;

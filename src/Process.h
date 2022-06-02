@@ -44,8 +44,6 @@ public:
     bool powerPlanGivenByMu;
     bool PminOnLambda;
     bool PmaxOnLambda;
-    bool heurPricingTime;
-    double heurPricingThreshold;
     vector<double> costBalancing;
     bool PminDifferentPmax;
     bool rampInMaster;
@@ -69,6 +67,13 @@ public:
     IloIntArray firstUnitGpe ;
     IloIntArray siteOf ;
 
+    //Options de pricing
+    bool heurPricingTime;
+    double heurPricingThreshold;
+    bool stopFirstSite;
+    bool stopFirstTime;
+    bool oneRoundTime;
+
     Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, bool ip, bool managesubpbsym, bool ramp,
                bool time, bool intra, bool dr, bool iup, double eps,
                bool dont, bool h_init, bool dontgetpvalue, bool one,
@@ -76,7 +81,7 @@ public:
                bool unitdecomp, bool startupdec, bool useSSBISub,
                bool PowerPlanGivenByLambda, bool PowerPlanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool heurPricingTime, double heurPricingThreshold, bool PminDifferentPmax, bool rampMaster, bool rampSubpb,
                bool masterSSBI, bool doubleDecompo, bool RSUonly, bool minUpDownDouble,
-               bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost, bool Farkas) ;
+               bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost, bool Farkas, bool stopFirstSite, bool stopFirstTime, bool oneRoundTime) ;
 
     int nbUnits(int s) const ;
 

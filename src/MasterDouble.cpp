@@ -33,6 +33,7 @@ void MasterDouble_Model::addCoefsToConstraints_siteVar(SCIP* scip, Master_Variab
             }
 
             else {
+                SCIPaddCoefLinear(scip, eq_time_site.at((first+i)*T+t), lambda->ptr, lambda->Power_plan[i*T+t]) ;
             }
         }
     }
@@ -88,8 +89,13 @@ void MasterDouble_Model::addCoefsToConstraints_timeVar(SCIP* scip, MasterTime_Va
     /* add coef to the equality x(site) = x(time)*/
 
     for (int i=0 ; i < n ; i++) {
-        if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
-            SCIPaddCoefLinear(scip, eq_time_site.at(i*T+t), lambda->ptr, -1.0) ;
+        if (!Param.powerPlanGivenByLambda) {
+            if (lambda->UpDown_plan[i] > 1 - Param.Epsilon) {
+                SCIPaddCoefLinear(scip, eq_time_site.at(i*T+t), lambda->ptr, -1.0) ;
+            }
+        }
+        else{
+            SCIPaddCoefLinear(scip, eq_time_site.at(i*T+t), lambda->ptr, lambda->Power_plan[i*T+t]) ;
         }
     }
 
@@ -807,10 +813,18 @@ void MasterDouble_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p)
         Master_Variable* lambda = new Master_Variable(s, plan);
         initMasterSiteVariable(scip, inst, lambda);
 
-        if (!Param.powerPlanGivenByLambda) { //fonction spécifique à implémenter dans le cas où le paramètre est à 1
-            SCIPaddVar(scip, lambda->ptr);
-            addCoefsToConstraints_siteVar(scip, lambda, inst) ;
+        if (Param.powerPlanGivenByLambda) { //fonction spécifique à implémenter dans le cas où le paramètre est à 1
+            IloNumArray powerPlan = IloNumArray(env, T*size) ;
+            for (int i=0 ; i < size ; i++) {
+                for (int t=0 ; t < T ; t++) {
+                    powerPlan[i*T+t] = p[(first+i)*T + t] ;
+                } 
+            }
+            lambda->addPowerPlan(powerPlan);
         }
+                    
+        SCIPaddVar(scip, lambda->ptr);
+        addCoefsToConstraints_siteVar(scip, lambda, inst) ;
     }
 
 
