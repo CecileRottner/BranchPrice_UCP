@@ -1,40 +1,42 @@
 CPXPARAM_Threads                                 1
 CPXPARAM_MIP_Tolerances_MIPGap                   9.9999999999999995e-08
-13 of 13 MIP starts provided solutions.
-MIP start 'm1' defined initial solution with objective 6978.3887.
+159 of 159 MIP starts provided solutions.
+MIP start 'm1' defined initial solution with objective 20957.7711.
 Tried aggregator 1 time.
-MIP Presolve eliminated 20 rows and 10 columns.
-MIP Presolve added 1 rows and 1 columns.
-Reduced MIP has 2 rows, 11 columns, and 14 nonzeros.
-Reduced MIP has 10 binaries, 1 generals, 0 SOSs, and 0 indicators.
-Presolve time = 0.00 sec. (0.02 ticks)
+MIP Presolve eliminated 20 rows and 0 columns.
+Reduced MIP has 21 rows, 40 columns, and 80 nonzeros.
+Reduced MIP has 20 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (0.05 ticks)
 Probing time = 0.00 sec. (0.00 ticks)
 Tried aggregator 1 time.
-MIP Presolve eliminated 1 rows and 1 columns.
-MIP Presolve added 1 rows and 1 columns.
-Reduced MIP has 2 rows, 11 columns, and 14 nonzeros.
-Reduced MIP has 10 binaries, 1 generals, 0 SOSs, and 0 indicators.
-Presolve time = 0.00 sec. (0.01 ticks)
+Reduced MIP has 21 rows, 40 columns, and 80 nonzeros.
+Reduced MIP has 20 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (0.05 ticks)
 Probing time = 0.00 sec. (0.00 ticks)
 MIP emphasis: balance optimality and feasibility.
 MIP search method: dynamic search.
 Parallel mode: none, using 1 thread.
-Root relaxation solution time = 0.00 sec. (0.01 ticks)
+Root relaxation solution time = 0.00 sec. (0.03 ticks)
 
         Nodes                                         Cuts/
    Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
 
-*     0+    0                         6978.3887        0.0000           100.00%
-      0     0     5695.4091     1     6978.3887     5695.4091        1   18.39%
-      0     0     6926.5848     2     6978.3887     Covers: 1        4    0.74%
-      0     0        cutoff           6978.3887                      5    0.00%
-Elapsed time = 0.00 sec. (0.12 ticks, tree = 0.01 MB, solutions = 13)
+*     0+    0                        20957.7711        0.0000           100.00%
+      0     0    20849.8080     1    20957.7711    20849.8080        7    0.52%
+      0     0    20941.8215     1    20957.7711       Cuts: 3       10    0.08%
+      0     0    20942.4922     2    20957.7711       Cuts: 2       11    0.07%
+      0     0    20942.5027     3    20957.7711    MIRcuts: 1       12    0.07%
+      0     0    20942.5436     4    20957.7711    MIRcuts: 1       13    0.07%
+      0     2    20942.5436     4    20957.7711    20942.5436       13    0.07%
+Elapsed time = 0.01 sec. (3.01 ticks, tree = 0.01 MB, solutions = 159)
 
-Cover cuts applied:  1
+Cover cuts applied:  31
+Mixed integer rounding cuts applied:  3
+Lift and project cuts applied:  1
 
 Root node processing (before b&c):
-  Real time             =    0.00 sec. (0.13 ticks)
+  Real time             =    0.01 sec. (3.07 ticks)
 Sequential b&c:
-  Real time             =    0.00 sec. (0.00 ticks)
+  Real time             =    0.03 sec. (21.48 ticks)
                           ------------
-Total (root+branch&cut) =    0.00 sec. (0.13 ticks)
+Total (root+branch&cut) =    0.03 sec. (24.55 ticks)

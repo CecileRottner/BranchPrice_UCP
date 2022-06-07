@@ -27,26 +27,46 @@ void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
 
 
     // cout << "site " << Site << ", first unit : " << first << ", nb units: " << Param.nbUnits(Site) << endl ;
-
-    for (int i = first ; i <= last ; i++) {
-        int down_t_1 = 0 ;
-        for (int t = 0 ; t < T ; t++) {
-            if (down_t_1 && UpDown_plan[(i-first)*T+t] > 1 - Param.Epsilon) { // il y a un démarrage en t
-                cost+= inst->getc0(i) ;
-            }
-
-            if (UpDown_plan[(i-first)*T+t] < Param.Epsilon ) {
-                down_t_1=1;
-            }
-            else { // l'unité i est up en t
-                cost+= Param.costBalancing.at(i) * inst->getcf(i);
-                if (Param.PminOnLambda || !Param.doubleDecompo){
-                    cost += Param.costBalancing.at(i) * inst->getcp(i) * inst->getPmin(i) ;
+    if (Param.doubleDecompo){
+        for (int i = first ; i <= last ; i++) {
+            int down_t_1 = 0 ;
+            for (int t = 0 ; t < T ; t++) {
+                if (down_t_1 && UpDown_plan[(i-first)*T+t] > 1 - Param.Epsilon) { // il y a un démarrage en t
+                    cost+= inst->getc0(i) ;
                 }
-                if (Param.PmaxOnLambda){
-                    cost += Param.costBalancing.at(i) * inst->getcp(i) * inst->getPmax(i) ;
+
+                if (UpDown_plan[(i-first)*T+t] < Param.Epsilon ) {
+                    down_t_1=1;
                 }
-                down_t_1=0;
+                else { // l'unité i est up en t
+                    cost+= Param.costBalancing.at(i) * inst->getcf(i);
+                    if (Param.PminOnLambda || !Param.doubleDecompo){
+                        cost += Param.costBalancing.at(i) * inst->getcp(i) * inst->getPmin(i) ;
+                    }
+                    if (Param.PmaxOnLambda){
+                        cost += Param.costBalancing.at(i) * inst->getcp(i) * inst->getPmax(i) ;
+                    }
+                    down_t_1=0;
+                }
+            }
+        }
+    }
+
+    else{
+        for (int i = first ; i <= last ; i++) {
+            int down_t_1 = 0 ;
+            for (int t = 0 ; t < T ; t++) {
+                if (down_t_1 && UpDown_plan[(i-first)*T+t] > 1 - Param.Epsilon) { // il y a un démarrage en t
+                    cost+= inst->getc0(i) ;
+                }
+
+                if (UpDown_plan[(i-first)*T+t] < Param.Epsilon ) {
+                    down_t_1=1;
+                }
+                else{
+                    cost+= inst->getcf(i) + inst->getcp(i) * inst->getPmin(i);
+                    down_t_1=0;
+                }
             }
         }
     }

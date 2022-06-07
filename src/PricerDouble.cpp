@@ -269,12 +269,12 @@ void ObjPricerDouble::updateDualCosts_site(SCIP* scip, DualCosts & dual_cost, bo
         //couts duaux power limits
         for (int i = 0; i < n; i++) {
             for (int t = 0 ; t < T ; t++) {
-                if (!Farkas) {
-                    dual_cost.Nu.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->power_limits.at(i*T+t));
-                }
-                else{
-                    dual_cost.Nu.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->power_limits.at(i*T+t));
-                }
+                // if (!Farkas) {
+                //     dual_cost.Nu.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->power_limits.at(i*T+t));
+                // }
+                // else{
+                //     dual_cost.Nu.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->power_limits.at(i*T+t));
+                // }
                 if (print)
                     cout << "nu(" << i <<"," << t <<") = " << dual_cost.Nu.at(i*T+t) <<endl;
             }
