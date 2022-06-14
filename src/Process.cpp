@@ -85,7 +85,7 @@ Parameters::Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, 
                        bool dont, bool h_init, bool dontgetpvalue, bool one,
                        bool addColumn, bool dptime, bool dp, bool pandb,
                        bool unitdecomp, bool startupdec, bool useSSBISub,
-                       bool PowerplanGivenByLambda, bool PowerplanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool heurPricingTime, double heurPricingThreshold, bool PminDifferentPmax, bool rampmaster, bool rampsub,
+                       bool PowerplanGivenByLambda, bool PowerplanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool sansGuidageRepartition, bool heurPricingTime, double heurPricingThreshold, bool PminDifferentPmax, bool rampmaster, bool rampsub,
                        bool ssbi, bool doubledec, bool rsu, bool minupdowndouble,
                        bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost, bool Farkas, bool stopFirstSite, bool stopFirstTime, bool oneRoundTime) :
     ColumnGeneration(ColumnGeneration),
@@ -113,6 +113,7 @@ Parameters::Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, 
     powerPlanGivenByMu(PowerplanGivenByMu),
     PminOnLambda(PminOnLambda),
     PmaxOnLambda(PmaxOnLambda),
+    sansGuidageRepartition(sansGuidageRepartition),
     heurPricingTime(heurPricingTime),
     heurPricingThreshold(heurPricingThreshold),
     PminDifferentPmax(PminDifferentPmax),
@@ -172,32 +173,40 @@ Parameters::Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, 
             firstUnitGpe[s] = inst->firstUnit(s);
         }
     }
-    costBalancing.resize(n,1);
+
+    costBalancingMaster.resize(n,1);
+    costBalancingPricer.resize(n,1);
 
     if (doubleDecompo){
-        if (unitGEQTime && powerPlanGivenByMu){
+        if (unitGEQTime){
             for (int i=0 ; i < n ; i++) {
                 if (PmaxOnLambda){
-                    costBalancing.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) ;
+                    costBalancingMaster.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) ;
+                    costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );
                 }
                 else if (PminOnLambda){
-                    //costBalancing stays at 1
+                    //costBalancingMaster stays at 1
+                    costBalancingPricer.at(i) = 0.5;
                 }
                 else {
-                    costBalancing.at(i) = 1 + inst->getcp(i) * inst->getPmin(i) / inst->getcf(i) ;
+                    costBalancingMaster.at(i) = 1 + inst->getcp(i) * inst->getPmin(i) / inst->getcf(i) ;
+                    costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * inst->getcf(i) );
                 }
             }
         }
-        if (!unitGEQTime) {
+        else {
             for (int i=0 ; i < n ; i++) {
                 if (PmaxOnLambda){
-                    costBalancing.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );
+                    costBalancingMaster.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );
+                    costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );    
                 }
                 else if (PminOnLambda){
-                    costBalancing.at(i) = 0.5;
+                    costBalancingMaster.at(i) = 0.5;
+                    costBalancingPricer.at(i) = 0.5;
                 }
                 else {
-                    costBalancing.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * inst->getcf(i) );
+                    costBalancingMaster.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * inst->getcf(i) );
+                    costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * inst->getcf(i) );
                 }
             }
         }
@@ -277,6 +286,8 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
     bool PminOnLambda = false;
     bool PmaxOnLambda = false;
     /////////////////////////////////////////
+
+    bool sansGuidageRepartition = false ;
 
     bool heurPricingTime = false;
     double heurPricingThreshold = 0;
@@ -472,7 +483,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
     if (met== 301) {
         doubleDecompo =true ;
-        //node_limit=1 ;
+        node_limit=1 ;
 
         IntraSite=0 ;
 
@@ -481,10 +492,10 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
         DynProgTime=true ;
         minUpDownDouble = 0;
-        UnitGEQTime=1 ;
+        UnitGEQTime=0 ;
         PminOnLambda = true;
 
-        //heuristicInit = true ;
+        heuristicInit = true ;
     }
 
     if (met== 3011) {
@@ -520,7 +531,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
         //heuristicInit = true;
 
-        oneRoundTime = true;
+        //oneRoundTime = true;
     }
 
     if (met== 3012) {
@@ -633,8 +644,10 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
         DynProgTime=false ;
         minUpDownDouble = 0;
-        UnitGEQTime=0 ;
+        UnitGEQTime=1 ;
         PminOnLambda = true;
+
+        sansGuidageRepartition = true ;
     }
 
     if (met== 401) {
@@ -892,7 +905,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
     Parameters param(inst, ColumnGeneration, node_limit, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
-                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, powerPlanGivenByMu, PminOnLambda, PmaxOnLambda, heurPricingTime, heurPricingThreshold, PminDifferentPmax, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo,RSUonly,
+                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, powerPlanGivenByMu, PminOnLambda, PmaxOnLambda, sansGuidageRepartition, heurPricingTime, heurPricingThreshold, PminDifferentPmax, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo,RSUonly,
                            minUpDownDouble, UnitGEQTime, useUVar, DynProgSUSD, nonLinearStartUpCost, Farkas, stopFirstSite, stopFirstTime, oneRoundTime);
 
 

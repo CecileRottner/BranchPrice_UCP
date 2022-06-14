@@ -39,12 +39,12 @@ void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
                     down_t_1=1;
                 }
                 else { // l'unité i est up en t
-                    cost+= Param.costBalancing.at(i) * inst->getcf(i);
+                    cost+= Param.costBalancingMaster.at(i) * inst->getcf(i);
                     if (Param.PminOnLambda || !Param.doubleDecompo){
-                        cost += Param.costBalancing.at(i) * inst->getcp(i) * inst->getPmin(i) ;
+                        cost += Param.costBalancingMaster.at(i) * inst->getcp(i) * inst->getPmin(i) ;
                     }
                     if (Param.PmaxOnLambda){
-                        cost += Param.costBalancing.at(i) * inst->getcp(i) * inst->getPmax(i) ;
+                        cost += Param.costBalancingMaster.at(i) * inst->getcp(i) * inst->getPmax(i) ;
                     }
                     down_t_1=0;
                 }

@@ -10,7 +10,6 @@ private:
     IloEnv env ;
 
     ///// Recupéré du fichier instance /////
-    int id ;
 
     IloInt n, T, K, S ;
     IloBoolArray Init ;
@@ -136,6 +135,8 @@ public:
     IloInt partition(IloNumArray const & ordre, IloIntArray & indices, IloInt p, IloInt q) ;
 
     void quickSort(IloNumArray const & ordre, IloIntArray & indices, IloInt p, IloInt q) ;
+    
+    int id ;
 
 };
 

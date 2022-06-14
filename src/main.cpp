@@ -285,6 +285,9 @@ int main(int argc, char** argv)
     cout<<"Write init pl"<<endl;
     SCIPwriteOrigProblem(scip, "init.lp", "lp", FALSE);
 
+    Master_ptr->inst->id = id;
+    ofstream convergence("convergence/" + std::to_string(Master_ptr->n) + "_" + std::to_string(Master_ptr->T) + + "_" + std::to_string((Master_ptr->inst)->id) + ".csv", std::ofstream::out | std::ofstream::app);
+    convergence << "iter,lowerBound,dualValue" << endl;
 
     /////////////////////////
     /////  BRANCHING    /////

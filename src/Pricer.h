@@ -56,6 +56,8 @@ public:
 //    // recherche d'une variable pour la faisabilité du PMR et insertion si trouvée
 //    virtual  SCIP_RETCODE scip_farkas(SCIP* scip, SCIP_PRICER* pricer, SCIP_RESULT* result) override {}
     virtual ~ObjPricerUCP() {}
+
+    double currentLowerBound ;
 };
 
 
@@ -175,6 +177,10 @@ public:
 
     vector<CplexPricingAlgoTime*> AlgoCplex_time;
     vector<DynProgPricingAlgoTime*> AlgoDynProg_time;
+
+    Parameters ParamMaster;
+
+    bool guidageTermine;
 
     int lastTimeStep;
 

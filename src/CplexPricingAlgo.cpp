@@ -23,7 +23,7 @@ DualCosts::DualCosts(InstanceUCP* inst, const Parameters & Param) {
 
     for (int i=0 ; i <n ; i++) {
         BaseObjCoefX.at(i) = inst->getcf(i);
-        if (Param.PminOnLambda){
+        if (Param.PminOnLambda || !Param.doubleDecompo){
             BaseObjCoefX.at(i) += (inst->getPmin(i))*inst->getcp(i) ;
         }
         if (Param.PmaxOnLambda){
@@ -146,9 +146,16 @@ void DualCosts::computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool
 
             if (!Farkas) {
                 ObjCoefU.at(i*T+t) += inst->getc0(i) ;
-                ObjCoefX.at(i*T+t) += Param.costBalancing.at(i) * BaseObjCoefX.at(i) ;
+                ObjCoefX.at(i*T+t) += Param.costBalancingPricer.at(i) * BaseObjCoefX.at(i) ;
                 ObjCoefP.at(i*T+t) += inst->getcp(i) ;
             }
+
+                // cout << "i: " << i << endl;
+                // cout << "t: " << t << endl;
+                // cout << "mu: " << Mu[t] << endl;
+                // cout << "nu: " << Nu[(i)*T+t] << endl;
+
+                // cout << "coef: " << ObjCoefX.at(i*T+t) << endl;
 
         } 
     }
@@ -422,3 +429,36 @@ bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual,
     return true;
 }
 
+void DualCosts::computeRedcost(InstanceUCP* inst, const Parameters & Param, Master_Variable * lambda, double& redcost) {
+
+    redcost = - Sigma[lambda->Site] ;
+    int T= inst->getT() ;
+
+    int first = Param.firstUnit(lambda->Site) ;
+    int last = Param.firstUnit(lambda->Site) + Param.nbUnits(lambda->Site) - 1 ;
+
+    for (int i = first ; i <= last ; i++) {
+        int down_t_1 = 0 ;
+        for (int t = 0 ; t < T ; t++) {
+            if (down_t_1 && lambda->UpDown_plan[(i-first)*T+t] > 1 - Param.Epsilon) { // il y a un démarrage en t
+                redcost+= ObjCoefU.at(i*T+t) ;
+            }
+            if (lambda->UpDown_plan[(i-first)*T+t] < Param.Epsilon ) {
+                down_t_1=1;
+            }
+            else { // l'unité i est up en t
+                redcost+= ObjCoefX.at(i*T+t) ;
+                down_t_1=0;
+            }
+        }
+    }
+
+    if (Param.powerPlanGivenByLambda) {
+        for (int i = first ; i <= last ; i++) {
+            for (int t = 0 ; t < T ; t++) {
+                redcost += lambda->Power_plan[(i-first)*T+t]*ObjCoefP.at(i*T+t) ;
+            }
+        }
+    }
+
+} 

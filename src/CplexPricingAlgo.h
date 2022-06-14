@@ -59,6 +59,8 @@ public:
     //Computes objective coefficients of x and u once dual values are updated
     // Depends on dualCostsTime in the case of double decomposition where min-up / min-down constraints are used for stabilization
     void computeObjCoef(InstanceUCP* inst, const Parameters & Param, bool Farkas, const DualCostsTime & dualTime) ;
+
+    void computeRedcost(InstanceUCP* inst, const Parameters & Param, Master_Variable * lambda, double& redcost) ;
 };
 
 

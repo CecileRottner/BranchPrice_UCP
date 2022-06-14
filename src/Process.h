@@ -44,7 +44,9 @@ public:
     bool powerPlanGivenByMu;
     bool PminOnLambda;
     bool PmaxOnLambda;
-    vector<double> costBalancing;
+    bool sansGuidageRepartition;
+    vector<double> costBalancingMaster;
+    vector<double> costBalancingPricer;
     bool PminDifferentPmax;
     bool rampInMaster;
     bool rampInSubPb ;
@@ -79,7 +81,7 @@ public:
                bool dont, bool h_init, bool dontgetpvalue, bool one,
                bool addColumn, bool dptime, bool dp, bool pandb,
                bool unitdecomp, bool startupdec, bool useSSBISub,
-               bool PowerPlanGivenByLambda, bool PowerPlanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool heurPricingTime, double heurPricingThreshold, bool PminDifferentPmax, bool rampMaster, bool rampSubpb,
+               bool PowerPlanGivenByLambda, bool PowerPlanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool sansGuidageRepartition, bool heurPricingTime, double heurPricingThreshold, bool PminDifferentPmax, bool rampMaster, bool rampSubpb,
                bool masterSSBI, bool doubleDecompo, bool RSUonly, bool minUpDownDouble,
                bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost, bool Farkas, bool stopFirstSite, bool stopFirstTime, bool oneRoundTime) ;
 

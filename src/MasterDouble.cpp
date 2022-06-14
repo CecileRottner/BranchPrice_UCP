@@ -24,10 +24,8 @@ void MasterDouble_Model::addCoefsToConstraints_siteVar(SCIP* scip, Master_Variab
                 if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
                     SCIPaddCoefLinear(scip, eq_time_site.at((first+i)*T+t), lambda->ptr, 1.0) ;
                     if (Param.PminDifferentPmax && !Param.powerPlanGivenByMu){
-                        // SCIPaddCoefLinear(scip, power_limits[(first+i)*T+t], lambda->ptr, inst->getPmax(first+i) - inst->getPmin(first+i)) ;
-                        if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
-                            SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(first+i)) ;
-                        }
+                        //SCIPaddCoefLinear(scip, power_limits[(first+i)*T+t], lambda->ptr, inst->getPmax(first+i) - inst->getPmin(first+i)) ;
+                        SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(first+i)) ;
                     }
                 }
             }
@@ -95,7 +93,7 @@ void MasterDouble_Model::addCoefsToConstraints_timeVar(SCIP* scip, MasterTime_Va
             }
         }
         else{
-            SCIPaddCoefLinear(scip, eq_time_site.at(i*T+t), lambda->ptr, lambda->Power_plan[i*T+t]) ;
+            SCIPaddCoefLinear(scip, eq_time_site.at(i*T+t), lambda->ptr, -lambda->Power_plan[i*T+t]) ;
         }
     }
 
