@@ -10,3 +10,4 @@ plots/
 logs/
 thresholds/moyennes/
 thresholds/*.csv
+convergence/

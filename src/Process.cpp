@@ -616,55 +616,6 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
     }    
 
-    if (met== 3015) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        //UnitGEQTime=1 ;
-        PminOnLambda = true;
-        PminDifferentPmax = true;
-
-    }   
-
-    if (met== 400) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=false ;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = true;
-
-        sansGuidageRepartition = true ;
-    }
-
-    if (met== 401) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        UnitGEQTime=0 ;
-        PminOnLambda = true;
-    }
-
     if (met== 4011) {
         doubleDecompo =true ;
         node_limit=1 ;
@@ -676,10 +627,31 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
         DynProgTime=true ;
         minUpDownDouble = 0;
-        UnitGEQTime=0 ;
+        UnitGEQTime=1 ;
         PminOnLambda = true;
 
-        oneRoundTime = true ;
+        heuristicInit = true ;
+
+        sansGuidageRepartition = true ;
+    }
+
+    if (met== 40111) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=true ;
+        minUpDownDouble = 0;
+        UnitGEQTime=1 ;
+        PminOnLambda = true;
+
+        //heuristicInit = true ;
+
+        sansGuidageRepartition = true ;
     }
 
     if (met== 4012) {
@@ -722,6 +694,29 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         heuristicInit = true;
 
         //Farkas = true ;
+    }    
+
+    if (met== 40131) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=false ;
+        powerPlanGivenByMu=true;
+        minUpDownDouble = 0;
+        UnitGEQTime=1 ;
+        PminOnLambda = true;
+        PminDifferentPmax = true;
+
+        heuristicInit = true;
+
+        //Farkas = true ;
+
+        sansGuidageRepartition = true ;
     }    
 
     if (met== 4014) {
@@ -771,7 +766,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         UnitDecompo=true;
         DynProg=1 ;
 
-        DynProgTime=true ;
+        DynProgTime=false ;
         powerPlanGivenByMu=true;
         minUpDownDouble = 0;
         //UnitGEQTime=1 ;
@@ -792,7 +787,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         UnitDecompo=true;
         DynProg=1 ;
 
-        DynProgTime=true ;
+        DynProgTime=false ;
         powerPlanGivenByMu=true;
         minUpDownDouble = 0;
         //UnitGEQTime=1 ;
@@ -800,6 +795,27 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         PminDifferentPmax = true;
 
         heuristicInit = true;
+
+        //Farkas = true ;
+    }    
+
+    if (met== 50131) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=false ;
+        powerPlanGivenByMu=true;
+        minUpDownDouble = 0;
+        //UnitGEQTime=1 ;
+        PminOnLambda = true;
+        PminDifferentPmax = true;
+
+        //heuristicInit = true;
 
         //Farkas = true ;
     }    
@@ -813,7 +829,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         UnitDecompo=true;
         DynProg=1 ;
 
-        DynProgTime=true ;
+        DynProgTime=false ;
         powerPlanGivenByMu=true;
         minUpDownDouble = 0;
         //UnitGEQTime=1 ;
