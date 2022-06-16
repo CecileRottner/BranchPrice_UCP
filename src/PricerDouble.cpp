@@ -154,7 +154,18 @@ SCIP_DECL_PRICERINIT(ObjPricerDouble::scip_init)
         }
     }
 
-
+    if (Param.PminDifferentPmax && !Param.powerPlanGivenByMu){
+        // demand constraints
+        for (int t = 0 ; t < T ; t++) {
+            SCIPgetTransformedCons(scip, Master->demand_cstr.at(t), &(Master->demand_cstr.at(t)));
+        }
+        //power limits
+        for (int t = 0 ; t < T ; t++) {
+            for (int i = 0 ; i < inst->getn() ; i++) {
+                SCIPgetTransformedCons(scip, Master->power_limits[i*T+t], &(Master->power_limits[i*T+t]));
+            }
+        }
+    }
 
     if (Param.IntraSite && Param.UnitDecompo) {
         for (int t = 1; t < T; t++) {

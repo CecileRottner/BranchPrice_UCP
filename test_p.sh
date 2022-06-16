@@ -10,7 +10,7 @@ intra=1
 
 
 
-dossier=data/other_data/
+dossier=data/debug_data/
 
 printf $dossier " \n" >> result.txt
 
@@ -23,10 +23,10 @@ UseIntraCons=1
 
 demand_type=3
 
-for n in 20 ; do
-  for T in 48 ; do
-    for id in {2..10} ; do
-      for met in 3012 3013 3014 ; do
+for n in 1 ; do
+  for T in 1 ; do
+    for id in 1 ; do
+      for met in 4015 ; do
         rm logs/$met.txt
         rm colonnes.csv
         rm convergence/${n}_${T}_$id.csv

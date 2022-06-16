@@ -24,7 +24,7 @@ void MasterDouble_Model::addCoefsToConstraints_siteVar(SCIP* scip, Master_Variab
                 if (lambda->UpDown_plan[i*T+t] > 1 - Param.Epsilon) {
                     SCIPaddCoefLinear(scip, eq_time_site.at((first+i)*T+t), lambda->ptr, 1.0) ;
                     if (Param.PminDifferentPmax && !Param.powerPlanGivenByMu){
-                        //SCIPaddCoefLinear(scip, power_limits[(first+i)*T+t], lambda->ptr, inst->getPmax(first+i) - inst->getPmin(first+i)) ;
+                        SCIPaddCoefLinear(scip, power_limits[(first+i)*T+t], lambda->ptr, inst->getPmax(first+i) - inst->getPmin(first+i)) ;
                         SCIPaddCoefLinear(scip, demand_cstr[t], lambda->ptr, inst->getPmin(first+i)) ;
                     }
                 }
@@ -338,31 +338,31 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
     }
 
     if (Param.PminDifferentPmax && !Param.powerPlanGivenByMu){
-        // ///// Power limits /////
-        // char con_name_power_limit[255];
-        // for (int i = 0 ; i <n ; i++)
-        // {
-        //     for (int t = 0; t < T; t++)
-        //     {
-        //         SCIP_CONS* con = NULL;
-        //         (void) SCIPsnprintf(con_name_power_limit, 255, "PowerLimit(%d,%d)", i, t); // nom de la contrainte
-        //         SCIPcreateConsLinear( scip, &con, con_name_power_limit, 0, NULL, NULL,
-        //                             0.0,   // lhs
-        //                             0.0,   // rhs  SCIPinfinity(scip) if >=1
-        //                             true,  /* initial */
-        //                             false, /* separate */
-        //                             true,  /* enforce */
-        //                             true,  /* check */
-        //                             true,  /* propagate */
-        //                             false, /* local */
-        //                             true,  /* modifiable */
-        //                             false, /* dynamic */
-        //                             false, /* removable */
-        //                             false  /* stickingatnode */ );
-        //         SCIPaddCons(scip, con);
-        //         power_limits[i*T + t] = con;
-        //     }
-        // }
+        ///// Power limits /////
+        char con_name_power_limit[255];
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = 0; t < T; t++)
+            {
+                SCIP_CONS* con = NULL;
+                (void) SCIPsnprintf(con_name_power_limit, 255, "PowerLimit(%d,%d)", i, t); // nom de la contrainte
+                SCIPcreateConsLinear( scip, &con, con_name_power_limit, 0, NULL, NULL,
+                                    0.0,   // lhs
+                                    0.0,   // rhs  SCIPinfinity(scip) if >=1
+                                    true,  /* initial */
+                                    false, /* separate */
+                                    true,  /* enforce */
+                                    true,  /* check */
+                                    true,  /* propagate */
+                                    false, /* local */
+                                    true,  /* modifiable */
+                                    false, /* dynamic */
+                                    false, /* removable */
+                                    false  /* stickingatnode */ );
+                SCIPaddCons(scip, con);
+                power_limits[i*T + t] = con;
+            }
+        }
 
         ///// Demand constraint /////
         char con_name_demand[255];
@@ -387,78 +387,78 @@ void  MasterDouble_Model::initScipMasterDoubleModel(SCIP* scip, InstanceUCP* ins
             demand_cstr[t] = con;
         }
 
-        /////////////////////////////////////////////////////////////
-        ////////   MASTER POWER VARIABLES INITIALIZATION   //////////
-        /////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////
+        //////   MASTER POWER VARIABLES INITIALIZATION   //////////
+        ///////////////////////////////////////////////////////////
 
-        // cout << "power var init" << endl ;
-        // char var_name[255];
+        cout << "power var init" << endl ;
+        char var_name[255];
 
-        // for (int i = 0 ; i <n ; i++)
-        // {
-        //     for (int t = 0; t < T; t++)
-        //     {
-        //         SCIP_VAR* var = NULL;
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = 0; t < T; t++)
+            {
+                SCIP_VAR* var = NULL;
 
-        //         SCIPsnprintf(var_name, 255, "p(%d,%d)",i,t);
-        //         SCIPdebugMsg(scip, "Variable <%s>\n", var_name);
-
-
-        //         SCIPcreateVar(scip, &var, var_name,
-        //                     0.0,                     // lower bound
-        //                     inst->getPmax(i) - inst->getPmin(i),      // upper bound
-        //                     inst->getcp(i),                     // objective
-        //                     SCIP_VARTYPE_CONTINUOUS, // variable type
-        //                     true, false, NULL, NULL, NULL, NULL, NULL);
+                SCIPsnprintf(var_name, 255, "p(%d,%d)",i,t);
+                SCIPdebugMsg(scip, "Variable <%s>\n", var_name);
 
 
-        //         /* add new variable to scip */
-        //         if (!Param.powerPlanGivenByLambda) {
-        //             SCIPaddVar(scip, var);
+                SCIPcreateVar(scip, &var, var_name,
+                            0.0,                     // lower bound
+                            inst->getPmax(i) - inst->getPmin(i),      // upper bound
+                            inst->getcp(i),                     // objective
+                            SCIP_VARTYPE_CONTINUOUS, // variable type
+                            true, false, NULL, NULL, NULL, NULL, NULL);
 
-        //             /* add coefficient to the demand constraint */
-        //             //SCIPaddCoefLinear(scip, demand_cstr[t], var, 1.0);
 
-        //             /* add coefficient to the power limit constraint */
-        //             SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);
-        //         }
-        //     }
-        // }
+                /* add new variable to scip */
+                if (!Param.powerPlanGivenByLambda) {
+                    SCIPaddVar(scip, var);
+
+                    /* add coefficient to the demand constraint */
+                    SCIPaddCoefLinear(scip, demand_cstr[t], var, 1.0);
+
+                    /* add coefficient to the power limit constraint */
+                    SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);
+                }
+            }
+        }
 
         cout << "fin" << endl ;
 
 
-        ///////////////////////////////////////
-        ////////   SLACK VARIABLES   //////////
-        ///////////////////////////////////////
+        /////////////////////////////////////
+        //////   SLACK VARIABLES   //////////
+        /////////////////////////////////////
 
-        // char slack_power_name[255];
+        char slack_power_name[255];
 
-        // for (int i = 0 ; i <n ; i++)
-        // {
-        //     for (int t = 0; t < T; t++)
-        //     {
-        //         SCIP_VAR* var = NULL;
+        for (int i = 0 ; i <n ; i++)
+        {
+            for (int t = 0; t < T; t++)
+            {
+                SCIP_VAR* var = NULL;
 
-        //         SCIPsnprintf(slack_power_name, 255, "slack_power(%d,%d)",i,t);
-        //         SCIPdebugMsg(scip, "Variable <%s>\n", slack_power_name);
-
-
-        //         SCIPcreateVar(scip, &var, slack_power_name,
-        //                     0.0,                     // lower bound
-        //                     inst->getPmax(i) - inst->getPmin(i),      // upper bound
-        //                     0.0,                     // objective
-        //                     SCIP_VARTYPE_CONTINUOUS, // variable type
-        //                     true, false, NULL, NULL, NULL, NULL, NULL);
+                SCIPsnprintf(slack_power_name, 255, "slack_power(%d,%d)",i,t);
+                SCIPdebugMsg(scip, "Variable <%s>\n", slack_power_name);
 
 
-        //         /* add new variable to scip */
-        //         SCIPaddVar(scip, var);
+                SCIPcreateVar(scip, &var, slack_power_name,
+                            0.0,                     // lower bound
+                            inst->getPmax(i) - inst->getPmin(i),      // upper bound
+                            0.0,                     // objective
+                            SCIP_VARTYPE_CONTINUOUS, // variable type
+                            true, false, NULL, NULL, NULL, NULL, NULL);
 
-        //         /* add coefficient to the power limit constraint */
-        //         SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);
-        //     }
-        // }
+
+                /* add new variable to scip */
+                SCIPaddVar(scip, var);
+
+                /* add coefficient to the power limit constraint */
+                SCIPaddCoefLinear(scip, power_limits[i*T + t], var, -1.0);
+            }
+        }
 
         char slack_demand_name[255];
 

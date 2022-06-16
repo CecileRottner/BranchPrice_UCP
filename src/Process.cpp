@@ -757,6 +757,23 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
     }     
 
+    if (met== 40151) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=1 ;
+
+        DynProgTime=false ;
+        minUpDownDouble = 0;
+        UnitGEQTime=1 ;
+        PminOnLambda = true;
+        PminDifferentPmax = true;
+
+    }    
+
     if (met== 5012) {
         doubleDecompo =true ;
         node_limit=1 ;
