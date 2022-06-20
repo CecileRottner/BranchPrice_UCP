@@ -170,7 +170,12 @@ bool DynProgPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const Dual
     for (int i=0 ; i <n ; i++) {
         SumCosts += ObjCoefX.at(i) ;
     }
-    objvalue = SumCosts - Table.at(n*(W+1)+W) - extraKPCost - Dual.Sigma[time] ;
+    if (W >= 0){
+        objvalue = SumCosts - Table.at(n*(W+1)+W) - extraKPCost - Dual.Sigma[time] ;
+    }
+    else{
+        return false ;
+    }
     if (objvalue < - Param.Epsilon) {
         return true ;
     }
