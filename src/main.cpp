@@ -110,7 +110,7 @@ int main(int argc, char** argv)
     SCIPinfoMessage(scip, NULL, "\n");
 
     /* include default plugins */
-   // SCIPincludeDefaultPlugins(scip);
+    //SCIPincludeDefaultPlugins(scip);
 
 
     // include various SCIP features
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
     SCIPincludeNodeselBfs(scip);
     SCIPincludeConshdlrIntegral(scip);
     SCIPincludeDispDefault(scip);
-    SCIPincludeDialogDefault(scip);
+    //SCIPincludeDialogDefault(scip);
     SCIPincludeHeurActconsdiving(scip);
     SCIPincludeHeurClique(scip);
     SCIPincludeHeurCoefdiving(scip);
@@ -159,7 +159,6 @@ int main(int argc, char** argv)
     SCIPsetRealParam(scip, "limits/time", 3600);
 
     SCIPincludeDispDefault(scip) ;
-    SCIPincludeDialogDefault(scip) ;
 
     /* set verbosity parameter */
     SCIPsetIntParam(scip, "display/verblevel", 5);

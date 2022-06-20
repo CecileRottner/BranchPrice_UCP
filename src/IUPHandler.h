@@ -90,6 +90,7 @@ public :
             SCIP_CONSHDLR*     conshdlr,           /**< the constraint handler itself */
             SCIP_CONS*         cons,               /**< the constraint that should lock rounding of its variables, or NULL if the
                                 *   constraint handler does not need constraints */
+            SCIP_LOCKTYPE      locktype,
             int                nlockspos,          /**< no. of times, the roundings should be locked for the constraint */
             int                nlocksneg           /**< no. of times, the roundings should be locked for the constraint's negation */
             );

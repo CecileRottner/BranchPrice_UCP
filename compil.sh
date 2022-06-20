@@ -1,5 +1,5 @@
 #!/bin/bash
 
-make  LPS=cpx ZIMPL=false GMP=false READLINE=false ZLIB=false
+make  LPS=cpx ZIMPL=false READLINE=false ZLIB=false
 
 
