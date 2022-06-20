@@ -291,12 +291,12 @@ int main(int argc, char** argv)
     //////  SOLVE    /////
     //////////////////////
 
-    MasterSite_Model* MS ;
+/*    MasterSite_Model* MS ;
     MS = dynamic_cast<MasterSite_Model*> (Master_ptr) ;
     if (MS != NULL) {
         cout << MS->demand_cstr.size() << endl;
         cout << MS->convexity_cstr.size() << endl ;
-    }
+    }*/
 
 
     if (param.ColumnGeneration) {
