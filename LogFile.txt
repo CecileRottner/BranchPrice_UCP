@@ -1,15 +1,34 @@
 CPXPARAM_Threads                                 1
 CPXPARAM_MIP_Tolerances_MIPGap                   9.9999999999999995e-08
-1 of 1 MIP starts provided solutions.
-MIP start 'm1' defined initial solution with objective 12.5771.
+14 of 14 MIP starts provided solutions.
+MIP start 'm1' defined initial solution with objective 1315.3169.
 Tried aggregator 1 time.
-MIP Presolve eliminated 1 rows and 1 columns.
-All rows and columns eliminated.
-Presolve time = 0.00 sec. (0.00 ticks)
+MIP Presolve eliminated 0 rows and 2 columns.
+Reduced MIP has 1 rows, 8 columns, and 8 nonzeros.
+Reduced MIP has 8 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (0.01 ticks)
+Probing time = 0.00 sec. (0.00 ticks)
+Tried aggregator 1 time.
+Reduced MIP has 1 rows, 8 columns, and 8 nonzeros.
+Reduced MIP has 8 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (0.01 ticks)
+Probing time = 0.00 sec. (0.00 ticks)
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: none, using 1 thread.
+Root relaxation solution time = 0.00 sec. (0.00 ticks)
+
+        Nodes                                         Cuts/
+   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+
+*     0+    0                         1315.3169     -208.0306           115.82%
+      0     0     1017.9014     1     1315.3169     1017.9014        1   22.61%
+      0     0        cutoff           1315.3169     1017.9014        1   22.61%
+Elapsed time = 0.00 sec. (0.04 ticks, tree = 0.01 MB, solutions = 14)
 
 Root node processing (before b&c):
-  Real time             =    0.00 sec. (0.00 ticks)
+  Real time             =    0.00 sec. (0.04 ticks)
 Sequential b&c:
   Real time             =    0.00 sec. (0.00 ticks)
                           ------------
-Total (root+branch&cut) =    0.00 sec. (0.00 ticks)
+Total (root+branch&cut) =    0.00 sec. (0.04 ticks)

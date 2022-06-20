@@ -292,12 +292,12 @@ void ObjPricerDouble::updateDualCosts_site(SCIP* scip, DualCosts & dual_cost, bo
         //couts duaux power limits
         for (int i = 0; i < n; i++) {
             for (int t = 0 ; t < T ; t++) {
-                // if (!Farkas) {
-                //     dual_cost.Nu.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->power_limits.at(i*T+t));
-                // }
-                // else{
-                //     dual_cost.Nu.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->power_limits.at(i*T+t));
-                // }
+                if (!Farkas) {
+                    dual_cost.Nu.at(i*T+t) = SCIPgetDualsolLinear(scip, Master->power_limits.at(i*T+t));
+                }
+                else{
+                    dual_cost.Nu.at(i*T+t) = SCIPgetDualfarkasLinear(scip, Master->power_limits.at(i*T+t));
+                }
                 if (print)
                     cout << "nu(" << i <<"," << t <<") = " << dual_cost.Nu.at(i*T+t) <<endl;
             }
@@ -424,9 +424,10 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
     Master->nbIter++;
 
-    if (Master->nbIter < 4) {
+    if (Master->nbIter == 1) {
         cout << "RMP value : " << endl;
-        SCIPprintSol(scip, NULL, NULL, FALSE);
+        //SCIPprintSol(scip, NULL, NULL, FALSE);
+        SCIPwriteLP(scip, "debug.lp");
     }
 
     totalDualCost = 0;
@@ -435,8 +436,6 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
     int print = 1;
     iteration++;
-
-    SCIPwriteLP(scip, "debug.lp");
 
     //int iteration_limit=5 ;
     //    /// PMR courant et sa solution
@@ -560,7 +559,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 lambda->addPowerPlan(powerPlan);
             }
 
-            SCIPwriteOrigProblem(scip, "debug.lp", "lp", FALSE);
+            //SCIPwriteOrigProblem(scip, "debug.lp", "lp", FALSE);
 
             dual_cost.computeObjCoef(inst,ParamMaster,Farkas, dual_cost_time);
             dual_cost.computeRedcost(inst, ParamMaster, lambda, redcost);

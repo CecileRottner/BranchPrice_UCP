@@ -747,9 +747,9 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         IntraSite=0 ;
 
         UnitDecompo=true;
-        DynProg=1 ;
+        DynProg=0 ;
 
-        DynProgTime=false ;
+        DynProgTime=true ;
         minUpDownDouble = 0;
         //UnitGEQTime=1 ;
         PminOnLambda = true;
@@ -768,7 +768,24 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
         DynProgTime=false ;
         minUpDownDouble = 0;
-        UnitGEQTime=1 ;
+        //UnitGEQTime=1 ;
+        PminOnLambda = true;
+        PminDifferentPmax = true;
+
+    }    
+
+    if (met== 401511) {
+        doubleDecompo =true ;
+        node_limit=1 ;
+
+        IntraSite=0 ;
+
+        UnitDecompo=true;
+        DynProg=0 ;
+
+        DynProgTime=false ;
+        minUpDownDouble = 0;
+        //UnitGEQTime=1 ;
         PminOnLambda = true;
         PminDifferentPmax = true;
 
