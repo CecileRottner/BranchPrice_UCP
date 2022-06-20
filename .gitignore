@@ -4,3 +4,6 @@ Resultats/
 Divers/
 data/Thesis_data
 Scripts/
+*.lp
+*.csv
+*.txt
