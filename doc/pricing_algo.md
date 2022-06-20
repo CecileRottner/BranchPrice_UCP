@@ -59,6 +59,8 @@ The following attributes are defined :
 
    (1) DP algorithm for 1 unit with min-up/min-down constraints : see details [here](dyn_prog_unit.md)
    
+   Note that the algorithm only works for min up time L < T (no loss of generality)
+   
    (2) DP algorithm for 1 with min-up/min-down constraints and start-up costs depending on the unit's down time
 
 
