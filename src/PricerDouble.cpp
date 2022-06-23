@@ -465,7 +465,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
     double epsilon= 0.0000001 ;
     double redcost = 0;
 
-    if (!guidageTermine && (!Param.unitGEQTime || Param.sansGuidageRepartition)) {
+    if (!guidageTermine && (!Param.unitGEQTime || !Param.balanceCosts)) {
         guidageTermine = true ;
     }
 

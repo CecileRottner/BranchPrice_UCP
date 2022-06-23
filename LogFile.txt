@@ -1,34 +1,37 @@
 CPXPARAM_Threads                                 1
 CPXPARAM_MIP_Tolerances_MIPGap                   9.9999999999999995e-08
-14 of 14 MIP starts provided solutions.
-MIP start 'm1' defined initial solution with objective 1315.3169.
+8 of 8 MIP starts provided solutions.
+MIP start 'm1' defined initial solution with objective 29349.2225.
 Tried aggregator 1 time.
-MIP Presolve eliminated 0 rows and 2 columns.
-Reduced MIP has 1 rows, 8 columns, and 8 nonzeros.
-Reduced MIP has 8 binaries, 0 generals, 0 SOSs, and 0 indicators.
-Presolve time = 0.00 sec. (0.01 ticks)
+MIP Presolve eliminated 10 rows and 0 columns.
+Reduced MIP has 11 rows, 20 columns, and 40 nonzeros.
+Reduced MIP has 10 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (0.02 ticks)
 Probing time = 0.00 sec. (0.00 ticks)
 Tried aggregator 1 time.
-Reduced MIP has 1 rows, 8 columns, and 8 nonzeros.
-Reduced MIP has 8 binaries, 0 generals, 0 SOSs, and 0 indicators.
-Presolve time = 0.00 sec. (0.01 ticks)
+Reduced MIP has 11 rows, 20 columns, and 40 nonzeros.
+Reduced MIP has 10 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (0.02 ticks)
 Probing time = 0.00 sec. (0.00 ticks)
 MIP emphasis: balance optimality and feasibility.
 MIP search method: dynamic search.
 Parallel mode: none, using 1 thread.
-Root relaxation solution time = 0.00 sec. (0.00 ticks)
+Root relaxation solution time = 0.00 sec. (0.02 ticks)
 
         Nodes                                         Cuts/
    Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
 
-*     0+    0                         1315.3169     -208.0306           115.82%
-      0     0     1017.9014     1     1315.3169     1017.9014        1   22.61%
-      0     0        cutoff           1315.3169     1017.9014        1   22.61%
-Elapsed time = 0.00 sec. (0.04 ticks, tree = 0.01 MB, solutions = 14)
+*     0+    0                        29349.2225        0.0000           100.00%
+      0     0    28993.5689     1    29349.2225    28993.5689        5    1.21%
+      0     0        cutoff          29349.2225                      7    0.00%
+Elapsed time = 0.00 sec. (0.17 ticks, tree = 0.01 MB, solutions = 8)
+
+Cover cuts applied:  1
+Lift and project cuts applied:  1
 
 Root node processing (before b&c):
-  Real time             =    0.00 sec. (0.04 ticks)
+  Real time             =    0.00 sec. (0.18 ticks)
 Sequential b&c:
   Real time             =    0.00 sec. (0.00 ticks)
                           ------------
-Total (root+branch&cut) =    0.00 sec. (0.04 ticks)
+Total (root+branch&cut) =    0.00 sec. (0.18 ticks)

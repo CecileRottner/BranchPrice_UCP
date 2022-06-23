@@ -85,7 +85,7 @@ Parameters::Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, 
                        bool dont, bool h_init, bool dontgetpvalue, bool one,
                        bool addColumn, bool dptime, bool dp, bool pandb,
                        bool unitdecomp, bool startupdec, bool useSSBISub,
-                       bool PowerplanGivenByLambda, bool PowerplanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool sansGuidageRepartition, bool heurPricingTime, double heurPricingThreshold, bool PminDifferentPmax, bool rampmaster, bool rampsub,
+                       bool PowerplanGivenByLambda, bool PowerplanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool balanceCosts, int guidageRepartition, bool heurPricingTime, double heurPricingThreshold, bool PminDifferentPmax, bool rampmaster, bool rampsub,
                        bool ssbi, bool doubledec, bool rsu, bool minupdowndouble,
                        bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost, bool Farkas, bool stopFirstSite, bool stopFirstTime, bool oneRoundTime) :
     ColumnGeneration(ColumnGeneration),
@@ -113,7 +113,8 @@ Parameters::Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, 
     powerPlanGivenByMu(PowerplanGivenByMu),
     PminOnLambda(PminOnLambda),
     PmaxOnLambda(PmaxOnLambda),
-    sansGuidageRepartition(sansGuidageRepartition),
+    balanceCosts(balanceCosts),
+    guidageRepartition(guidageRepartition),
     heurPricingTime(heurPricingTime),
     heurPricingThreshold(heurPricingThreshold),
     PminDifferentPmax(PminDifferentPmax),
@@ -182,31 +183,41 @@ Parameters::Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, 
             for (int i=0 ; i < n ; i++) {
                 if (PmaxOnLambda){
                     costBalancingMaster.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) ;
-                    costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );
+                    if (balanceCosts){
+                        costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );
+                    }
+                    
                 }
                 else if (PminOnLambda){
                     //costBalancingMaster stays at 1
-                    costBalancingPricer.at(i) = 0.5;
+                    if (balanceCosts){
+                        costBalancingPricer.at(i) = 0.5;
+                    }
+
                 }
                 else {
                     costBalancingMaster.at(i) = 1 + inst->getcp(i) * inst->getPmin(i) / inst->getcf(i) ;
-                    costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * inst->getcf(i) );
+                    if (balanceCosts){
+                        costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * inst->getcf(i) );
+                    }
                 }
             }
         }
         else {
-            for (int i=0 ; i < n ; i++) {
-                if (PmaxOnLambda){
-                    costBalancingMaster.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );
-                    costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );    
-                }
-                else if (PminOnLambda){
-                    costBalancingMaster.at(i) = 0.5;
-                    costBalancingPricer.at(i) = 0.5;
-                }
-                else {
-                    costBalancingMaster.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * inst->getcf(i) );
-                    costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * inst->getcf(i) );
+            if (balanceCosts){
+                for (int i=0 ; i < n ; i++) {
+                    if (PmaxOnLambda){
+                        costBalancingMaster.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );
+                        costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );    
+                    }
+                    else if (PminOnLambda){
+                        costBalancingMaster.at(i) = 0.5;
+                        costBalancingPricer.at(i) = 0.5;
+                    }
+                    else {
+                        costBalancingMaster.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * inst->getcf(i) );
+                        costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * inst->getcf(i) );
+                    }
                 }
             }
         }
@@ -287,7 +298,8 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
     bool PmaxOnLambda = false;
     /////////////////////////////////////////
 
-    bool sansGuidageRepartition = false ;
+    bool balanceCosts = false ;
+    int guidageRepartition = 0 ;
 
     bool heurPricingTime = false;
     double heurPricingThreshold = 0;
@@ -327,635 +339,122 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
     bool Farkas = false ;
 
-    //// COMPARISONS
-    ///
-    /// Unit subset decompositions
-    ///
 
-    if (met == 100) { // UNIT DECOMPOSITION ---- BRANCH AND PRICE
-        UnitDecompo=true;
-        heuristicInit=1 ;
-        DynProg=1 ;
 
+    // Parse met value given as argument to infer parameters
+
+    int arr[16];
+    int indice = 0;
+    int chiffre ;
+
+    // On récupère tous les chiffres de met
+    while(met != 0) {
+        chiffre = met % 10 ;
+        arr[indice] = chiffre ;
+        indice++ ;
+        met = met / 10 ;
     }
 
-    if (met == 101) { // UNIT DECOMPOSITION ---- COL GEN
-        UnitDecompo=true;
-        DynProg=1 ;
-        node_limit=1 ;
+    // Puis on regarde les chiffres de gauche à droite pour fixer les paramètres
 
+    // Type de décomposition
+    switch (arr[indice - 1]) {
+        case 1:
+            // Par unité
+            UnitDecompo = true ;
+            DynProg = 1 ;
+            break ;
+
+        case 2:
+            // Par pas de temps 
+            TimeStepDec = true ;
+            break ;
+
+        case 3:
+            // Double, Pmin = Pmax
+            doubleDecompo = true ;
+            UnitDecompo = true ;
+            PminOnLambda = true ;
+            DynProg = true ;
+            DynProgTime = true ;
+            break ;
+
+        case 4:
+            // Double, variables p dans le ss-pb par pas de temps
+            doubleDecompo = true ;
+            UnitDecompo = true ;
+            PminDifferentPmax = true ;
+            powerPlanGivenByMu = true ;
+            DynProg = true ;
+            break ;
+
+        case 5:
+            // Double, variables p dans le pb maitre
+            doubleDecompo = true ;
+            UnitDecompo = true ;
+            PminDifferentPmax = true ;
+            PminOnLambda = true ;
+            DynProg = true ;
+            DynProgTime = true ;
+            break ;
     }
 
-    if (met == 1012) { // UNIT DECOMPOSITION ---- COL GEN, subpb résolu par Cplex
-        UnitDecompo=true;
-        node_limit=1 ;
-        Ramp=1;
-        RampInMaster=1 ;
-
+    // Branchement ou non
+    if (arr[indice - 2] == 0) {
+        node_limit = 1 ;
     }
 
-    if (met == 1011) { // UNIT START UP DECOMPOSITION ---- COL GEN
-        UnitDecompo=true;
-        StartUpDecompo=true;
-
-        node_limit=1 ;
-    }
-
-    if (met == 102) { // SITE DECOMPOSITION ---- COL GEN
-
-        node_limit=1 ;
-    }
-    if (met == 1022) { // SITE DECOMPOSITION WITH SSBI in SUBPB ---- COL GEN
-        useSSBIinSubPb=true;
-        node_limit=1 ;
-    }
-
-    if (met == 1021) { // SITE START-UP DECOMPOSITION ---- COL GEN
-        StartUpDecompo=true;
-
-        node_limit=1 ;
-    }
-
-    if (met == 103) { // RESIDUAL DEMAND DECOMPOSITION ---- COL GEN
-        DemandeResiduelle= true;
-
-        node_limit=1 ;
-    }
-    if (met == 1031) { // RESIDUAL DEMAND START UP DECOMPOSITION ---- COL GEN
-        DemandeResiduelle= true;
-        StartUpDecompo=true;
-
-        node_limit=1 ;
-    }
-
-
-    if (met == 104) { // UNIT DECOMPOSITION with P GIVEN BY LAMBDA ---- COL GEN
-        UnitDecompo=true;
-        powerPlanGivenByLambda = true;
-        node_limit=1 ;
-        Ramp=1 ;
-        RampInSubPb=1 ;
-
-    }
-
-    /// Time decomposition
-
-    if (met == 200) {
-        TimeStepDec = true ;
-        DynProgTime = true ;
-        heuristicInit=1 ;
-        node_limit=1 ;
-    }
-
-    if (met == 201) {
-        TimeStepDec = true ;
-        DynProgTime = true ;
-        //node_limit=1 ;
-    }
-
-    if (met == 2011) {
-        TimeStepDec = true ;
-        DynProgTime = true ;
-        IntraSite=0;
-        node_limit=1 ;
-    }
-
-    if (met == 202) {
-        TimeStepDec = true ;
-        DynProgTime = true ;
-        IntervalUpSet = true;
-
-        node_limit=1 ;
-    }
-
-
-
-    if (met == 203) {
-        TimeStepDec = true ;
-        DynProgTime = true ;
-        node_limit=1 ;
-        masterSSBI=1 ;
-    }
-
-    if (met == 204) {
-        TimeStepDec = true ;
-        DynProgTime = true ;
-        masterSSBI=1 ;
-        RSUonly=1 ;
-        heuristicInit=1 ;
-    }
-
-    if (met == 205) {
-        TimeStepDec = true ;
-        DynProgTime = true ;
-        masterSSBI=1 ;
-        heuristicInit=1 ;
-    }
-
-    if (met == 206) {
-        TimeStepDec = true ;
-        DynProgTime = true ;
-        masterSSBI=1 ;
-        RSUonly=1 ;
-    }
-
-    if (met == 207) {
-        TimeStepDec = true ;
-        DynProgTime = true ;
-        masterSSBI=1 ;
-    }
-
-
-    if (met== 300) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        UnitGEQTime=0 ;
-        PminOnLambda = true;
-    }
-
-    if (met== 301) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        UnitGEQTime=0 ;
-        PminOnLambda = true;
-
+    // Initialisation heuristique ou non
+    if (arr[indice - 3] == 1) {
         heuristicInit = true ;
     }
 
-    if (met== 3011) {
-        doubleDecompo =true ;
-        node_limit=1 ;
+    // Réglages spécifiques double decomposition
+    if (doubleDecompo){
+        switch (arr[indice - 1]) {
+            // Cas 0 : basique, egalite et sans repartition de couts
 
-        IntraSite=0 ;
+            case 1:
+                balanceCosts = true ;
+                break ;
 
-        UnitDecompo=true;
-        DynProg=1 ;
+            case 2:
+                UnitGEQTime = true ;
+                break ;
 
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = true;
+            case 3:
+                // Guidage 'naif' par la repartition
+                UnitGEQTime = true ;
+                balanceCosts = true ;
+                break ;
 
-        heuristicInit = true;
+            case 4:
+                // Decroissance linéaire de la repartition
+                UnitGEQTime = true ;
+                balanceCosts = true ;
+                guidageRepartition = 1 ;
+                break ;
+
+            case 5:
+                // Decroissance sigmoide de la repartition
+                UnitGEQTime = true ;
+                balanceCosts = true ;
+                guidageRepartition = 1 ;
+                break ;
+
+            case 6:
+                // Decroissance exp de la repartition
+                UnitGEQTime = true ;
+                balanceCosts = true ;
+                guidageRepartition = 1 ;
+                break ;
+        }
     }
 
-    if (met== 30111) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = true;
-
-        //heuristicInit = true;
-
-        //oneRoundTime = true;
-    }
-
-    if (met== 3012) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = false;
-        PminDifferentPmax = true;
-
-    }    
-
-    if (met== 30121) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = false;
-        PminDifferentPmax = true;
-
-        heuristicInit = true;
-
-        //Farkas = true ;
-
-        // stopFirstSite = true;
-        // stopFirstTime = true;
-        //OneTimeStepPerIter = true;
-        oneRoundTime = true;
-    }      
-
-    if (met== 3013) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = true;
-        PminDifferentPmax = true;
-
-        heurPricingTime = true;
-        heurPricingThreshold = 0.005;
-    }    
-
-    if (met== 3014) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PmaxOnLambda = true;
-        PminDifferentPmax = true;
-
-    }    
-
-    if (met== 4011) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = true;
-
-        heuristicInit = true ;
-
-        sansGuidageRepartition = true ;
-    }
-
-    if (met== 40111) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = true;
-
-        //heuristicInit = true ;
-
-        sansGuidageRepartition = true ;
-    }
-
-    if (met== 4012) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=false ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = false;
-        PminDifferentPmax = true;
-
-        heuristicInit = true;
-
-        //Farkas = true ;
-    }    
-
-    if (met== 4013) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=false ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = true;
-        PminDifferentPmax = true;
-
-        heuristicInit = true;
-
-        //Farkas = true ;
-    }    
-
-    if (met== 40131) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=false ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PminOnLambda = true;
-        PminDifferentPmax = true;
-
-        heuristicInit = true;
-
-        //Farkas = true ;
-
-        sansGuidageRepartition = true ;
-    }    
-
-    if (met== 4014) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=false ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-        PmaxOnLambda = true;
-        PminDifferentPmax = true;
-
-        heuristicInit = true;
-
-        //Farkas = true ;
-    }    
-
-    if (met== 4015) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=0 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        //UnitGEQTime=1 ;
-        PminOnLambda = true;
-        PminDifferentPmax = true;
-
-    }     
-
-    if (met== 40151) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=false ;
-        minUpDownDouble = 0;
-        //UnitGEQTime=1 ;
-        PminOnLambda = true;
-        PminDifferentPmax = true;
-
-    }    
-
-    if (met== 401511) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=0 ;
-
-        DynProgTime=false ;
-        minUpDownDouble = 0;
-        //UnitGEQTime=1 ;
-        PminOnLambda = true;
-        PminDifferentPmax = true;
-
-    }    
-
-    if (met== 5012) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=false ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        //UnitGEQTime=1 ;
-        PminOnLambda = false;
-        PminDifferentPmax = true;
-
-        heuristicInit = true;
-
-        //Farkas = true ;
-    }     
-
-    if (met== 5013) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=false ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        //UnitGEQTime=1 ;
-        PminOnLambda = true;
-        PminDifferentPmax = true;
-
-        heuristicInit = true;
-
-        //Farkas = true ;
-    }    
-
-    if (met== 50131) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=false ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        //UnitGEQTime=1 ;
-        PminOnLambda = true;
-        PminDifferentPmax = true;
-
-        //heuristicInit = true;
-
-        //Farkas = true ;
-    }    
-
-    if (met== 5014) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=false ;
-        powerPlanGivenByMu=true;
-        minUpDownDouble = 0;
-        //UnitGEQTime=1 ;
-        PmaxOnLambda = true;
-        PminDifferentPmax = true;
-
-        heuristicInit = true;
-
-        //Farkas = true ;
-    }    
-
-    if (met== 3001) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-        DynProgSUSD=1 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-    }
-
-    if (met== 3002) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        nonLinearStartUpCost = true ; // attention, est remis à 0 à un moment.... fuite mémoire?
-        UnitDecompo=true;
-        DynProg=1 ;
-        DynProgSUSD=1 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 0;
-        UnitGEQTime=1 ;
-    }
-
-    if (met== 302) {
-        doubleDecompo =true ;
-        node_limit=1 ;
-
-        IntraSite=0 ;
-
-        UnitDecompo=true;
-        DynProg=1 ;
-
-        DynProgTime=true ;
-        minUpDownDouble = 1;
-        UnitGEQTime=1 ;
-        useUVar=1 ;
-    }
-
-    /// Branch & Price (& Cut)
-    if (met==1) {
-        heuristicInit=1 ;
-    }
-    if (met==2) {
-        heuristicInit=1 ;
-        IntervalUpSet =1 ;
-    }
-
-    /// Price and Branch
-    if (met==3) {
-        PriceAndBranch=1;
-        heuristicInit=1;
-    }
-    if (met==4) {
-        PriceAndBranch=1;
-        heuristicInit=1;
-        IntervalUpSet = 1 ;
-        Ramp = 1 ;
-    }
-
-    if (met==10) {
-        TimeStepDec = true;
-        DynProgTime = false ;
-        node_limit=1 ;
-    }
-
-    if (met==11) {
-        TimeStepDec = 0;
-        DynProgTime = 0 ;
-    }
 
     Parameters param(inst, ColumnGeneration, node_limit, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
-                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, powerPlanGivenByMu, PminOnLambda, PmaxOnLambda, sansGuidageRepartition, heurPricingTime, heurPricingThreshold, PminDifferentPmax, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo,RSUonly,
+                           UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, powerPlanGivenByMu, PminOnLambda, PmaxOnLambda, balanceCosts, guidageRepartition, heurPricingTime, heurPricingThreshold, PminDifferentPmax, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo,RSUonly,
                            minUpDownDouble, UnitGEQTime, useUVar, DynProgSUSD, nonLinearStartUpCost, Farkas, stopFirstSite, stopFirstTime, oneRoundTime);
 
 
