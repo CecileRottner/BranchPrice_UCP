@@ -9,9 +9,9 @@ Each digit defines a different aspect of the solving.
 
 * **1** : Unit decomposition
 * **2** : Time-step decomposition
-* **3** : Double decomposition for $ Pmin=Pmax $
-* **4** : Double decomposition for $ Pmin \neq Pmax $ with production variables **p** in the time-step subproblem
-* **5** : Double decomposition for $ Pmin \neq Pmax $ with production variables **p** in the master problem
+* **3** : Double decomposition for $P_{min}=P_{max}$
+* **4** : Double decomposition for $P_{min} \neq P_{max}$ with production variables $p$ in the time-step subproblem
+* **5** : Double decomposition for $P_{min} \neq P_{max}$ with production variables $p$ in the master problem
 
 
 ### Second digit
