@@ -1,6 +1,13 @@
-data/small_UCP_data/ & n & T & D & id & IUP & Iter & Var & cols U & cols T & CPU & CPU(Master) & Gap & Dual b. & Primal b. & LR & LR(Cplex) \\ 
-  Unit 101 & 20 & 48 & 3 & 3 & -  &  0 & 456 & 32659 & 1856905432 &  0.192163 & 0.151261 &  1.340364 &  504012.6 &  1179573 & 504012.6 & 516629 \\ 
-300 & 20 & 48 & 3 & 3 & -  &  263 & 8580 & 2722 & 5790 &  61.90443 & 60.49976 &  1.281777 &  516953.5 &  1179573 & 503744.9 & 516337.5 \\ 
+data/small_UCP_data/ & n & T & D & id & Nodes & CPU & CPU(Master) & Dual b. & Primal b. & CPLEX & Nodes & CPU & gap \\ 
+ \hline 
+\hline 
+\hline 
+\hline 
+\hline 
+\hline 
+\hline 
+\hline 
+\hline 
 \hline 
 \hline 
 

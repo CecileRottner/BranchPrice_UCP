@@ -5,7 +5,7 @@ Choosing the solving parameters is done by the **met** argument, which must be a
 Each digit defines a different aspect of the solving.
 
 
-### First digit
+### First digit : decomposition type
 
 * **1** : Unit decomposition
 * **2** : Time-step decomposition
@@ -14,18 +14,18 @@ Each digit defines a different aspect of the solving.
 * **5** : Double decomposition for $P_{min} \neq P_{max}$ with production variables $p$ in the master problem
 
 
-### Second digit
+### Second digit : branching
 
 * **0** : Solve at root node (relaxation)
 * **1** : Branch & Price
 
 
-### Third digit
+### Third digit : initialization
 
 * **0** : Initialization with columns corresponding to every unit on all the time
 * **1** : Heuristic initialization (columns given by CPLEX)
 
 
-### Fourth digit : double decomposition-specific parameters
+### Fourth digit (and beyond...) : decomposition-specific parameters
 
 See [code file](/src/Process.cpp) for details.

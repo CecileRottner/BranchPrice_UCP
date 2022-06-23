@@ -368,6 +368,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         case 2:
             // Par pas de temps 
             TimeStepDec = true ;
+            DynProgTime = true ;
             break ;
 
         case 3:
@@ -411,7 +412,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
     // Réglages spécifiques double decomposition
     if (doubleDecompo){
-        switch (arr[indice - 1]) {
+        switch (arr[indice - 4]) {
             // Cas 0 : basique, egalite et sans repartition de couts
 
             case 1:
@@ -448,6 +449,13 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
                 balanceCosts = true ;
                 guidageRepartition = 1 ;
                 break ;
+        }
+    }
+    else{
+        if (TimeStepDec){
+            if (indice >= 4){
+                DynProgTime = false ;
+            }
         }
     }
 

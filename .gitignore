@@ -11,3 +11,5 @@ logs/
 thresholds/moyennes/
 thresholds/*.csv
 convergence/
+*.csv
+LogFile.txt

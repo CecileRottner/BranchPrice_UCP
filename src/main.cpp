@@ -350,27 +350,6 @@ int main(int argc, char** argv)
     cout << "ici write" << endl ;
     SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
 
-    if (met==101 || met==100) {
-        fichier << " Unit " ;
-    }
-    if (met==1011) {
-        fichier << " Unit-SU " ;
-    }
-    if (met==102) {
-        fichier << "Site ";
-    }
-    if (met==1021) {
-        fichier << "Site-SU ";
-    }
-    if (met==103) {
-        fichier << "RD ";
-    }
-    if (met==201) {
-        fichier << "Time ";
-    }
-    if (met==202) {
-        fichier << "Time+I ";
-    }
     //fichier << "met & n & T & id & nodes & IUP & Iter & Var & CPU & gap & RL & low & up & cplex heur \\\\ " << endl;
     fichier << met << " & " << n << " & " << T << " & " << demande << " & " << id ;
 
@@ -410,16 +389,11 @@ int main(int argc, char** argv)
             //fichier << " & " << temps_scip  ;
             fichier << " &  " << SCIPgetGap(scip);
             // fichier << " &  " << SCIPgetDualboundRoot(scip) ;
-            if (met==100) {
-            fichier << " &  " << SCIPgetPrimalbound(scip) ;
-            }
-            else {
             fichier << " &  " << SCIPgetDualbound(scip) ;
             fichier << " &  " << SCIPgetPrimalbound(scip) ;
             fichier << " & " << checker.getLRValue() ; // RL*/
             fichier << " & " << checker.getLRCplex() ; // RL CPLEX
             SCIPprintSol(scip, SCIPgetBestSol(scip), NULL, FALSE);
-            }
         }
 
         else{

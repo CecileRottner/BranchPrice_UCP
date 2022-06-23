@@ -23,10 +23,10 @@ UseIntraCons=1
 
 demand_type=3
 
-for n in 20 ; do
-  for T in 48 ; do
-    for id in 3 ; do
-      for met in 101 300 ; do
+for n in 10 ; do
+  for T in 24 ; do
+    for id in 1 2 3 4 5 6 7 8 9 10 ; do
+      for met in 100 200 101 201 ; do
         rm logs/$met.txt
         rm colonnes.csv
         rm convergence/${n}_${T}_$id.csv
