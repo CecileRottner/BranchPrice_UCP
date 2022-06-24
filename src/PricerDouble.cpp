@@ -929,9 +929,7 @@ void ObjPricerDouble::addVarBound(SCIP_ConsData* consdata) {
         }
     }
     else {
-        //cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
-        //vérifier avec Cécile que c'est bon
-        (AlgoCplex_time.at(t))->model.add((AlgoCplex_time.at(t))->x[i] == consdata->bound);
+        //A implémenter
     }
 }
 
@@ -955,9 +953,7 @@ void ObjPricerDouble::removeVarBound(SCIP_ConsData* consdata) {
         (AlgoDynProg_time.at(t))->init.at(i) = -1 ;
     }
     else {
-        //cout << "AlgoDynProg.at(t) NULL: branchement non supporté pour sous problèmes résolus par Cplex dans la décomposition par pas de temps" << endl ;
-        //vérifier avec Cécile que c'est bon
-        (AlgoCplex_time.at(t))->model.remove((AlgoCplex_time.at(t))->x[i] == consdata->bound);
+        //A implémenter
     }
 }
 
