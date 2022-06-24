@@ -834,10 +834,10 @@ void MasterDouble_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p)
         IloNumArray plan = IloNumArray(env, n) ;
         for (int i=0 ; i < n ; i++) {
             if (x[i*T + t] > 1 - Param.Epsilon) {
-            plan[i]=1 ;
+                plan[i]=1 ;
             }
             if (x[i*T + t] < Param.Epsilon) {
-            plan[i]=0 ;
+                plan[i]=0 ;
             }
         }
 

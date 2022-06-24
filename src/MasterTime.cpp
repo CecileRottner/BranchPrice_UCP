@@ -314,19 +314,20 @@ void MasterTime_Model::createColumns(SCIP* scip, IloNumArray x, IloNumArray p) {
     int T = inst->getT() ;
 
     for (int t = 0 ; t < T ; t++) {
-
         IloNumArray plan = IloNumArray(env, n) ;
+        IloNumArray powerPlan = IloNumArray(env, n) ;
         for (int i=0 ; i < n ; i++) {
             if (x[i*T + t] > 1 - Param.Epsilon) {
-            plan[i]=1 ;
+                plan[i]=1 ;
             }
             if (x[i*T + t] < Param.Epsilon) {
-            plan[i]=0 ;
+                plan[i]=0 ;
             }
+            powerPlan[i] = p[i*T + t]  + inst->getPmin(i);
         }
 
         MasterTime_Variable* lambda = new MasterTime_Variable(t, plan) ;
-        lambda->addPowerPlan(p);
+        lambda->addPowerPlan(powerPlan);
         initMasterTimeVariable(scip, lambda);
 
         SCIPaddVar(scip, lambda->ptr);
