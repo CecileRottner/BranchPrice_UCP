@@ -888,6 +888,13 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
         }
     }
 
+    // Ajouts terme de droite lorsque les contraintes de demande sont dans le maître
+    if (guidageTermine && Param.PminDifferentPmax && !Param.powerPlanGivenByMu){
+        for (int t = 0 ; t < T ; t++) {
+            currentLowerBound += -dual_cost.Mu[t] * inst->getD(t);
+        }
+    }
+
     cout << "total: " << totalDualCost << endl;
 
     Master->totalDualCostList.push_back(totalDualCost);

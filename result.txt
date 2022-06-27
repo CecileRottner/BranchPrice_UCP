@@ -1,2 +1,9 @@
-data/small_UCP_data/ & n & T & D & id & Nodes & CPU & CPU(Master) & Dual b. & Primal b. & CPLEX & Nodes & CPU & gap \\ 
- 
+data/debug_data/ & n & T & D & id & Nodes & CPU & CPU(Master) & Dual b. & Primal b. & CPLEX & Nodes & CPU & gap \\ 
+ 111 & 6 & 6 & 3 & 1 &  495 &  0.210589 & 0.164008 &  35872.58 &  35872.58 & 35872.58 & 0 & 0.055237 & 0 \\ 
+1110 & 6 & 6 & 3 & 1 &  12581 &  142.8709 & 10.15422 &  35872.58 &  35872.58 & 35872.58 & 0 & 0.179564 & 0 \\ 
+\hline 
+\hline 
+
+
+
+

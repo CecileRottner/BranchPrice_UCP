@@ -457,6 +457,11 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
                 DynProgTime = false ;
             }
         }
+        else{
+            if (indice >= 4){
+                DynProg = false ;
+            }
+        }
     }
 
 

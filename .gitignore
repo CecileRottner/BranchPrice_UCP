@@ -13,3 +13,4 @@ thresholds/*.csv
 convergence/
 *.csv
 LogFile.txt
+data/debug_data
