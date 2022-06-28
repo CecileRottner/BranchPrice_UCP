@@ -440,14 +440,14 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
                 // Decroissance sigmoide de la repartition
                 UnitGEQTime = true ;
                 balanceCosts = true ;
-                guidageRepartition = 1 ;
+                guidageRepartition = 2 ;
                 break ;
 
             case 6:
                 // Decroissance exp de la repartition
                 UnitGEQTime = true ;
                 balanceCosts = true ;
-                guidageRepartition = 1 ;
+                guidageRepartition = 3 ;
                 break ;
         }
     }

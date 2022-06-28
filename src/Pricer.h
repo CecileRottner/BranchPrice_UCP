@@ -58,6 +58,11 @@ public:
     virtual ~ObjPricerUCP() {}
 
     double currentLowerBound ;
+
+    list<Master_Variable*> siteVarsToAdd ;
+    list<MasterTime_Variable*> timeVarsToAdd ;
+
+    bool infeasibilityDetected ;
 };
 
 

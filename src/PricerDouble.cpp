@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 
 #define OUTPUT_PRICER
@@ -424,11 +425,11 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
     Master->nbIter++;
 
-    if (Master->nbIter == 1) {
-        cout << "RMP value : " << endl;
-        //SCIPprintSol(scip, NULL, NULL, FALSE);
-        SCIPwriteLP(scip, "debug.lp");
-    }
+    // if (Master->nbIter == 1) {
+    //     cout << "RMP value : " << endl;
+    //     //SCIPprintSol(scip, NULL, NULL, FALSE);
+    //     SCIPwriteLP(scip, "debug.lp");
+    // }
 
     totalDualCost = 0;
     int T = inst->getT() ;
@@ -436,6 +437,20 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
     int print = 1;
     iteration++;
+
+    switch(Param.guidageRepartition){
+        case 1:
+            break ;
+
+        case 2:
+            break ;
+
+        case 3:
+            for (int i=0 ; i < n ; i++) {
+                //Param.costBalancingPricer.at(i) = Param.costBalancingPricer.at(i) * pow(0.5, (1 / sqrt(n*T) ));
+            }
+            break ;
+    }
 
     //int iteration_limit=5 ;
     //    /// PMR courant et sa solution
