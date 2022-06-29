@@ -157,7 +157,7 @@ void CplexPricingAlgoTime::updateObjCoefficients(InstanceUCP* inst, const Parame
 
 
 bool CplexPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCostsTime & Dual, double& objvalue, double & temps_resolution, int exact) {
-    //returns True if an improving Up/Down plan has been found
+    //returns True if a solution has been found
 
     ofstream LogFile("LogFile.txt");
     cplex.setOut(LogFile);
@@ -190,11 +190,8 @@ bool CplexPricingAlgoTime::findImprovingSolution(InstanceUCP* inst, const DualCo
     }
     else {
         objvalue = cplex.getObjValue() - Dual.Sigma[time] ;
-        if (objvalue < - Param.Epsilon) {
-            return true ;
-        }
     }
-    return false;
+    return true ;
 }
 
 void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTime & Dual, IloNumArray UpDownPlan, IloNumArray PowerPlan, double& realCost, double & totalProd, bool Farkas) {

@@ -451,16 +451,14 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
                 break ;
         }
     }
-    else{
-        if (TimeStepDec){
-            if (indice >= 4){
-                DynProgTime = false ;
-            }
+    else if (TimeStepDec){
+        if (indice >= 4){
+            DynProgTime = false ;
         }
-        else{
-            if (indice >= 4){
-                DynProg = false ;
-            }
+    }
+    else{
+        if (indice >= 4){
+            DynProg = false ;
         }
     }
 

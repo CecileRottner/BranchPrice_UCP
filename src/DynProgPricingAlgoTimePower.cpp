@@ -234,6 +234,14 @@ bool DynProgPricingAlgoTimePower::findImprovingSolution(InstanceUCP* inst, const
     if (pivotUnit >= 0) {
         return true ;
     }
+
+    // Vérifier si on a trouvé une solution réalisable
+    for (int i = 0 ; i < n ; i++) {
+        if ( Table[i].at( (n-1) *(Dt+1) + Dt) < std::numeric_limits<float>::max() / 20 ) {
+            return true ;
+        }
+    }
+
     return false ;
 }   
 

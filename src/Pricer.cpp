@@ -41,7 +41,9 @@ ObjPricerSite::ObjPricerSite(
         }
     }
 
-
+    unitColumns=0;
+    timeColumns=0;
+    infeasibilityDetected = false ;
 }
 
 
@@ -327,13 +329,15 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
     int T = inst->getT() ;
     int S = Param.nbDecGpes ;
 
+    siteVarsToAdd.clear() ;
+
     DualCostsTime dummyDualTime = DualCostsTime(inst);
 
     DualCosts dual_cost = DualCosts(inst,Param) ;
     updateDualCosts(scip, dual_cost, Farkas);
     dual_cost.computeObjCoef(inst,Param,Farkas, dummyDualTime);
 
-    double epsilon= 0.0000001 ;
+    double epsilon = 0.0000001 ;
     for (int s = 0 ; s < S ; s++) {
 
        //cout << "site "<< s << endl;
@@ -381,8 +385,11 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
 
         // cout << "solution found: " << solutionFound << endl;
         if (!solutionFound) {
-            //PRUNE THE NODE
+            // Pricer detected an infeasibility : we should immediately stop pricing
+            infeasibilityDetected = true ;
+            break ;
         }
+
         if (print) cout << "Minimum reduced cost plan: "<< objvalue << endl ;
 
         if (print) {
@@ -411,16 +418,40 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
                 lambda->addPowerPlan(powerPlan);
             }
 
-            //// CREATION D'UNE NOUVELLE VARIABLE DANS LE MASTER
-            Master->initMasterVariable(scip, inst, lambda) ;
-
-            /* add new variable to the list of variables to price into LP (score: leave 1 here) */
-            SCIPaddPricedVar(scip, lambda->ptr, 1.0);
-
-            ///// ADD COEFFICIENTS TO DEMAND, POWER LIMITS and CONVEXITY CONSTRAINTS
-            Master->addCoefsToConstraints(scip, lambda, inst) ;
+            siteVarsToAdd.push_back(lambda) ;
         }
     }
+
+    // If we detected an infeasibility in one of the pricers, we add no variables to the Master
+    // This will force termination of column generation, the master problem will remain infeasible
+    // And this will cause the node to be pruned
+
+    cout << "infeasibility detected: " << infeasibilityDetected << endl;
+    if (!infeasibilityDetected){
+
+        Master_Variable* lambdaSite ;
+        
+        while (!siteVarsToAdd.empty()){
+
+            lambdaSite = siteVarsToAdd.front() ;
+
+            //// CREATION D'UNE NOUVELLE VARIABLE DANS LE MASTER
+            Master->initMasterVariable(scip, inst, lambdaSite) ;
+
+            /* add new variable to the list of variables to price into LP (score: leave 1 here) */
+            SCIP_RETCODE ajout = SCIPaddPricedVar(scip, lambdaSite->ptr, 1.0);
+            cout << "ajout var par unité: " << ajout << endl;
+
+            ///// ADD COEFFICIENTS TO CONVEXITY and TIME/SITE EQUALITY CONSTRAINTS
+            Master->addCoefsToConstraints(scip, lambdaSite, inst) ;
+
+            unitColumns++;
+
+            siteVarsToAdd.pop_front() ;
+        }
+    }
+
+    infeasibilityDetected = false ;
 
 #ifdef OUTPUT_PRICER
     SCIPwriteTransProblem(scip, "ucp.lp", "lp", FALSE);

@@ -398,7 +398,7 @@ void CplexPricingAlgo::updateObjCoefficients(InstanceUCP* inst, const Parameters
 
 
 bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual, IloNumArray UpDownPlan, double& objvalue) {
-    //returns True if an improving Up/Down plan has been found
+    //returns True if a solution has been found
 
     ofstream LogFile("LogFile.txt");
     cplex.setOut(LogFile);
