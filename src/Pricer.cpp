@@ -357,12 +357,12 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
         double objvalue = 0 ;
         IloNumArray upDownPlan  ;
         IloNumArray powerPlan  ;
-        int solutionFound ;
+        bool solutionFound ;
 
 
         if (!Param.DynProg) {
             upDownPlan = IloNumArray((AlgoCplex[s])->env, Param.nbUnits(s)*T) ;
-            solutionFound= (AlgoCplex[s])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue) ;
+            solutionFound = (AlgoCplex[s])->findUpDownPlan(inst, dual_cost, upDownPlan, objvalue) ;
             for (int index=0 ; index <Param.nbUnits(s)*T ; index++ ) {
                 if (upDownPlan[index]>1-epsilon) {
                     upDownPlan[index]=1 ;
@@ -376,7 +376,7 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
         else { // résolution par programmation dynamique
 
             upDownPlan = IloNumArray((AlgoDynProg[s])->env, Param.nbUnits(s)*T) ;
-            (AlgoDynProg.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
+            solutionFound = (AlgoDynProg.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
             (AlgoDynProg.at(s))->getUpDownPlan(inst, upDownPlan) ;
 
             cout << "DP resolution done" << endl ;

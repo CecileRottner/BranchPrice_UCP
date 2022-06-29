@@ -351,7 +351,7 @@ int main(int argc, char** argv)
     SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
 
     //fichier << "met & n & T & id & nodes & IUP & Iter & Var & CPU & gap & RL & low & up & cplex heur \\\\ " << endl;
-    fichier << met << " & " << n << " & " << T << " & " << demande << " & " << id ;
+    fichier << met << " & " << n << " & " << T << " & " << id ;
 
 
 

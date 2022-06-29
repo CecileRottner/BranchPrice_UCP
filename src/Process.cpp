@@ -437,7 +437,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
                 break ;
 
             case 5:
-                // Decroissance sigmoide de la repartition
+                // Decroissance linéaire de la repartition : version 2
                 UnitGEQTime = true ;
                 balanceCosts = true ;
                 guidageRepartition = 2 ;

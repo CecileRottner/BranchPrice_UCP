@@ -485,7 +485,9 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 break ;
 
             case 2:
-                //sigmoide compliquée à implémenter pour raisons de débordement de double precision
+                if (iteration > sqrt(n*T) ){
+                    facteur = fmax( (2*sqrt(n*T) - iteration) / (2*sqrt(n*T)), 0) ;
+                }
                 break ;
 
             case 3:
@@ -493,14 +495,14 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 break ;
         }
 
-        // if (facteur > 0.01){
+        if (facteur > 0.01){
             for (int i=0 ; i < n ; i++) {
-                //Param.costBalancingPricer.at(i) = Param.costBalancingPricer.at(i) * facteur + Param.costBalancingMaster.at(i) * (1 - facteur) ;
+                Param.costBalancingPricer.at(i) = Param.costBalancingPricer.at(i) * facteur + Param.costBalancingMaster.at(i) * (1 - facteur) ;
             }
-        // }
-        // else{
-        //     guidageTermine = true ;
-        // }
+        }
+        else{
+            guidageTermine = true ;
+        }
 
     }
 
@@ -776,7 +778,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                     (AlgoDynProg_site.at(s))->getUpDownPlanSUSD(inst, upDownPlan) ;
                 }
                 else {
-                    (AlgoDynProg_site.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
+                    solutionFound = (AlgoDynProg_site.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
                     (AlgoDynProg_site.at(s))->getUpDownPlan(inst, upDownPlan) ;
                 }
             }
