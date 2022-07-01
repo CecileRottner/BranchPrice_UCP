@@ -15,7 +15,7 @@ dossier=data/other_data/
 printf $dossier " \n" >> result.txt
 
 
-printf " & n & T & D & id & IUP & Iter & Var & cols U & cols T & CPU & CPU(Master) & Gap & Dual b. & Primal b. & LR & LR(Cplex) \\\\\\ \n " >> result.txt
+printf " & n & T & id & IUP & Iter & Var & cols U & cols T & CPU & CPU(Master) & Gap & Dual b. & Primal b. & LR & LR(Cplex) \\\\\\ \n " >> result.txt
 
 
 
@@ -26,7 +26,7 @@ demand_type=3
 for n in 10 ; do
   for T in 24 ; do
     for id in {1..10} ; do
-      for met in 5013 4015 ; do
+      for met in 4006 5006 ; do
         rm logs/$met.txt
         rm colonnes.csv
         rm convergence/${n}_${T}_$id.csv
