@@ -22,7 +22,7 @@ using namespace scip;
 class ObjPricerUCP : public ObjPricer {
 public:
     InstanceUCP* inst ;
-    const Parameters Param ;
+    Parameters Param ;
 
     int timeColumns;
     int unitColumns;

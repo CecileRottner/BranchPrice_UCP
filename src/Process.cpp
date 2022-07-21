@@ -437,7 +437,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
                 break ;
 
             case 5:
-                // Decroissance sigmoide de la repartition
+                // Decroissance linéaire de la repartition : version 2
                 UnitGEQTime = true ;
                 balanceCosts = true ;
                 guidageRepartition = 2 ;
@@ -451,17 +451,27 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
                 break ;
         }
     }
+    else if (TimeStepDec){
+        if (indice >= 4){
+            DynProgTime = false ;
+            if (arr[indice - 4] == 1){
+                PminDifferentPmax = true ;
+                powerPlanGivenByMu = true ;
+            }       
+        }
+    }
     else{
-        if (TimeStepDec){
-            if (indice >= 4){
-                DynProgTime = false ;
-            }
+        if (indice >= 4){
+            DynProg = false ;
         }
-        else{
-            if (indice >= 4){
-                DynProg = false ;
-            }
-        }
+    }
+
+    if (indice >= 5){
+        DynProg= false ;
+    }
+
+    if (indice >= 6){
+        DynProgTime = false ;
     }
 
 

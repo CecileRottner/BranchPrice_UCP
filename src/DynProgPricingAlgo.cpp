@@ -80,7 +80,7 @@ bool DynProgPricingAlgo::findImprovingSolution(InstanceUCP* inst, const DualCost
 
     //initialisation
     for (int t=0; t < 2*T ; t++) {
-        Bellman.at(t) = std::numeric_limits<double>::infinity(); ;
+        Bellman.at(t) = std::numeric_limits<double>::infinity();
     }
 
 
@@ -275,7 +275,7 @@ bool DynProgPricingAlgo::findImprovingSolution(InstanceUCP* inst, const DualCost
 
    objvalue = fmin(V_up, V_down) - Dual.Sigma[Site] ;
 
-    if (objvalue < - Param.Epsilon) {
+    if (objvalue <= std::numeric_limits<double>::max() / 2) {
         return true ;
     }
     return false ;

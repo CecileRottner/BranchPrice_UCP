@@ -175,10 +175,7 @@ bool DynProgPricingAlgoTimeNoPower::findImprovingSolution(InstanceUCP* inst, con
         return false ;
     }
 
-    if (objvalue < - Param.Epsilon) {
-        return true ;
-    }
-    return false ;
+    return true ;
 
 }
 

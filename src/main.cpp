@@ -325,7 +325,16 @@ int main(int argc, char** argv)
         n=inst->getn();
         T=inst->getT();
         Master_ptr->computeFracSol(scip);
+        cout << "Sol. fractionnaire optimale :" << endl;
+        for (int i=0 ; i < n ; i++) {
+            cout << "i=" << i << " : " ;
+            for (int t=0 ; t < T ; t++) {
+                cout << Master_ptr->x_frac[i*T+t] << " " ;
+            }
+            cout << endl;
+        }
 
+        checker.checkSolution(Master_ptr->x_frac) ;
 
 
 //        cout << "solution x frac: " << endl;
@@ -351,7 +360,7 @@ int main(int argc, char** argv)
     SCIP_PRICER ** scippricer = SCIPgetPricers(scip);
 
     //fichier << "met & n & T & id & nodes & IUP & Iter & Var & CPU & gap & RL & low & up & cplex heur \\\\ " << endl;
-    fichier << met << " & " << n << " & " << T << " & " << demande << " & " << id ;
+    fichier << met << " & " << n << " & " << T << " & " << id ;
 
 
 

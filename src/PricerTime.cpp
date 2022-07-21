@@ -54,6 +54,10 @@ ObjPricerTimeUCP::ObjPricerTimeUCP(
     lastTimeStep=-1 ;
     nbCallsToCplex=0 ;
 
+    unitColumns=0;
+    timeColumns=0;    
+    infeasibilityDetected = false ;
+
     cout << "ici fin constructeur" << endl ;
 }
 
@@ -356,6 +360,10 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
     int T = inst->getT() ;
     int n = inst->getn() ;
 
+    timeVarsToAdd.clear() ;
+
+    double epsilon = 0.0000001 ;
+
     DualCostsTime dual_cost = DualCostsTime(inst) ;
 
     updateDualCosts(scip, dual_cost, Farkas);
@@ -404,18 +412,25 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
                 //// CALCUL D'UN PLAN DE COUT REDUIT MINIMUM
                 double objvalue = 0 ;
                 double temps ;
-                bool ImprovingSolutionFound;
+                bool solutionFound;
 
                 if (!Param.DynProgTime) {
-                     ImprovingSolutionFound = (AlgoCplex.at(t))->findImprovingSolution(inst, dual_cost, objvalue, temps, 1);
+                    solutionFound = (AlgoCplex.at(t))->findImprovingSolution(inst, dual_cost, objvalue, temps, 1);
                 }
                 else {
-                    ImprovingSolutionFound = (AlgoDynProg.at(t))->findImprovingSolution(inst, dual_cost, objvalue, temps, cas-1);
+                    solutionFound = (AlgoDynProg.at(t))->findImprovingSolution(inst, dual_cost, objvalue, temps, Param.heurPricingTime);
                 }
                 nbCallsToCplex++;
                 Master->cumul_resolution_pricing += temps ;
 
-                if (ImprovingSolutionFound) {
+
+                if (!solutionFound) {
+                    // Pricer detected an infeasibility : we should immediately stop pricing
+                    infeasibilityDetected = true ;
+                    break ;
+                }
+
+                if (objvalue < -epsilon) {
                     oneImprovingSolution = true ;
 
                     TimeSolNotFound.at(t) = 0 ;
@@ -477,15 +492,8 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
 
                             MasterTime_Variable* lambda = new MasterTime_Variable(k, upDownPlan);
                             lambda->addPowerPlan(powerPlan);
-                            // cout << "Plan found for time " << t << " with reduced cost = " << objvalue << " ";
-                            //// CREATION D'UNE NOUVELLE VARIABLE
-                            Master->initMasterTimeVariable(scip, lambda) ;
 
-                            /* add new variable to the list of variables to price into LP (score: leave 1 here) */
-                            SCIPaddPricedVar(scip, lambda->ptr, 1.0);
-
-                            ///// ADD COEFFICIENTS TO DEMAND, POWER LIMITS and CONVEXITY CONSTRAINTS
-                            Master->addCoefsToConstraints(scip, lambda) ;
+                            timeVarsToAdd.push_back(lambda) ;
                         }
 
                     }
@@ -500,6 +508,37 @@ void ObjPricerTimeUCP::pricingUCP( SCIP*              scip  , bool Farkas       
             }
         }
     }
+
+    // If we detected an infeasibility in one of the pricers, we add no variables to the Master
+    // This will force termination of column generation, the master problem will remain infeasible
+    // And this will cause the node to be pruned
+
+    cout << "infeasibility detected: " << infeasibilityDetected << endl;
+    if (!infeasibilityDetected){
+
+        MasterTime_Variable* lambdaTime ;
+
+        while (!timeVarsToAdd.empty()){
+
+            lambdaTime = timeVarsToAdd.front() ;
+
+            //// CREATION D'UNE NOUVELLE VARIABLE
+            Master->initMasterTimeVariable(scip, lambdaTime) ;
+
+            /* add new variable to the list of variables to price into LP (score: leave 1 here) */
+            SCIP_RETCODE ajout = SCIPaddPricedVar(scip, lambdaTime->ptr, 1.0);
+            cout << "ajout var par temps: " << ajout << endl;
+
+            ///// ADD COEFFICIENTS TO DEMAND, POWER LIMITS and CONVEXITY CONSTRAINTS
+            Master->addCoefsToConstraints(scip, lambdaTime) ;
+
+            timeColumns++;
+
+            timeVarsToAdd.pop_front() ;
+        }
+    }
+
+    infeasibilityDetected = false ;
 
   //  cout<<"************END PRICER******************"<<endl;
 #ifdef OUTPUT_PRICER
