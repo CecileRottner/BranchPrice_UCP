@@ -20,10 +20,11 @@ Each digit defines a different aspect of the solving.
 * **1** : Branch & Price
 
 
-### Third digit : initialization
+### Third digit : general column generation parameters
 
 * **0** : Initialization with columns corresponding to every unit on all the time
 * **1** : Heuristic initialization (columns given by CPLEX)
+* **2** : Use dynamic lower bound to interrupt column generation early
 
 
 ### Fourth digit (and beyond...) : decomposition-specific parameters

@@ -15,7 +15,7 @@ dossier=data/small_UCP_data/
 printf $dossier " \n" >> result.txt
 
 
-printf " & n & T & D & id & Nodes & CPU & CPU(Master) & Dual b. & Primal b. & CPLEX & Nodes & CPU & gap \\\\\\ \n " >> result.txt
+printf " & n & T & id & Nodes & CPU & CPU(Master) & Dual b. & Primal b. & CPLEX & Nodes & CPU & gap \\\\\\ \n " >> result.txt
 
 
 

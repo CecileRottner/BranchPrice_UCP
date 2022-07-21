@@ -222,8 +222,11 @@ SCIP_RETCODE ObjPricerDouble::scip_redcost(SCIP* scip, SCIP_PRICER* pricer, SCIP
     /* set result pointer, see above */
     *result = SCIP_SUCCESS;
 
-    /* call pricing routine */
-    pricingUCP(scip,0);
+    //check if convergence between upper and lower bounds has been reached
+    if (( (SCIPgetSolOrigObj(scip,NULL) - currentLowerBound)/(0.0000000001 + SCIPgetSolOrigObj(scip,NULL)) > 0.0001) || !Param.useLowerBound){
+        /* call pricing routine */
+        pricingUCP(scip,0);
+    }
 
     return SCIP_OKAY;
 

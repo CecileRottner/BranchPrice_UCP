@@ -87,7 +87,7 @@ Parameters::Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, 
                        bool unitdecomp, bool startupdec, bool useSSBISub,
                        bool PowerplanGivenByLambda, bool PowerplanGivenByMu, bool PminOnLambda, bool PmaxOnLambda, bool balanceCosts, int guidageRepartition, bool heurPricingTime, double heurPricingThreshold, bool PminDifferentPmax, bool rampmaster, bool rampsub,
                        bool ssbi, bool doubledec, bool rsu, bool minupdowndouble,
-                       bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost, bool Farkas, bool stopFirstSite, bool stopFirstTime, bool oneRoundTime) :
+                       bool unitgeqtime, bool useuvar, bool dpsusd, bool nlsucost, bool Farkas, bool stopFirstSite, bool stopFirstTime, bool oneRoundTime, bool useLowerBound) :
     ColumnGeneration(ColumnGeneration),
     nodeLimit(nodeLimit),
     IP(ip),
@@ -131,7 +131,8 @@ Parameters::Parameters(InstanceUCP* inst, bool ColumnGeneration, int nodeLimit, 
     Farkas(Farkas),
     stopFirstSite(stopFirstSite),
     stopFirstTime(stopFirstTime),
-    oneRoundTime(oneRoundTime)
+    oneRoundTime(oneRoundTime),
+    useLowerBound(useLowerBound)
 {
 
 
@@ -339,6 +340,8 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
 
     bool Farkas = false ;
 
+    bool useLowerBound = false ;
+
 
 
     // Parse met value given as argument to infer parameters
@@ -405,9 +408,14 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
         node_limit = 1 ;
     }
 
-    // Initialisation heuristique ou non
-    if (arr[indice - 3] == 1) {
-        heuristicInit = true ;
+    // Paramètres généraux de génération de colonnes
+    switch (arr[indice - 1]) {
+        case 1:
+            heuristicInit = true ;
+            break ,
+        case 2:
+            useLowerBound = true ;
+            break ;
     }
 
     // Réglages spécifiques double decomposition
@@ -478,7 +486,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
     Parameters param(inst, ColumnGeneration, node_limit, IP, ManageSubPbSym, Ramp, TimeStepDec, IntraSite, DemandeResiduelle, IntervalUpSet, eps, DontPriceAllTimeSteps,
                            heuristicInit, DontGetPValue, OneTimeStepPerIter, addColumnToOtherTimeSteps, DynProgTime, DynProg, PriceAndBranch,
                            UnitDecompo, StartUpDecompo, useSSBIinSubPb, powerPlanGivenByLambda, powerPlanGivenByMu, PminOnLambda, PmaxOnLambda, balanceCosts, guidageRepartition, heurPricingTime, heurPricingThreshold, PminDifferentPmax, RampInMaster, RampInSubPb, masterSSBI, doubleDecompo,RSUonly,
-                           minUpDownDouble, UnitGEQTime, useUVar, DynProgSUSD, nonLinearStartUpCost, Farkas, stopFirstSite, stopFirstTime, oneRoundTime);
+                           minUpDownDouble, UnitGEQTime, useUVar, DynProgSUSD, nonLinearStartUpCost, Farkas, stopFirstSite, stopFirstTime, oneRoundTime, useLowerBound);
 
 
     return param;
