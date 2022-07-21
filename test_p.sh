@@ -19,18 +19,19 @@ printf " & n & T & id & IUP & Iter & Var & cols U & cols T & CPU & CPU(Master) &
 
 
 
-UseIntraCons=1
+UseIntraCons=0
 
 demand_type=3
 
-for n in 10 ; do
-  for T in 24 ; do
+for n in 20 ; do
+  for T in 48 ; do
     for id in {1..10} ; do
       for met in 4006 5006 ; do
         rm logs/$met.txt
         rm colonnes.csv
         rm convergence/${n}_${T}_$id.csv
         ./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dossier $n $T 1 $demand_type $sym $cat01 $intra $id $met $UseIntraCons >> logs/$met.txt
+        #python3 convergence/plot.py $n $T $id $met
       done
       printf "\\hline \n" >> result.txt	
     done

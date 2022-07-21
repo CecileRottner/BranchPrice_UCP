@@ -325,7 +325,16 @@ int main(int argc, char** argv)
         n=inst->getn();
         T=inst->getT();
         Master_ptr->computeFracSol(scip);
+        cout << "Sol. fractionnaire optimale :" << endl;
+        for (int i=0 ; i < n ; i++) {
+            cout << "i=" << i << " : " ;
+            for (int t=0 ; t < T ; t++) {
+                cout << Master_ptr->x_frac[i*T+t] << " " ;
+            }
+            cout << endl;
+        }
 
+        checker.checkSolution(Master_ptr->x_frac) ;
 
 
 //        cout << "solution x frac: " << endl;

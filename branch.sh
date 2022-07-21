@@ -19,14 +19,14 @@ printf " & n & T & D & id & Nodes & CPU & CPU(Master) & Dual b. & Primal b. & CP
 
 
 
-UseIntraCons=1
+UseIntraCons=0
 
 demand_type=3
 
 for n in 10 ; do
-  for T in 10 ; do
-    for id in 2 ; do
-      for met in 111 ; do
+  for T in 24 ; do
+    for id in {1..10} ; do
+      for met in 3106 ; do
         rm logs/$met.txt
         rm colonnes.csv
         rm convergence/${n}_${T}_$id.csv

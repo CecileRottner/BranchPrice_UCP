@@ -891,7 +891,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
     // Ajouts terme de droite lorsque les contraintes de demande sont dans le maître
     if (guidageTermine && Param.PminDifferentPmax && !Param.powerPlanGivenByMu){
         for (int t = 0 ; t < T ; t++) {
-            currentLowerBound += -dual_cost.Mu[t] * inst->getD(t);
+            currentLowerBound += +dual_cost.Mu[t] * inst->getD(t);
         }
     }
 
@@ -950,7 +950,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
     if (Param.nodeLimit == 1){
         Master->totalDualCostList.push_back(totalDualCost);
-        convergence << Master->nbIter << "," << currentLowerBound << "," << SCIPgetSolOrigObj(scip,NULL) << endl;
+        convergence << Master->nbIter << "," << fmax(currentLowerBound,0) << "," << SCIPgetSolOrigObj(scip,NULL) << endl;
     }
 
 #ifdef OUTPUT_PRICER

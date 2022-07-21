@@ -275,7 +275,7 @@ bool DynProgPricingAlgo::findImprovingSolution(InstanceUCP* inst, const DualCost
 
    objvalue = fmin(V_up, V_down) - Dual.Sigma[Site] ;
 
-    if (objvalue <= std::numeric_limits<double>::max()) {
+    if (objvalue <= std::numeric_limits<double>::max() / 2) {
         return true ;
     }
     return false ;

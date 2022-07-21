@@ -454,12 +454,24 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
     else if (TimeStepDec){
         if (indice >= 4){
             DynProgTime = false ;
+            if (arr[indice - 4] == 1){
+                PminDifferentPmax = true ;
+                powerPlanGivenByMu = true ;
+            }       
         }
     }
     else{
         if (indice >= 4){
             DynProg = false ;
         }
+    }
+
+    if (indice >= 5){
+        DynProg= false ;
+    }
+
+    if (indice >= 6){
+        DynProgTime = false ;
     }
 
 
