@@ -412,7 +412,7 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
     switch (arr[indice - 1]) {
         case 1:
             heuristicInit = true ;
-            break ,
+            break ;
         case 2:
             useLowerBound = true ;
             break ;

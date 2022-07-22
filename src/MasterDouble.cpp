@@ -741,8 +741,8 @@ void MasterDouble_Model::discardVar(SCIP* scip, SCIP_ConsData* consdata) {
    list<Master_Variable*>::const_iterator itv_site;
 
    for (itv_site = L_var_site.begin(); itv_site!=L_var_site.end(); itv_site++) {
-       if ((*itv_site)->Site == consdata->site) {
-           if ((*itv_site)->UpDown_plan[consdata->unit*T + consdata->time] != consdata->bound ) {
+       if ((*itv_site)->Site == consdata->unit) {
+           if ((*itv_site)->UpDown_plan[consdata->time] != consdata->bound ) {
 
                SCIP_Real old_bound =  SCIPgetVarUbAtIndex(scip, (*itv_site)->ptr, NULL, 0) ;
 

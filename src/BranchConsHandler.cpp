@@ -39,10 +39,10 @@ void createBranchCstr(SCIP* scip, int VarX, int bound, int unit, int time, int s
             if (!pricer->Param.TimeStepDec) {
                 int T = pricer->inst->getT() ;
                 if (VarX) {
-                    consdata->BranchConstraint = ((PricerSite->AlgoCplex[site])->x[unit*T+time] == bound) ;
+                    consdata->BranchConstraint = ((PricerSite->AlgoCplex[site])->x[(unit - pricer->inst->firstUnit(site) )*T+time] == bound) ;
                 }
                 else {
-                    consdata->BranchConstraint = ((PricerSite->AlgoCplex[site])->u[unit*T+time] == bound) ;
+                    consdata->BranchConstraint = ((PricerSite->AlgoCplex[site])->u[(unit - pricer->inst->firstUnit(site) )*T+time] == bound) ;
                 }
             }
         }

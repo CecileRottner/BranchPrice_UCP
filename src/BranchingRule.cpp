@@ -71,21 +71,7 @@ SCIP_RETCODE BranchingRule::scip_execlp(SCIP* scip, SCIP_BRANCHRULE* branchrule,
        // int unit = floor(bestfrac) + inst->getFirstG(group) ;
 
         int VarX=1 ;
-        int unit_on_site;
-        int Site ;
-
-        if (Param.TimeStepDec) {
-            Site=0 ;
-            unit_on_site = unit ;
-        }
-
-        else {
-            Site = Param.getSiteOf(unit);
-            unit_on_site= unit - Param.firstUnit(Site) ;
-
-        }
-
-
+        int Site = Param.getSiteOf(unit);
 
 
 #ifdef OUTPUT_BRANCHRULE
@@ -99,13 +85,13 @@ SCIP_RETCODE BranchingRule::scip_execlp(SCIP* scip, SCIP_BRANCHRULE* branchrule,
 
         // first node
         SCIPcreateChild(scip, &newnode, 1000.0, SCIPgetLocalTransEstimate(scip));
-        createBranchCstr(scip, VarX, 0, unit_on_site, time, Site, pricer, &newcons );
+        createBranchCstr(scip, VarX, 0, unit, time, Site, pricer, &newcons );
         SCIPaddConsNode(scip, newnode, newcons, NULL);
         SCIPreleaseCons(scip, &newcons);
 
         // second node
         SCIPcreateChild(scip, &newnode, 1000.0, SCIPgetLocalTransEstimate(scip));
-        createBranchCstr(scip, VarX, 1, unit_on_site, time, Site, pricer, &newcons );
+        createBranchCstr(scip, VarX, 1, unit, time, Site, pricer, &newcons );
         SCIPaddConsNode(scip, newnode, newcons, NULL);
         SCIPreleaseCons(scip, &newcons);
 

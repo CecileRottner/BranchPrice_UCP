@@ -176,7 +176,7 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
 
 double CplexChecker::getIntegerObjValue() {
 
-    int print=0 ;
+    int print=1 ;
 
 
     clock_t start;
@@ -211,8 +211,9 @@ double CplexChecker::getIntegerObjValue() {
 
         cout.precision(6);
         cout << "X: " << endl ;
-        for (int t=0 ; t < T ; t++) {
-            for (int i=0 ; i < n ; i++) {
+        for (int i=0 ; i < n ; i++) {
+            cout << "i= " << i << " : " ;
+            for (int t=0 ; t < T ; t++) {
                 cout << fabs(solution[i*T+t]) << " " ;
             }
             cout << endl ;

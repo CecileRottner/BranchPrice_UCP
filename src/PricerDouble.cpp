@@ -993,6 +993,7 @@ void ObjPricerDouble::addVarBound(SCIP_ConsData* consdata) {
     else {
         //A implémenter
     }
+    cout << "placed var bound on time pricer" << endl;
 }
 
 void ObjPricerDouble::removeVarBound(SCIP_ConsData* consdata) {
