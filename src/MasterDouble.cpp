@@ -711,6 +711,9 @@ void MasterDouble_Model::computeFracSol(SCIP* scip) {
     SCIP_Real frac_value;
     for (int ind=0 ; ind < n*T ; ind++) {
         x_frac[ind]=0;
+        if (Param.PminDifferentPmax){
+            p_frac[ind]=0;
+        }
     }
 
     for (itv = L_var_site.begin(); itv!=L_var_site.end(); itv++) {
@@ -726,6 +729,16 @@ void MasterDouble_Model::computeFracSol(SCIP* scip) {
                     //group_frac[group*T + t] += frac_value ;
                     x_frac[(first+i)*T+t] += frac_value ;
                 }
+            }
+        }
+    }
+    
+    if (Param.powerPlanGivenByMu){
+        list<MasterTime_Variable*>::const_iterator itv_time;
+        for (itv_time = L_var_time.begin(); itv_time!=L_var_time.end(); itv_time++) {
+            frac_value = fabs(SCIPgetVarSol(scip,(*itv_time)->ptr));
+            for (int i=0 ; i < n ; i++) {
+                p_frac[i*T + (*itv_time)->time] += frac_value * (*itv_time)->Power_plan[i];
             }
         }
     }

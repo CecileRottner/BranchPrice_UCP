@@ -289,6 +289,11 @@ int main(int argc, char** argv)
     ofstream convergence("convergence/" + std::to_string(Master_ptr->n) + "_" + std::to_string(Master_ptr->T) + + "_" + std::to_string((Master_ptr->inst)->id) + ".csv", std::ofstream::out | std::ofstream::app);
     convergence << "iter,lowerBound,dualValue" << endl;
 
+    if (param.nodeLimit > 1){
+        ofstream profondeur("profondeur/" + std::to_string(Master_ptr->n) + "_" + std::to_string(Master_ptr->T) + + "_" + std::to_string((Master_ptr->inst)->id) + ".csv", std::ofstream::out | std::ofstream::app);
+        profondeur << "profondeur,iter" << endl;
+    }
+
     /////////////////////////
     /////  BRANCHING    /////
     /////////////////////////
@@ -329,12 +334,21 @@ int main(int argc, char** argv)
         for (int i=0 ; i < n ; i++) {
             cout << "i=" << i << " : " ;
             for (int t=0 ; t < T ; t++) {
-                cout << Master_ptr->x_frac[i*T+t] << " " ;
+                cout << Master_ptr->x_frac[i*T+t] ;
+                if (param.doubleDecompo && param.powerPlanGivenByMu){
+                    cout << "," << Master_ptr->p_frac[i*T+t] ;
+                }
+                cout << "  " ;
             }
             cout << endl;
         }
 
-        checker.checkSolution(Master_ptr->x_frac) ;
+        if (param.doubleDecompo && param.powerPlanGivenByMu){
+            checker.checkSolution(Master_ptr->x_frac, Master_ptr->p_frac) ;
+        }
+        else{
+            checker.checkSolution(Master_ptr->x_frac) ;
+        }
 
 
 //        cout << "solution x frac: " << endl;

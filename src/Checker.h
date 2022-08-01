@@ -51,6 +51,7 @@ class CplexChecker {
 
   double printSolution();
   void checkSolution(const vector<double> & x_frac);
+  void checkSolution(const vector<double> & x_frac, const vector<double> & p_frac);
 
 };
 

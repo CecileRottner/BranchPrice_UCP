@@ -73,6 +73,7 @@ public:
     //solution fractionnaire et valeurs duales associes
     list<double> totalDualCostList;
     vector<double> x_frac ;
+    vector<double> p_frac ;
 
     //compteur du nb d'appels au pricer
     double cumul_resolution_pricing ;
@@ -89,6 +90,7 @@ public:
         T= inst->getT() ;
         nbIntUpSet = 0 ;
         x_frac.resize(n*T,0);
+        p_frac.resize(n*T,0);
 
         IUP_t0.resize(T) ;
         IUP_t1.resize(T) ;

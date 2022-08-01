@@ -80,6 +80,8 @@ ObjPricerDouble::ObjPricerDouble(
     infeasibilityDetected = false ;
     guidageTermine = false;
 
+    profondeur = 0;
+
 
     //Pricers sans répartition de couts
 
@@ -994,6 +996,15 @@ void ObjPricerDouble::addVarBound(SCIP_ConsData* consdata) {
         //A implémenter
     }
     cout << "placed var bound on time pricer" << endl;
+
+    // Tracer itérations de pricing en fonction de la profondeur
+    ofstream ecrire("profondeur/" + std::to_string(Master->n) + "_" + std::to_string(Master->T) + + "_" + std::to_string((Master->inst)->id) + ".csv", std::ofstream::out | std::ofstream::app);
+    ecrire << profondeur << "," << iteration << endl;
+
+    // Réinitialiser les métadonnées du pricer pour le nouveau noeud
+    profondeur ++;
+    iteration = 0;
+    guidageTermine = false ;
 }
 
 void ObjPricerDouble::removeVarBound(SCIP_ConsData* consdata) {
@@ -1018,6 +1029,12 @@ void ObjPricerDouble::removeVarBound(SCIP_ConsData* consdata) {
     else {
         //A implémenter
     }
+
+    // Tracer itérations de pricing en fonction de la profondeur
+    ofstream ecrire("profondeur/" + std::to_string(Master->n) + "_" + std::to_string(Master->T) + + "_" + std::to_string((Master->inst)->id) + ".csv", std::ofstream::out | std::ofstream::app);
+    ecrire << profondeur << "," << iteration << endl;
+    profondeur --;
+    iteration = 0;
 }
 
 

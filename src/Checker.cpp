@@ -469,10 +469,105 @@ void CplexChecker::checkSolution(const vector<double> & x_frac) {
     double value = CheckCplex.getObjValue() ;
     cout << "value: " <<  value << endl ;
 
-    //    IloNumArray solution_p = IloNumArray(env, n*T) ;
-    //    CheckCplex.getValues(solution_p, p) ;
-    //    cout << solution_p << endl ;
-
+    IloNumArray solution_p = IloNumArray(env, n*T) ;
+    CheckCplex.getValues(solution_p, p) ;
+    cout << "solution en p:" << endl;
+    cout << solution_p << endl ;
 
 }
 
+
+void CplexChecker::checkSolution(const vector<double> & x_frac, const vector<double> & p_frac) {
+    double eps = 0.000001 ;
+
+    cout << "start check..." << endl;
+
+    int T = inst->getT() ;
+    int n = inst->getn();
+
+    IloModel CheckModel(env) ;
+
+    vector<double> u_frac(n*T, 0) ;
+    for (int i=0 ; i <n ; i++) {
+        for (int t=1 ; t < T ; t++) {
+            if ( x_frac[i*T+t-1] < x_frac[i*T+t]  ) {
+                u_frac[i*T+t] = x_frac[i*T+t] - x_frac[i*T+t-1] ;
+            }
+        }
+    }
+
+
+    // Objective Function: Minimize Cost
+    IloExpr cost(env) ;
+    for (int t=0 ; t < T ; t++) {
+        for (int i=0; i<n; i++) {
+            cost +=  x_frac[i*T + t]*inst->getcf(i) + inst->getc0(i)*u_frac[i*T + t] + (p_frac[i*T + t]*inst->getcp(i)) ;
+        }
+    }
+
+
+    CheckModel.add(IloMinimize(env, cost));
+
+    // Min up constraints
+    for (int i=0; i<n; i++) {
+        for (int t=inst->getL(i) ; t < T ; t++) {
+            double sum = 0 ;
+            for (int k= t - inst->getL(i) + 1; k <= t ; k++) {
+                sum += u_frac[i*T + k] ;
+            }
+            if (sum > x_frac[i*T + t] + eps) {
+                cout << "min up " << i << ", " << t << " non satisfaite" << endl ;
+            }
+        }
+    }
+
+    // Min down constraints
+    for (int i=0; i<n; i++) {
+        for (int t=inst->getl(i) ; t < T ; t++) {
+            double sum=0 ;
+            for (int k= t - inst->getl(i) + 1; k <= t ; k++) {
+                sum += u_frac[i*T + k] ;
+            }
+            if (sum > 1 - x_frac[i*T + t - inst->getl(i)] + eps) {
+                cout << "min down " << i << ", " << t << " non satisfaite" << endl ;
+
+                cout << "sum: " << sum << endl ;
+                cout << "RHS: " << 1 - x_frac[i*T + t - inst->getl(i)]  << endl ;
+            }
+        }
+    }
+
+    //Limite de production
+    for (int i=0; i<n; i++) {
+        for (int t=0 ; t < T ; t++) {
+            if (p_frac[i*T + t] > inst->getPmax(i)*x_frac[i*T + t] + eps){
+                cout << "puissance " << i << ", " << t << " trop haute" << endl ;
+            }
+            if (p_frac[i*T + t] < inst->getPmin(i)*x_frac[i*T + t] - eps){
+                cout << "puissance " << i << ", " << t << " trop basse" << endl ;
+            }
+        }
+    }
+
+    //Demande
+    for (int t=0; t < T ; t++) {
+        double sum=0 ;
+        for (int i=0; i<n; i++) {
+            sum += p_frac[i*T + t] ;
+        }
+        if (sum < inst->getD(t) - eps){
+            cout << "demande " << t << " non satisfaite" << endl ;
+            cout << "puissance produite : " << sum << endl;
+            cout << "demande : " << inst->getD(t) << endl;
+        }
+    }
+
+    IloCplex CheckCplex = IloCplex(CheckModel) ;
+
+    cout << "Solve..." << endl ;
+    CheckCplex.solve() ;
+    cout << "end solve" << endl ;
+
+    double value = CheckCplex.getObjValue() ;
+    cout << "value: " <<  value << endl ;
+}

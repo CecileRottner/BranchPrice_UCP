@@ -403,13 +403,13 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
             break ;
     }
 
-    // Branchement ou non
+    // Branchement
     if (arr[indice - 2] == 0) {
         node_limit = 1 ;
     }
 
     // Paramètres généraux de génération de colonnes
-    switch (arr[indice - 1]) {
+    switch (arr[indice - 3]) {
         case 1:
             heuristicInit = true ;
             break ;

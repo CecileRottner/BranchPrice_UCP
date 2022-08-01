@@ -63,6 +63,8 @@ public:
     list<MasterTime_Variable*> timeVarsToAdd ;
 
     bool infeasibilityDetected ;
+
+    int profondeur ; // profondeur courante dans l'arbre de branchement
 };
 
 
