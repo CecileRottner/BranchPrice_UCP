@@ -206,13 +206,48 @@ void CplexPricingAlgoTime::getUpDownPlan(InstanceUCP* inst, const DualCostsTime 
         IloNumArray prod(env, n) ;
         cplex.getValues(p, prod) ;
         for (int i=0 ; i <n ; i++) {
-            if (UpDownPlan[i] > 1 - Param.Epsilon) {
+            if (UpDownPlan[i] > 1 - cplex.getParam(IloCplex::Param::MIP::Tolerances::Integrality) ) {
+                UpDownPlan[i] = 1 ;
                 PowerPlan[i] = inst->getPmin(i) + prod[i] ;
             }
             else{
+                UpDownPlan[i] = 0;
                 PowerPlan[i] = 0;
             }
             totalProd += PowerPlan[i];
+
+        //     if (i==9){
+        //         cout.precision(15);
+        //         cout << "x: " << UpDownPlan[i] << endl ;
+        //         cout << "comparatif: " << 1 - Param.Epsilon << endl;
+        //         cout << "test: "<< (UpDownPlan[i] > 1 - Param.Epsilon) << endl ;
+        //         cout << "p: " << PowerPlan[i] << endl;
+        //         cout << "pmin: " << inst->getPmin(i) << endl;
+        //     }
+        // }
+        // if (time == 19){
+        //     double production = 0 ; 
+        //     for (int i=0 ; i < n ; i++) {
+        //         production += PowerPlan[i] ;
+        //     }
+
+        //     if (production < inst->getD(time) - Param.Epsilon){
+        //         cout << "BUG : " << endl;
+        //         cout << "pas de temps : " << time << endl;
+        //         cout << "production : " << production << endl;
+        //         cout << "demande : " << inst->getD(time) << endl;
+
+        //         cout << "plan: " << endl;
+        //         for (int i=0 ; i < inst->getn() ; i++) {
+        //             cout << UpDownPlan[i] << " "  ;
+        //         }
+        //         cout << endl;
+        //         cout << "and power plan: " << endl;
+        //         for (int i=0 ; i < inst->getn() ; i++) {
+        //             cout << PowerPlan[i] << " "  ;
+        //         }
+        //         cout << endl;
+        //     }
         }
     }
 }

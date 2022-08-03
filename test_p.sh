@@ -26,7 +26,7 @@ demand_type=3
 for n in 20 ; do
   for T in 24 ; do
     for id in 3 ; do
-      for met in 4006 ; do
+      for met in 4000 4001 4002 4003 4004 4006 ; do
         rm logs/$met.txt
         rm colonnes.csv
         rm convergence/${n}_${T}_$id.csv
