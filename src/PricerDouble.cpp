@@ -482,22 +482,131 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
         double facteur = 1 ;
 
-        switch(Param.guidageRepartition){
+        switch(profondeur){
+            case 0:
+                switch(Param.guidageRepartition){
+                    case 1:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (3*sqrt(n*T) - iteration) / (2*sqrt(n*T)), 0) ;
+                        }
+                        break ;
+
+                    case 2:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (2*sqrt(n*T) - iteration) / (2*sqrt(n*T)), 0) ;
+                        }
+                        break ;
+
+                    case 3:
+                        facteur = pow(0.5, ( (iteration - 1) / (2*sqrt(n*T)) ) ) ;
+                        break ;
+                    }
+                break;
+
             case 1:
-                if (iteration > sqrt(n*T) ){
-                    facteur = fmax( (3*sqrt(n*T) - iteration) / (2*sqrt(n*T)), 0) ;
-                }
-                break ;
+                switch(Param.guidageRepartition){
+                    case 1:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (sqrt(n*T)/2 - iteration) / (sqrt(n*T)/3), 0) ;
+                        }
+                        break ;
+
+                    case 2:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (sqrt(n*T)/3 - iteration) / (sqrt(n*T)/3), 0) ;
+                        }
+                        break ;
+
+                    case 3:
+                        facteur = pow(0.5, ( 3 * (iteration - 1) / (sqrt(n*T)) ) ) ;
+                        break ;
+                    }
+                break;
 
             case 2:
-                if (iteration > sqrt(n*T) ){
-                    facteur = fmax( (2*sqrt(n*T) - iteration) / (2*sqrt(n*T)), 0) ;
-                }
-                break ;
+                switch(Param.guidageRepartition){
+                    case 1:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (sqrt(n*T)/3 - iteration) / (sqrt(n*T)/4), 0) ;
+                        }
+                        break ;
+
+                    case 2:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (sqrt(n*T)/4 - iteration) / (sqrt(n*T)/4), 0) ;
+                        }
+                        break ;
+
+                    case 3:
+                        facteur = pow(0.5, ( 4 * (iteration - 1) / (sqrt(n*T)) ) ) ;
+                        break ;
+                    }
+                break;
 
             case 3:
-                facteur = pow(0.5, ( (iteration - 1) / (2*sqrt(n*T)) ) ) ;
-                break ;
+                switch(Param.guidageRepartition){
+                    case 1:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (sqrt(n*T)/4 - iteration) / (sqrt(n*T)/5), 0) ;
+                        }
+                        break ;
+
+                    case 2:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (sqrt(n*T)/5 - iteration) / (sqrt(n*T)/5), 0) ;
+                        }
+                        break ;
+
+                    case 3:
+                        facteur = pow(0.5, ( 5 * (iteration - 1) / (sqrt(n*T)) ) ) ;
+                        break ;
+                    }
+                break;
+
+            case 4:
+                switch(Param.guidageRepartition){
+                    case 1:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (sqrt(n*T)/5 - iteration) / (sqrt(n*T)/6), 0) ;
+                        }
+                        break ;
+
+                    case 2:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (sqrt(n*T)/6 - iteration) / (sqrt(n*T)/6), 0) ;
+                        }
+                        break ;
+
+                    case 3:
+                        facteur = pow(0.5, ( 6 * (iteration - 1) / (sqrt(n*T)) ) ) ;
+                        break ;
+                    }
+                break;
+
+            case 5:
+                switch(Param.guidageRepartition){
+                    case 1:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (sqrt(n*T)/6 - iteration) / (sqrt(n*T)/7), 0) ;
+                        }
+                        break ;
+
+                    case 2:
+                        if (iteration > sqrt(n*T) ){
+                            facteur = fmax( (sqrt(n*T)/7 - iteration) / (sqrt(n*T)/7), 0) ;
+                        }
+                        break ;
+
+                    case 3:
+                        facteur = pow(0.5, ( 7 * (iteration - 1) / (sqrt(n*T)) ) ) ;
+                        break ;
+                    }
+                break;
+
+            default:
+                facteur = 0;
+                break;
+            
         }
 
         if (facteur > 0.01){
