@@ -466,13 +466,16 @@ void CplexChecker::checkSolution(const vector<double> & x_frac) {
 
     int fea = CheckCplex.isPrimalFeasible();
     cout << "feasible: " << fea << endl ;
-    double value = CheckCplex.getObjValue() ;
-    cout << "value: " <<  value << endl ;
 
-    IloNumArray solution_p = IloNumArray(env, n*T) ;
-    CheckCplex.getValues(solution_p, p) ;
-    cout << "solution en p:" << endl;
-    cout << solution_p << endl ;
+    if (fea){
+        double value = CheckCplex.getObjValue() ;
+        cout << "value: " <<  value << endl ;
+
+        IloNumArray solution_p = IloNumArray(env, n*T) ;
+        CheckCplex.getValues(solution_p, p) ;
+        cout << "solution en p:" << endl;
+        cout << solution_p << endl ;
+    }
 
 }
 

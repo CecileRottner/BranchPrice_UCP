@@ -164,7 +164,7 @@ int main(int argc, char** argv)
 
     // resolution parameters (time and node limits)
     SCIPsetLongintParam(scip, "limits/nodes", param.nodeLimit);
-    SCIPsetRealParam(scip, "limits/time", 3600);
+    SCIPsetRealParam(scip, "limits/time", 2);
 
     // Changements pour rendre le code compatible avec scip-8.0.0
     SCIPincludeDialogDefaultBasic(scip) ;
@@ -322,7 +322,7 @@ int main(int argc, char** argv)
 
         cout << "resolution..." << endl ;
         SCIPsolve(scip);
-        SCIPwriteTransProblem(scip, "priced.lp", NULL, FALSE);
+        //SCIPwriteTransProblem(scip, "priced.lp", NULL, FALSE);
         cout << "fin resolution" << endl ;
 
 
@@ -342,7 +342,7 @@ int main(int argc, char** argv)
             }
             cout << endl;
         }
-
+        cout << "hey" << endl;
         if (param.doubleDecompo && param.powerPlanGivenByMu){
             checker.checkSolution(Master_ptr->x_frac, Master_ptr->p_frac) ;
         }
@@ -362,12 +362,12 @@ int main(int argc, char** argv)
 
     }
 
-
+    cout << "hey" << endl;
     double temps_scip =  ( clock() - start ) / (double) CLOCKS_PER_SEC;
     //////////////////////
     //////   STATS   /////
     //////////////////////
-
+    cout << "hey" << endl;
     fichier.precision(7);
 
     cout << "ici write" << endl ;
