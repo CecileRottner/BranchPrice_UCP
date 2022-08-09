@@ -87,8 +87,8 @@ ObjPricerDouble::ObjPricerDouble(
 
     for (int i=0 ; i < inst->getn() ; i++) {
         ParamMaster.costBalancingPricer.at(i) = ParamMaster.costBalancingMaster.at(i);
-        cout << "pricer: " << Param.costBalancingPricer.at(i) << endl;
-        cout << "master: " << ParamMaster.costBalancingPricer.at(i) << endl;
+        //cout << "pricer: " << Param.costBalancingPricer.at(i) << endl;
+        //cout << "master: " << ParamMaster.costBalancingPricer.at(i) << endl;
     }
 }
 
@@ -1114,6 +1114,20 @@ void ObjPricerDouble::addVarBound(SCIP_ConsData* consdata) {
     profondeur ++;
     iteration = 0;
     guidageTermine = false ;
+
+    if (Param.unitGEQTime && Param.balanceCosts){
+        for (int i=0 ; i < inst->getn() ; i++) {
+            if (Param.PmaxOnLambda){
+                Param.costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * (inst->getcf(i) + inst->getcp(i) * inst->getPmax(i)) );
+            }
+            else if (Param.PminOnLambda){
+                Param.costBalancingPricer.at(i) = 0.5;
+            }
+            else {
+                Param.costBalancingPricer.at(i) = (inst->getcf(i) + inst->getcp(i) * inst->getPmin(i)) / ( 2 * inst->getcf(i) );
+            }
+        }
+    }
 }
 
 void ObjPricerDouble::removeVarBound(SCIP_ConsData* consdata) {

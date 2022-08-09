@@ -1,8 +1,2 @@
 data/small_UCP_data/ & n & T & id & Nodes & CPU & CPU(Master) & Dual b. & Primal b. & CPLEX & Nodes & CPU & gap \\ 
- 3103 & 10 & 24 & 3 &  46 &  2.000169 & 1.728724 &  158327.1 &  159635 & 159635 & 216 & 5.658381 & 0 \\ 
-\hline 
-\hline 
-
-
-
-
+ \hline 
