@@ -19,6 +19,8 @@ A transition from (t, 0) to (t',1) means that unit i is up at time t-1, shuts do
 Therefore, a transition (t, 0) to (t', 1) is not allowed if t' - t < l (where l is the minimum down time).
 Similarly, a transition (t, 1) to (t', 0) is not allowed if t' - t < L (where L is the minimum up time).
 
+No transition of type (t,0) --> (t',0) or of type (t,1) --> (t',1) exists.
+
 
 ## Implementation
 
@@ -30,4 +32,5 @@ The following methods are defined :
 
   * **findImprovingSolution**: runs DP algorithm and fills Bellman values in vector **Bellman** and predecessor vector **Prec**
   * **getUpDownPlan**: fills up/down plan in vector upDownPlan given as argument, using Bellman values and predecessor vector
+  * **checkTransitionSUSD**: checks that a transition (prec_time, prec_status ) --> (current_time, curent_status) is valid (with respect to min-up/down constraints and branching decisions)
   * **computeStartUpCosts** : given a transition (prec_time, 0) --> (current_time, 1), computes the associated start-up cost (taking also into account dual values)
