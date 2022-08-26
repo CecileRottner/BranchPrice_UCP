@@ -34,6 +34,7 @@ Note that double (unit/site + time) decompositions uses both classes DualCosts a
 
 ## Pricing algorithm classes
 
+
 ### CplexPricingAlgo
 
 Class for solving unit/site subproblems with frontal Cplex. 
@@ -53,6 +54,15 @@ The following attributes are defined :
 * **s** : int, refers to the site concerned by the subproblem. Note that the DP algorithm is implemented only for sites composed of 1 unit, i.e. site s will correspond here to unit s
 
 * **branchingDecision**s : vector of size n. For time step t, branchingDecisions[t] = 0 (resp. 1) if unit s has been fixed to 0 (resp. 1) by branching at time t. If unit s is not fixed by branching at time t, then branchingDecisions[t] = 8.
+
+* **Bellman** (or **Table** for time subproblems) : vector containing Bellamn values computed by dynamic programming
+
+
+The following methods are defined:
+
+  * **updateObjCoeficients**: takes new dual costs as input and updates the subproblem objective function
+  
+  * **findUpDownPlan**: computes Bellman table and predecessor vector. Returns true if an improving solution has been found. objvalue is updated in this case
 
 
 2 algorithms are implemented in this class:
