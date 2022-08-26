@@ -9,7 +9,7 @@ Methods of class DynProgPricingAlgo defined in CplexPricingAlgo.h.
 
 ## Dynamic programming states and transitions
 
-The states and transitions for this DP algo directly corresponds to those from the graph of the "Flow formulation" defined p25 of thesis https://hal.archives-ouvertes.fr/tel-02052101/document 
+The states and transitions for this DP algo directly correspond to those from the graph of the "Flow formulation" defined p25 of thesis https://hal.archives-ouvertes.fr/tel-02052101/document 
 
 The algorithm is implemented for any unit i.
 The set of dynamic programming states consists in couples (t, b), for t in {1, ..., T} and b in {0,1} indicates whether unit i is start-up (b=1) or shuts-down (b=0).
