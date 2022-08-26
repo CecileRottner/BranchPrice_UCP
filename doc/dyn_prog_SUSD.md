@@ -30,3 +30,4 @@ The following methods are defined :
 
   * **findImprovingSolution**: runs DP algorithm and fills Bellman values in vector **Bellman** and predecessor vector **Prec**
   * **getUpDownPlan**: fills up/down plan in vector upDownPlan given as argument, using Bellman values and predecessor vector
+  * **computeStartUpCosts** : given a transition (prec_time, 0) --> (current_time, 1), computes the associated start-up cost (taking also into account dual values)
