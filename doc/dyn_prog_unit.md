@@ -1,7 +1,10 @@
+[Go back to pricing algorithms](pricing_algo.md)
+
 # Dynamic programming algorithm to solve unit subproblems
 
 Algorithm implemented in file DynProgPricingAlgo.cpp.
 
+Methods of class DynProgPricingAlgo defined in CplexPricingAlgo.h.
 
 ## Dynamic programming states and transitions
 The algorithm is implemtend for any unit i.
