@@ -1,5 +1,7 @@
 # Dynamic programming algorithm to solve unit subproblems
 
+Algorithm implemented in file DynProgPricingAlgo.cpp.
+
 
 ## Dynamic programming states and transitions
 The algorithm is implemtend for any unit i.
