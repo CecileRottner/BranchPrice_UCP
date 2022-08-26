@@ -12,7 +12,7 @@ Methods of class DynProgPricingAlgo defined in CplexPricingAlgo.h.
 The states and transitions for this DP algo directly correspond to those from the graph of the "Flow formulation" defined p25 of thesis https://hal.archives-ouvertes.fr/tel-02052101/document 
 
 The algorithm is implemented for any unit i.
-The set of dynamic programming states consists in couples (t, b), for t in {1, ..., T} and b in {0,1} indicates whether unit i is start-up (b=1) or shuts-down (b=0).
+The set of dynamic programming states consists in couples (t, b), for t in {1, ..., T} and b in {0,1} indicates whether unit i starts-up (b=1) or shuts-down (b=0) at time t.
 
 A transition from (t, 0) to (t',1) means that unit i is up at time t-1, shuts down at time t, remains down from t to t'-1 and starts up and time t'. The cost of such a transition corresponds to the starts-up cost at time t' (after being down from time t to t').
 
