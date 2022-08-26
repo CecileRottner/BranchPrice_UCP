@@ -19,7 +19,7 @@ It costs 0 because this transition correspond to a shut-down of unit i at time t
 
 * **Bellman** : matrix of size (T,2). Bellman(t, 0) (resp. Bellman(t, 1)) indicates the minimum cost of an up/down plan for unit s from time 0 to time t, where unit s is down  (resp. up) at time t.
 
-* **Prec** : matrix of size (T,2). Prec(t,0) indicates which was the last transition used to obtain the min cost Bellman(t, 0) up/down plan from time 0 to t. This vector is useful to construct the subproblem solution given the Bellman vector.
+* **Prec** : matrix of size (T,2). Prec(t,0) indicates which was the last transition used to obtain the min cost Bellman(t, 0) up/down plan from time 0 to t. This vector is useful to construct the subproblem solution given by the Bellman vector.
 
 The following methods are defined :
 
