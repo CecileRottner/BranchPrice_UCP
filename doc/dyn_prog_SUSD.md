@@ -17,7 +17,7 @@ The set of dynamic programming states consists in couples (t, b), for t in {1, .
 A transition from (t, 0) to (t',1) means that unit i is up at time t-1, shuts down at time t, remains down from t to t'-1 and starts up and time t'. Similarly, a transition from (t, 1) to (t',0) means that unit i is down at time t-1,  starts up at time t, remains up from t to t'-1 and shuts down and time t'.
 
 Therefore, a transition (t, 0) to (t', 1) is not allowed if t' - t < l (where l is the minimum down time).
-Similarly, a transition (t, 1) to (t', 0) is not allowed if t' - t < L (where L is the minimum down time).
+Similarly, a transition (t, 1) to (t', 0) is not allowed if t' - t < L (where L is the minimum up time).
 
 
 ## Implementation
