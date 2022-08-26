@@ -14,7 +14,10 @@ The states and transitions for this DP algo directly correspond to those from th
 The algorithm is implemented for any unit i.
 The set of dynamic programming states consists in couples (t, b), for t in {1, ..., T} and b in {0,1} indicates whether unit i is start-up (b=1) or shuts-down (b=0).
 
-A transition from (t, 0) to (t',1) means that unit i is up at time t-1, shuts down at time t, remains down from t to t'-1 and starts up and time t'. Similarly, a transition from (t, 1) to (t',0) means that unit i is down at time t-1,  starts up at time t, remains up from t to t'-1 and shuts down and time t'.
+A transition from (t, 0) to (t',1) means that unit i is up at time t-1, shuts down at time t, remains down from t to t'-1 and starts up and time t'. The cost of such a transition corresponds to the starts-up cost at time t' (after being down from time t to t').
+
+
+Similarly, a transition from (t, 1) to (t',0) means that unit i is down at time t-1,  starts up at time t, remains up from t to t'-1 and shuts down and time t'. The cost of such a transition correspond to the fixed cost for being up of unit i.
 
 Therefore, a transition (t, 0) to (t', 1) is not allowed if t' - t < l (where l is the minimum down time).
 Similarly, a transition (t, 1) to (t', 0) is not allowed if t' - t < L (where L is the minimum up time).
