@@ -69,5 +69,12 @@ in exec.sh uses the following arguments :
 - met : unique number referring to a particular tuple of parameters to be used for the resolution (see main.cpp)
 - intra : equals 1 if intra-site constraints must be taken into account
 
+## Parameters
+
+* **nonLinearStartUpCost**
+
+If true: start-up cost are not constant anymore but are an increasing function of the down time (see function ComputeStartUpCosts in DynProgSUSDPricingAlgo.cpp)
+
+Note: bug in master.cpp, start-up costs are not computed correctly in this case in function "computeCost" of class MasterVariable
 
 
