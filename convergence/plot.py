@@ -16,5 +16,5 @@ ax.set_ylim([-0.5 * upper, 1.1*upper])
 
 df.lowerBound.plot(ax=ax, x='iter')
 df.dualValue.plot(ax=ax, x='iter')
-
+plt.xlim([0, 376])
 plt.savefig("convergence/plots/" + str(sys.argv[4]) + "_" + nom + ".png")

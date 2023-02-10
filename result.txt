@@ -1,2 +1,8 @@
-data/small_UCP_data/ & n & T & id & Nodes & CPU & CPU(Master) & Dual b. & Primal b. & CPLEX & Nodes & CPU & gap \\ 
- \hline 
+data/small_UCP_data/ & n & T & id & IUP & Iter & Var & cols U & cols T & CPU & CPU(Master) & Gap & Dual b. & Primal b. & LR & LR(Cplex) \\ 
+ 3006 & 20 & 48 & 6 & -  &  132 & 4897 & 1754 & 3075 &  14.13204 & 13.20133 &  0.1082244 &  553409.6 &  613302 & 542302.5 & 552529.6 \\ 
+\hline 
+\hline 
+
+
+
+

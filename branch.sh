@@ -25,16 +25,16 @@ demand_type=3
 
 for n in 20 ; do
   for T in 24 ; do
-    for met in 3104 3105 3106 ; do
-      for id in {1..10} ; do
+    for id in {1..10} ; do
+      for met in 3100 3101 3102 3103 3104 3105 3106 ; do
         rm logs/$met.txt
         rm colonnes.csv
         rm convergence/${n}_${T}_$id.csv
         rm profondeur/${n}_${T}_$id.csv
         ./bin/SCIP_UCP_BP.linux.x86_64.gnu.opt.cpx 1 $dossier $n $T 1 $demand_type $sym $cat01 $intra $id $met $UseIntraCons >> logs/$met.txt
-        python3 profondeur/plot.py $n $T $id $met
+        #python3 profondeur/plot.py $n $T $id $met
       done
-      python3 profondeur/moyennegenerale.py $n $T $met
+      #python3 profondeur/moyennegenerale.py $n $T $met
       printf "\\hline \n" >> result.txt	
     done
    printf "\\hline \n" >> result.txt	
