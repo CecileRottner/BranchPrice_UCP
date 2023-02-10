@@ -461,8 +461,8 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
     }
     else if (TimeStepDec){
         if (indice >= 4){
-            DynProgTime = false ;
             if (arr[indice - 4] == 1){
+                DynProgTime = false ;
                 PminDifferentPmax = true ;
                 powerPlanGivenByMu = true ;
             }       
@@ -470,16 +470,15 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
     }
     else{
         if (indice >= 4){
-            DynProg = false ;
+            if (arr[indice - 4] == 1){
+                DynProg = false ;
+            }
         }
     }
 
     if (indice >= 5){
-        DynProg= false ;
-    }
-
-    if (indice >= 6){
-        DynProgTime = false ;
+        nonLinearStartUpCost = true;
+        DynProgSUSD = true;
     }
 
 
