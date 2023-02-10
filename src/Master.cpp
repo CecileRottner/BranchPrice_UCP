@@ -16,6 +16,19 @@ void Master_Variable::addPowerPlan(IloNumArray PowerPlan) {
     Power_plan = PowerPlan  ;
 }
 
+double Master_Variable::computeStartUpCost(InstanceUCP* inst, int prec_time, int current_time, int unit, const Parameters & Param) {
+    int T = inst->getT() ;
+    double c0 = inst->getc0(unit) ;
+    double cost = 0;
+    if (Param.nonLinearStartUpCost) {
+        cost += c0*(1 - exp(-float(current_time - prec_time)/T));
+    }
+    else{
+        cost += c0;
+    }
+    return cost ;
+}
+
 void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
     //compute cost of up/down plan lambda: fixed cost (including minimum power output cost) and start up cost
     //init à prendre en compte plus tard
@@ -30,12 +43,16 @@ void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
     if (Param.doubleDecompo){
         for (int i = first ; i <= last ; i++) {
             int down_t_1 = 0 ;
+            int prec = 0;
             for (int t = 0 ; t < T ; t++) {
                 if (down_t_1 && UpDown_plan[(i-first)*T+t] > 1 - Param.Epsilon) { // il y a un démarrage en t
-                    cost+= inst->getc0(i) ;
+                    cost+= computeStartUpCost(inst, prec, t, i, Param);
                 }
 
                 if (UpDown_plan[(i-first)*T+t] < Param.Epsilon ) {
+                    if (down_t_1 == 0){ // on éteint l'unité en t
+                        prec = t;
+                    }
                     down_t_1=1;
                 }
                 else { // l'unité i est up en t
@@ -55,12 +72,16 @@ void Master_Variable::computeCost(InstanceUCP* inst, const Parameters & Param) {
     else{
         for (int i = first ; i <= last ; i++) {
             int down_t_1 = 0 ;
+            int prec = 0;
             for (int t = 0 ; t < T ; t++) {
                 if (down_t_1 && UpDown_plan[(i-first)*T+t] > 1 - Param.Epsilon) { // il y a un démarrage en t
-                    cost+= inst->getc0(i) ;
+                    cost+= computeStartUpCost(inst, prec, t, i, Param);
                 }
 
                 if (UpDown_plan[(i-first)*T+t] < Param.Epsilon ) {
+                    if (down_t_1 == 0){ // on éteint l'unité en t
+                        prec = t;
+                    }
                     down_t_1=1;
                 }
                 else{

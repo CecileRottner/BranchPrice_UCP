@@ -667,11 +667,11 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 upDownPlan = IloNumArray((AlgoDynProg_site[s])->env, Param.nbUnits(s)*T) ;
                 cout << "updownplan initialisé" << endl;
                 if (Param.DynProgSUSD) {
-                    (AlgoDynProg_site.at(s))->findImprovingSolutionSUSD(inst, dual_cost, objvalue);
+                    solutionFound = (AlgoDynProg_site.at(s))->findImprovingSolutionSUSD(inst, dual_cost, objvalue);
                     (AlgoDynProg_site.at(s))->getUpDownPlanSUSD(inst, upDownPlan) ;
                 }
                 else {
-                    (AlgoDynProg_site.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
+                    solutionFound = (AlgoDynProg_site.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
                     (AlgoDynProg_site.at(s))->getUpDownPlan(inst, upDownPlan) ;
                 }
                 cout << "DP resolution done" << endl ;
@@ -714,8 +714,8 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
                 //SCIPwriteOrigProblem(scip, "debug.lp", "lp", FALSE);
 
-                dual_cost.computeObjCoef(inst,ParamMaster,Farkas, dual_cost_time);
-                dual_cost.computeRedcost(inst, ParamMaster, lambda, redcost);
+                dual_cost.computeObjCoef(inst,ParamMaster, Farkas, dual_cost_time);
+                dual_cost.computeRedcost(inst, ParamMaster, Farkas, lambda, redcost);
                 cout << "cout reduit calculé: " << redcost << endl;
 
                 if (redcost < -epsilon) {
@@ -888,7 +888,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 cout << AlgoDynProg_site[s]->Site << endl;
                 upDownPlan = IloNumArray((AlgoDynProg_site[s])->env, Param.nbUnits(s)*T) ;
                 if (Param.DynProgSUSD) {
-                    (AlgoDynProg_site.at(s))->findImprovingSolutionSUSD(inst, dual_cost, objvalue);
+                    solutionFound = (AlgoDynProg_site.at(s))->findImprovingSolutionSUSD(inst, dual_cost, objvalue);
                     (AlgoDynProg_site.at(s))->getUpDownPlanSUSD(inst, upDownPlan) ;
                 }
                 else {

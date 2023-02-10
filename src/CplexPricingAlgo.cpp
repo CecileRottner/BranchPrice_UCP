@@ -429,7 +429,7 @@ bool CplexPricingAlgo::findUpDownPlan(InstanceUCP* inst, const DualCosts & Dual,
     return true;
 }
 
-void DualCosts::computeRedcost(InstanceUCP* inst, const Parameters & Param, Master_Variable * lambda, double& redcost) {
+void DualCosts::computeRedcost(InstanceUCP* inst, const Parameters & Param, bool Farkas, Master_Variable * lambda, double& redcost) {
 
     redcost = - Sigma[lambda->Site] ;
     int T= inst->getT() ;
@@ -439,11 +439,19 @@ void DualCosts::computeRedcost(InstanceUCP* inst, const Parameters & Param, Mast
 
     for (int i = first ; i <= last ; i++) {
         int down_t_1 = 0 ;
+        int prec = 0;
         for (int t = 0 ; t < T ; t++) {
             if (down_t_1 && lambda->UpDown_plan[(i-first)*T+t] > 1 - Param.Epsilon) { // il y a un démarrage en t
                 redcost+= ObjCoefU.at(i*T+t) ;
+                if (Param.nonLinearStartUpCost && !Farkas){
+                    redcost -= inst->getc0(i) ;
+                    redcost += lambda->computeStartUpCost(inst, prec, t, i, Param);
+                }
             }
             if (lambda->UpDown_plan[(i-first)*T+t] < Param.Epsilon ) {
+                if (down_t_1 == 0){ // on éteint l'unité en t
+                    prec = t;
+                }
                 down_t_1=1;
             }
             else { // l'unité i est up en t

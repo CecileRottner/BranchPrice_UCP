@@ -236,7 +236,7 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
 
    objvalue = V_sink - Dual.Sigma[Site] ;
 
-    if (objvalue < - Param.Epsilon) {
+    if (objvalue <= std::numeric_limits<double>::max() / 2) {
         return true ;
     }
 

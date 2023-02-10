@@ -133,6 +133,7 @@ public:
     Master_Variable(int site, IloNumArray UpDown) ;
     void addPowerPlan(IloNumArray PowerPlan);
     void computeCost(InstanceUCP* inst, const Parameters & Param) ;
+    double computeStartUpCost(InstanceUCP* inst, int prec_time, int current_time, int unit, const Parameters & Param) ;
 
 };
 
