@@ -20,11 +20,27 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
 
     cost = IloExpr(env) ;
 
+    // Variables spécifiques aux coûts de démarrage non linéaires
+    IloBoolVarArray d = IloBoolVarArray(env, n*T) ;
+    IloBoolVarArray u_temps = IloBoolVarArray(env, n*T*T) ;
+
     // Objective Function: Minimize Cost
     
-    for (int t=0 ; t < T ; t++) {
-        for (int i=0; i<n; i++) {
-            cost += x[i*T + t]*inst->getcf(i) + inst->getc0(i)*u[i*T + t] + (pp[i*T + t]+inst->getPmin(i)*x[i*T + t])*(inst->getcp(i)) ;
+    if (!Param.nonLinearStartUpCost){
+        for (int t=0 ; t < T ; t++) {
+            for (int i=0; i<n; i++) {
+                cost += x[i*T + t]*inst->getcf(i) + inst->getc0(i)*u[i*T + t] + (pp[i*T + t]+inst->getPmin(i)*x[i*T + t])*(inst->getcp(i)) ;
+            }
+        }
+    }
+    else{
+        for (int t=0 ; t < T ; t++) {
+            for (int i=0; i<n; i++) {
+                cost += x[i*T + t]*inst->getcf(i) + (pp[i*T + t]+inst->getPmin(i)*x[i*T + t])*(inst->getcp(i)) ;
+                for (int downtime = inst->getl(i); downtime < t; downtime++){
+                    cost += (1 - exp(-float(downtime)/T)) * inst->getc0(i) * u_temps[i*T*T + t*T + downtime];
+                }
+            }
         }
     }
 
@@ -56,9 +72,18 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
     }
 
     //Relation entre u et x
-    for (int i=0; i<n; i++) {
-        for (int t=1 ; t < T ; t++) {
-            model.add(x[i*T + t] - x[i*T + t-1] <= u[i*T + t]);
+    if (!Param.nonLinearStartUpCost){
+        for (int i=0; i<n; i++) {
+            for (int t=1 ; t < T ; t++) {
+                model.add(x[i*T + t] - x[i*T + t-1] <= u[i*T + t]);
+            }
+        }
+    }
+    else{
+        for (int i=0; i<n; i++) {
+            for (int t=1 ; t < T ; t++) {
+                model.add(x[i*T + t] - x[i*T + t-1] = u[i*T + t] - d[i*T + t]);
+            }
         }
     }
 
@@ -93,6 +118,20 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
         }
     }
 
+    //Contraintes spécifiques aux coûts de démarrage non linéaires
+    if (Param.nonLinearStartUpCost){
+        for (int i=0; i<n; i++) {
+            for (int t=1 ; t < T ; t++) {
+                IloExpr sum(env) ;
+                for (int downtime = inst->getl(i); downtime < t-1; downtime++){
+                    model.add(u_temps[i*T*T + t*T + downtime] <= d[i*T + t - downtime]);
+                    sum += u_temps[i*T*T + t*T + downtime];
+                }
+                sum += u_temps[i*T*T + t*T + t-1];
+                model.add(sum >= u[i*T + t]);
+            }
+        }
+    }
 
     //Contraintes intra-site
     if (Param.IntraSite) {
@@ -262,9 +301,10 @@ double CplexChecker::getLRValue() {
     LRModel.add(model) ;
     LRModel.add(IloConversion(env, x, IloNumVar::Float) ) ;
     LRModel.add(IloConversion(env, u, IloNumVar::Float) ) ;
-
+    cout << "a" << endl;
     //Résolution
     IloCplex LRVal = IloCplex(LRModel) ;
+    cout << "a" << endl;
     LRVal.setParam(IloCplex::EpGap, 0) ;
     LRVal.solve() ;
 
