@@ -82,7 +82,7 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
     else{
         for (int i=0; i<n; i++) {
             for (int t=1 ; t < T ; t++) {
-                model.add(x[i*T + t] - x[i*T + t-1] = u[i*T + t] - d[i*T + t]);
+                model.add(x[i*T + t] - x[i*T + t-1] == u[i*T + t] - d[i*T + t]);
             }
         }
     }
@@ -123,11 +123,10 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
         for (int i=0; i<n; i++) {
             for (int t=1 ; t < T ; t++) {
                 IloExpr sum(env) ;
-                for (int downtime = inst->getl(i); downtime < t-1; downtime++){
+                for (int downtime = inst->getl(i); downtime < t; downtime++){
                     model.add(u_temps[i*T*T + t*T + downtime] <= d[i*T + t - downtime]);
                     sum += u_temps[i*T*T + t*T + downtime];
                 }
-                sum += u_temps[i*T*T + t*T + t-1];
                 model.add(sum >= u[i*T + t]);
             }
         }
@@ -301,10 +300,9 @@ double CplexChecker::getLRValue() {
     LRModel.add(model) ;
     LRModel.add(IloConversion(env, x, IloNumVar::Float) ) ;
     LRModel.add(IloConversion(env, u, IloNumVar::Float) ) ;
-    cout << "a" << endl;
+
     //Résolution
     IloCplex LRVal = IloCplex(LRModel) ;
-    cout << "a" << endl;
     LRVal.setParam(IloCplex::EpGap, 0) ;
     LRVal.solve() ;
 
