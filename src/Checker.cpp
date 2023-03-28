@@ -396,20 +396,38 @@ void CplexChecker::checkSolution(const vector<double> & x_frac) {
     IloNumVarArray p = IloNumVarArray(env, n*T, 0.0, 1000);
 
     vector<double> u_frac(n*T, 0) ;
+    vector<double> d_frac(n*T, 0) ;
     for (int i=0 ; i <n ; i++) {
         for (int t=1 ; t < T ; t++) {
             if ( x_frac[i*T+t-1] < x_frac[i*T+t]  ) {
                 u_frac[i*T+t] = x_frac[i*T+t] - x_frac[i*T+t-1] ;
             }
+            if ( x_frac[i*T+t-1] > x_frac[i*T+t]  ) {
+                d_frac[i*T+t] = x_frac[i*T+t-1] - x_frac[i*T+t] ;
+            }
         }
     }
 
+    // Variables spécifiques aux coûts de démarrage non linéaires
+    IloBoolVarArray u_temps = IloBoolVarArray(env, n*T*T) ;
 
     // Objective Function: Minimize Cost
-    IloExpr cost(env) ;
-    for (int t=0 ; t < T ; t++) {
-        for (int i=0; i<n; i++) {
-            cost +=  x_frac[i*T + t]*inst->getcf(i) + inst->getc0(i)*u_frac[i*T + t] + (p[i*T + t]+inst->getPmin(i)*x_frac[i*T + t])*(inst->getcp(i)) ;
+    
+    if (!Param.nonLinearStartUpCost){
+        for (int t=0 ; t < T ; t++) {
+            for (int i=0; i<n; i++) {
+                cost += x_frac[i*T + t]*inst->getcf(i) + inst->getc0(i)*u[i*T + t] + (p[i*T + t]+inst->getPmin(i)*x_frac[i*T + t])*(inst->getcp(i)) ;
+            }
+        }
+    }
+    else{
+        for (int t=0 ; t < T ; t++) {
+            for (int i=0; i<n; i++) {
+                cost += x_frac[i*T + t]*inst->getcf(i) + (p[i*T + t]+inst->getPmin(i)*x_frac[i*T + t])*(inst->getcp(i)) ;
+                for (int downtime = 1; downtime < t + 1; downtime++){
+                    cost += (1 - exp(-float(downtime)/T)) * inst->getc0(i) * u_temps[i*T*T + t*T + downtime];
+                }
+            }
         }
     }
 
@@ -490,6 +508,22 @@ void CplexChecker::checkSolution(const vector<double> & x_frac) {
         }
     }
 
+    }
+
+    //Contraintes spécifiques aux coûts de démarrage non linéaires
+    if (Param.nonLinearStartUpCost){
+        for (int i=0; i<n; i++) {
+            for (int t=1 ; t < T ; t++) {
+                IloExpr sum(env) ;
+                for (int downtime = 1; downtime < t + 1; downtime++){
+                    IloRange cons(env, u_temps[i*T*T + t*T + downtime], d_frac[i*T + t - downtime], ("duree_eteinte_i=" + std::to_string(i) + "_t=" + std::to_string(t) + "_d=" + std::to_string(downtime)).c_str());
+                    CheckModel.add(cons);
+                    sum += u_temps[i*T*T + t*T + downtime];
+                }
+                IloRange cons(env, -sum, -u_frac[i*T + t], ("somme_allumage_i=" + std::to_string(i) + "_t=" + std::to_string(t)).c_str());
+                CheckModel.add(cons);
+            }
+        }
     }
 
 
