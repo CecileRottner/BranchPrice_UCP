@@ -37,7 +37,7 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
         for (int t=0 ; t < T ; t++) {
             for (int i=0; i<n; i++) {
                 cost += x[i*T + t]*inst->getcf(i) + (pp[i*T + t]+inst->getPmin(i)*x[i*T + t])*(inst->getcp(i)) ;
-                for (int downtime = inst->getl(i); downtime < t; downtime++){
+                for (int downtime = 1; downtime < t + 1; downtime++){
                     cost += (1 - exp(-float(downtime)/T)) * inst->getc0(i) * u_temps[i*T*T + t*T + downtime];
                 }
             }
@@ -123,7 +123,7 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
         for (int i=0; i<n; i++) {
             for (int t=1 ; t < T ; t++) {
                 IloExpr sum(env) ;
-                for (int downtime = inst->getl(i); downtime < t; downtime++){
+                for (int downtime = 1; downtime < t + 1; downtime++){
                     model.add(u_temps[i*T*T + t*T + downtime] <= d[i*T + t - downtime]);
                     sum += u_temps[i*T*T + t*T + downtime];
                 }
