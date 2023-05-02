@@ -910,6 +910,9 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 Master_Variable* lambda = new Master_Variable(s, upDownPlan);
                 if (print) cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " "  << endl ;
 
+                dual_cost.computeRedcost(inst, ParamMaster, Farkas, lambda, redcost);
+                cout << "cout reduit calculé: " << redcost << endl;
+
                 if (Param.powerPlanGivenByLambda && !Param.DynProg) {
                     powerPlan = IloNumArray((AlgoCplex_site[s])->env, Param.nbUnits(s)*T) ;
                     (AlgoCplex_site[s]->cplex).getValues(AlgoCplex_site[s]->p, powerPlan) ;

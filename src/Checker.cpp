@@ -21,8 +21,8 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
     cost = IloExpr(env) ;
 
     // Variables spécifiques aux coûts de démarrage non linéaires
-    IloBoolVarArray d = IloBoolVarArray(env, n*T) ;
-    IloBoolVarArray u_temps = IloBoolVarArray(env, n*T*T) ;
+    d = IloBoolVarArray(env, n*T) ;
+    u_temps = IloBoolVarArray(env, n*T*T) ;
 
     // Objective Function: Minimize Cost
     
@@ -124,8 +124,11 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
             for (int t=1 ; t < T ; t++) {
                 IloExpr sum(env) ;
                 for (int downtime = 1; downtime < t + 1; downtime++){
-                    model.add(u_temps[i*T*T + t*T + downtime] <= d[i*T + t - downtime]);
+                    //model.add(u_temps[i*T*T + t*T + downtime] <= d[i*T + t - downtime]);
                     sum += u_temps[i*T*T + t*T + downtime];
+                    if (t - downtime > 0){
+                        model.add(x[i*T + t - downtime - 1] >= u_temps[i*T*T + t*T + downtime]);
+                    }
                 }
                 model.add(sum >= u[i*T + t]);
             }
@@ -228,7 +231,7 @@ double CplexChecker::getIntegerObjValue() {
     IntegerObjCplex.setParam(IloCplex::Param::ClockType, 1); //1 : CPU TIME
     //IntegerObjCplex.setParam(IloCplex::Param::TimeLimit, 30) ;
 
-
+    IntegerObjCplex.exportModel ("debug.lp");
     IntegerObjCplex.solve() ;
 
     DualBound = IntegerObjCplex.getBestObjValue() ;
@@ -255,6 +258,14 @@ double CplexChecker::getIntegerObjValue() {
                 cout << fabs(solution[i*T+t]) << " " ;
             }
             cout << endl ;
+
+            if (Param.nonLinearStartUpCost){
+                cout << "u_temps " << " : " ;
+                for (int d = 1; d < 3; d++){
+                    //cout << fabs(IntegerObjCplex.getValue(u_temps[i*T+2+d])) << " " ;
+                }
+                cout << endl ;
+            }
         }
         cout << endl ;
     }
@@ -406,6 +417,7 @@ void CplexChecker::checkSolution(const vector<double> & x_frac) {
                 d_frac[i*T+t] = x_frac[i*T+t-1] - x_frac[i*T+t] ;
             }
         }
+        d_frac[i*T] = 1;
     }
 
     // Variables spécifiques aux coûts de démarrage non linéaires

@@ -11,6 +11,7 @@ intra=1
 
 
 dossier=data/small_UCP_data/
+dossier=data/debug_data/
 
 printf $dossier " \n" >> result.txt
 
@@ -25,8 +26,8 @@ demand_type=3
 
 for n in 10 ; do
   for T in 10 ; do
-    for id in {1..10}; do
-      for met in 3006 10000 30060 ; do
+    for id in 1 ; do
+      for met in 30000 30010 30020 30030 30040 30050 30060 ; do
         rm logs/$met.txt
         rm colonnes.csv
         rm convergence/${n}_${T}_$id.csv
