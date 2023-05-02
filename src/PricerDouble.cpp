@@ -440,7 +440,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
     int T = inst->getT() ;
     int n = inst->getn() ;
 
-    int print = 1;
+    int print = 0;
     iteration++;
 
     siteVarsToAdd.clear() ;
@@ -661,11 +661,11 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
             }
 
             else { // résolution par programmation dynamique
-                cout << "début dynprogsite" << endl;
-                cout << "s = " << s << endl;
-                cout << AlgoDynProg_site[s]->Site << endl;
+                //cout << "début dynprogsite" << endl;
+                //cout << "s = " << s << endl;
+                //cout << AlgoDynProg_site[s]->Site << endl;
                 upDownPlan = IloNumArray((AlgoDynProg_site[s])->env, Param.nbUnits(s)*T) ;
-                cout << "updownplan initialisé" << endl;
+                //cout << "updownplan initialisé" << endl;
                 if (Param.DynProgSUSD) {
                     solutionFound = (AlgoDynProg_site.at(s))->findImprovingSolutionSUSD(inst, dual_cost, objvalue);
                     (AlgoDynProg_site.at(s))->getUpDownPlanSUSD(inst, upDownPlan) ;
@@ -674,7 +674,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                     solutionFound = (AlgoDynProg_site.at(s))->findImprovingSolution(inst, dual_cost, objvalue);
                     (AlgoDynProg_site.at(s))->getUpDownPlan(inst, upDownPlan) ;
                 }
-                cout << "DP resolution done" << endl ;
+                //cout << "DP resolution done" << endl ;
 
             }
 
@@ -716,7 +716,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
 
                 dual_cost.computeObjCoef(inst,ParamMaster, Farkas, dual_cost_time);
                 dual_cost.computeRedcost(inst, ParamMaster, Farkas, lambda, redcost);
-                cout << "cout reduit calculé: " << redcost << endl;
+                //cout << "cout reduit calculé: " << redcost << endl;
 
                 if (redcost < -epsilon) {
                     totalDualCost += redcost;
@@ -759,7 +759,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 ///// MISE A JOUR DES OBJECTIFS DES SOUS PROBLEMES
                 // cout << "mise à jour des couts, farkas=" << Farkas << endl;
                 if (!Param.DynProgTime) {
-                    cout << "début updateobjcoeff" << endl;
+                    //cout << "début updateobjcoeff" << endl;
                     (AlgoCplex_time.at(t))->updateObjCoefficients(inst, Param, dual_cost_time, Farkas) ;
                     if(t == 0 && Master->nbIter == 2){
                         (AlgoCplex_time.at(t))->cplex.exportModel( ( std::to_string(Param.PminDifferentPmax) + "_bug.lp" ).c_str() );
@@ -770,7 +770,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                     }
                 }
                 else {
-                    cout << "début updateobjcoeff" << endl;
+                    //cout << "début updateobjcoeff" << endl;
                     (AlgoDynProg_time.at(t))->updateObjCoefficients(inst, Param, dual_cost_time, Farkas) ;
                 }
 
@@ -780,11 +780,11 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 bool solutionFound;
 
                 if (!Param.DynProgTime) {
-                    cout << "début findimprovingsol" << endl;
+                    //cout << "début findimprovingsol" << endl;
                     solutionFound = (AlgoCplex_time.at(t))->findImprovingSolution(inst, dual_cost_time, objvalue, temps, 1);
                 }
                 else {
-                    cout << "début findimprovingsol" << endl;
+                    //cout << "début findimprovingsol" << endl;
                     solutionFound = (AlgoDynProg_time.at(t))->findImprovingSolution(inst, dual_cost_time, objvalue, temps, Param.heurPricingTime);
                 }
                 Master->cumul_resolution_pricing += temps ;
@@ -856,7 +856,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
     }
 
     if (guidageTermine) {
-        cout << "début pricing test" << endl;
+        //cout << "début pricing test" << endl;
 
         dual_cost.computeObjCoef(inst,ParamMaster,Farkas, dual_cost_time);
 
@@ -910,8 +910,8 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 Master_Variable* lambda = new Master_Variable(s, upDownPlan);
                 if (print) cout << "Plan found for site " << s << " with reduced cost = " << objvalue << " "  << endl ;
 
-                dual_cost.computeRedcost(inst, ParamMaster, Farkas, lambda, redcost);
-                cout << "cout reduit calculé: " << redcost << endl;
+                //dual_cost.computeRedcost(inst, ParamMaster, Farkas, lambda, redcost);
+                //cout << "cout reduit calculé: " << redcost << endl;
 
                 if (Param.powerPlanGivenByLambda && !Param.DynProg) {
                     powerPlan = IloNumArray((AlgoCplex_site[s])->env, Param.nbUnits(s)*T) ;
@@ -993,7 +993,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 }
 
                 MasterTime_Variable* lambda = new MasterTime_Variable(t, upDownPlan);
-                cout << "Plan found for time " << t << " with reduced cost = " << objvalue << " ";
+                //cout << "Plan found for time " << t << " with reduced cost = " << objvalue << " ";
 
                 if (Param.powerPlanGivenByMu) {
                     lambda->addPowerPlan(powerPlan);

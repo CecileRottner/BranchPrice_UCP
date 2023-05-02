@@ -112,8 +112,6 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
 
     int l = inst->getl(i);
     int L = inst->getL(i);
-    cout << "l : " << l << endl ; 
-    cout << "L : " << L << endl ;
 
 
     //initialisation
@@ -163,10 +161,7 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
 
         // arc de la source à V(t,down) vaut 0
 
-        if (checkTransitionSUSD(inst,-1, t, 0)) {
-            Bellman.at(0*T+t) = 0;
-            Prec.at(0*T+t) = -1;
-        }
+
 
         for (int k = 0 ; k < t ; k++) {
 

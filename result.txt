@@ -1,2 +1,2 @@
-data/debug_data/ & n & T & id & IUP & Iter & Var & cols U & cols T & CPU & CPU(Master) & Gap & Dual b. & Primal b. & LR & LR(Cplex) \\ 
- 30000 & 3 & 10 & 1 & -  &  1459 & 1543 & 1488 & 42 &  0.352232 & 0.227719 &  1e+20 &  -1e+20 &  27712.96 & 17304.02 & 20865.23 \\ 
+data/small_UCP_data/ & n & T & id & Nodes & CPU & CPU(Master) & Dual b. & Primal b. & CPLEX & Nodes & CPU & gap \\ 
+ 
