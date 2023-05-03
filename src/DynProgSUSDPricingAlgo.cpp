@@ -116,14 +116,18 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
     cout << "L : " << L << endl ;
 
 
-    //initialisation
+    //initialisation pour le pas de temps 0
     for (int t=0; t < 2*T ; t++) {
         Bellman.at(t) = std::numeric_limits<double>::infinity(); ;
     }
-
+    
+    // transition source --> (t=0,down) : V=0 si transition faisable
+    // modelise un etat initial eteint qui reste a l'arret en 0
     if ( checkTransitionSUSD( inst, -1, 0, 0) ) {
         Bellman.at(0*T+ 0) = 0 ;
     }
+    
+    // transition source --> (t=0,up)
     if ( checkTransitionSUSD( inst, -1, 0, 1) ) {
         Bellman.at(1*T+ 0) = 0 ; // cf(t) sera pris en compte par le prochain noeud
     }
@@ -134,9 +138,12 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
 
     for (int t = 1 ; t < T ; t++) {
 
+        //On calcule les valeurs de Bellman V des noeuds (t,up) et (t,down)
+        //Les valeurs V sur les pas de temps précédents sont déjà calculées
+
         ///// Calcul de V(t, up) /////
 
-        // cas où prec=source
+        // cas où noeud precedent est la source
         if (checkTransitionSUSD(inst,-1, t, 1)) {
             double bell=0;
             for (int k=0 ; k < t ; k++) {
@@ -147,6 +154,7 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
             Prec.at(1*T+t) = -1;
         }
 
+        //cas ou noeud precedent est (k, 0)
         for (int k = 0 ; k < t ; k++) {
 
             if (checkTransitionSUSD(inst, k, t, 1)) {
@@ -161,12 +169,8 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
         
         ///// calcul de V(t, down) //////
 
-        // arc de la source à V(t,down) vaut 0
 
-        if (checkTransitionSUSD(inst,-1, t, 0)) {
-            Bellman.at(0*T+t) = 0;
-            Prec.at(0*T+t) = -1;
-        }
+       // arc from (k, up) to (t, down) 
 
         for (int k = 0 ; k < t ; k++) {
 
@@ -185,13 +189,11 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
     }
 
 
+    //Transitions to the sink
     double V_sink= 0 ;
-
 
     time_prec_sink=-1;
     status_prec_sink=0;
-
-
 
     for (int t=0 ; t  < T ; t++) {
 
@@ -207,6 +209,8 @@ bool DynProgPricingAlgo::findImprovingSolutionSUSD(InstanceUCP* inst, const Dual
                 status_prec_sink=1;
             }
         }
+        
+        // transition V(down,t) --> sink
         if ( checkTransitionSUSD(inst, t, T, 0) ) {
             double bell = Bellman.at(0*T+t);
             if (bell < V_sink ) {
