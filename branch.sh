@@ -26,7 +26,7 @@ demand_type=3
 
 for n in 20 ; do
   for T in 24 ; do
-    for id in 4; do
+    for id in {1..11}; do
       for met in 31060 ; do
         rm logs/$met.txt
         rm colonnes.csv

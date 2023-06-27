@@ -228,10 +228,10 @@ double CplexChecker::getIntegerObjValue() {
 
     IloCplex IntegerObjCplex = IloCplex(IntegerModel) ; // ou juste valeur opt entière
     IntegerObjCplex.setParam(IloCplex::EpGap, Param.Epsilon) ;
-    IntegerObjCplex.setParam(IloCplex::Param::ClockType, 1); //1 : CPU TIME
-    //IntegerObjCplex.setParam(IloCplex::Param::TimeLimit, 30) ;
+    IntegerObjCplex.setParam(IloCplex::Param::ClockType, 2); //1 : CPU TIME
+    //IntegerObjCplex.setParam(IloCplex::Param::TimeLimit, 300) ;
 
-    IntegerObjCplex.exportModel ("debug.lp");
+    //IntegerObjCplex.exportModel ("debug.lp");
     IntegerObjCplex.solve() ;
 
     DualBound = IntegerObjCplex.getBestObjValue() ;
@@ -287,7 +287,7 @@ double CplexChecker::useLowBound(double lowbound) {
 
     IloCplex useLowBoundCplex = IloCplex(IntegerModel) ; // ou juste valeur opt entière
     useLowBoundCplex.setParam(IloCplex::EpGap, Param.Epsilon) ;
-    useLowBoundCplex.setParam(IloCplex::Param::ClockType, 1); //1 : CPU TIME
+    useLowBoundCplex.setParam(IloCplex::Param::ClockType, 2); //1 : CPU TIME
     //useLowBoundCplex.setParam(IloCplex::Param::TimeLimit, 30) ;
 
 
@@ -299,12 +299,15 @@ double CplexChecker::useLowBound(double lowbound) {
     DualBoundLowBound = useLowBoundCplex.getBestObjValue() ;
     PrimalBoundLowBound = useLowBoundCplex.getObjValue() ;
 
-    cpuTimeLowBound =  ( clock() - start ) / (double) CLOCKS_PER_SEC;
+    //cpuTimeLowBound =  ( clock() - start ) / (double) CLOCKS_PER_SEC;
 
     return cpuTimeLowBound;
 }
 
 double CplexChecker::getLRValue() {
+
+    clock_t start;
+    start = clock();
 
     //Modèle
     IloModel LRModel(env) ;
@@ -315,13 +318,18 @@ double CplexChecker::getLRValue() {
     //Résolution
     IloCplex LRVal = IloCplex(LRModel) ;
     LRVal.setParam(IloCplex::EpGap, 0) ;
+    LRVal.setParam(IloCplex::Param::ClockType, 1); //1 : CPU TIME
     LRVal.solve() ;
 
     LRValue = LRVal.getObjValue();
+    cpuTime =  ( clock() - start ) / (double) CLOCKS_PER_SEC;
     return LRValue;
 }
 
 double CplexChecker::getLRCplex() {
+
+    clock_t start;
+    start = clock();
 
     //Modèle
     IloModel LRCplexModel(env) ;
@@ -331,9 +339,11 @@ double CplexChecker::getLRCplex() {
     IloCplex LRCplex = IloCplex(LRCplexModel) ;
     LRCplex.setParam(IloCplex::EpGap, 0) ;
     LRCplex.setParam(IloCplex::Param::MIP::Limits::Nodes, 1) ;
+    LRCplex.setParam(IloCplex::Param::ClockType, 1); //1 : CPU TIME
     LRCplex.solve() ;
 
     LRCplexVal = LRCplex.getBestObjValue() ;
+    cpuTime =  ( clock() - start ) / (double) CLOCKS_PER_SEC;
     return LRCplexVal ;
 }
 

@@ -404,8 +404,13 @@ Parameters init_parameters(InstanceUCP* inst, int met, int intra_cons) {
     }
 
     // Branchement
-    if (arr[indice - 2] == 0) {
-        node_limit = 1 ;
+    switch (arr[indice - 2]) {
+        case 0:
+            node_limit = 1 ;
+            break ;
+        case 2:
+            PriceAndBranch = true ;
+            break ;
     }
 
     // Paramètres généraux de génération de colonnes

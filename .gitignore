@@ -14,3 +14,4 @@ convergence/
 *.csv
 LogFile.txt
 data/debug_data
+data/Sym

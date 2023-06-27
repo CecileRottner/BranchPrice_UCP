@@ -314,6 +314,7 @@ void ObjPricerSite::pricingUCP( SCIP*              scip  , bool Farkas          
 
     int print = 1 ;
     iteration++;
+    Master->nbIter++;
 
     //int iteration_limit=5 ;
 //    /// PMR courant et sa solution

@@ -4,6 +4,7 @@ rm result.txt
 nom=result.txt
 
 sym=0
+#sym=2
 
 cat01=1
 intra=1
@@ -11,12 +12,13 @@ intra=1
 
 
 dossier=data/small_UCP_data/
-dossier=data/debug_data/
+#dossier=data/Sym/
+#dossier=data/debug_data/
 
 printf $dossier " \n" >> result.txt
 
 
-printf " & n & T & id & IUP & Iter & Var & cols U & cols T & CPU & CPU(Master) & Gap & Dual b. & Primal b. & LR & LR(Cplex) \\\\\\ \n " >> result.txt
+printf " & n & T & id & Iter & Var & cols U & cols T & CPU & CPU(Master) & Gap & Dual b. & Primal b. & LR(Cplex) & CPU(LR Cplex)\\\\\\ \n " >> result.txt
 
 
 
@@ -24,10 +26,10 @@ UseIntraCons=0
 
 demand_type=3
 
-for n in 10 ; do
-  for T in 10 ; do
-    for id in 1 ; do
-      for met in 30000 30010 30020 30030 30040 30050 30060 ; do
+for n in 20 ; do
+  for T in 24 ; do
+    for id in {1..11} ; do
+      for met in 30060 ; do
         rm logs/$met.txt
         rm colonnes.csv
         rm convergence/${n}_${T}_$id.csv

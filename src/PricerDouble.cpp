@@ -761,13 +761,6 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
                 if (!Param.DynProgTime) {
                     //cout << "début updateobjcoeff" << endl;
                     (AlgoCplex_time.at(t))->updateObjCoefficients(inst, Param, dual_cost_time, Farkas) ;
-                    if(t == 0 && Master->nbIter == 2){
-                        (AlgoCplex_time.at(t))->cplex.exportModel( ( std::to_string(Param.PminDifferentPmax) + "_bug.lp" ).c_str() );
-                        for (int i=0 ; i<n ; i++) {
-                            cout << "i:" << i << endl;
-                            cout << dual_cost_time.Omega.at(i*T+t) << endl;
-                        }
-                    }
                 }
                 else {
                     //cout << "début updateobjcoeff" << endl;
