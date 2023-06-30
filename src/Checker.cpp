@@ -38,7 +38,7 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
             for (int i=0; i<n; i++) {
                 cost += x[i*T + t]*inst->getcf(i) + (pp[i*T + t]+inst->getPmin(i)*x[i*T + t])*(inst->getcp(i)) ;
                 for (int downtime = 1; downtime < t + 1; downtime++){
-                    cost += (1 - exp(-float(downtime)/T)) * inst->getc0(i) * u_temps[i*T*T + t*T + downtime];
+                    cost += (1 - exp(-float(downtime)/12)) * inst->getc0(i) * u_temps[i*T*T + t*T + downtime];
                 }
             }
         }
@@ -231,6 +231,8 @@ double CplexChecker::getIntegerObjValue() {
     IntegerObjCplex.setParam(IloCplex::Param::ClockType, 2); //1 : CPU TIME
     //IntegerObjCplex.setParam(IloCplex::Param::TimeLimit, 300) ;
 
+    IntegerObjCplex.setParam(IloCplex::Param::Threads, 1);
+
     //IntegerObjCplex.exportModel ("debug.lp");
     IntegerObjCplex.solve() ;
 
@@ -314,11 +316,16 @@ double CplexChecker::getLRValue() {
     LRModel.add(model) ;
     LRModel.add(IloConversion(env, x, IloNumVar::Float) ) ;
     LRModel.add(IloConversion(env, u, IloNumVar::Float) ) ;
+    LRModel.add(IloConversion(env, u_temps, IloNumVar::Float) ) ;
+    LRModel.add(IloConversion(env, d, IloNumVar::Float) ) ;
 
     //Résolution
     IloCplex LRVal = IloCplex(LRModel) ;
     LRVal.setParam(IloCplex::EpGap, 0) ;
     LRVal.setParam(IloCplex::Param::ClockType, 1); //1 : CPU TIME
+
+    LRVal.setParam(IloCplex::Param::Threads, 1);
+
     LRVal.solve() ;
 
     LRValue = LRVal.getObjValue();
@@ -340,6 +347,9 @@ double CplexChecker::getLRCplex() {
     LRCplex.setParam(IloCplex::EpGap, 0) ;
     LRCplex.setParam(IloCplex::Param::MIP::Limits::Nodes, 1) ;
     LRCplex.setParam(IloCplex::Param::ClockType, 1); //1 : CPU TIME
+
+    LRCplex.setParam(IloCplex::Param::Threads, 1);
+
     LRCplex.solve() ;
 
     LRCplexVal = LRCplex.getBestObjValue() ;

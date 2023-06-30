@@ -21,7 +21,8 @@ double Master_Variable::computeStartUpCost(InstanceUCP* inst, int prec_time, int
     double c0 = inst->getc0(unit) ;
     double cost = 0;
     if (Param.nonLinearStartUpCost) {
-        cost += c0*(1 - exp(-float(current_time - prec_time)/T));
+        //cost += c0*(1 - exp(-float(current_time - prec_time)/T));
+        cost += c0*(1 - exp(-float(current_time - prec_time)/12));
     }
     else{
         cost += c0;

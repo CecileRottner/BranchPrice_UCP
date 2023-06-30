@@ -92,7 +92,8 @@ double DynProgPricingAlgo::computeStartUpCosts(InstanceUCP* inst,  const DualCos
     double cost = (Dual.ObjCoefU).at(i*T + current_time);
     double c0 = inst->getc0(i) ;
     if (Param.nonLinearStartUpCost) {
-        cost -= c0 * exp(-float(current_time - prec_time)/T);
+        //cost -= c0 * exp(-float(current_time - prec_time)/T);
+        cost -= c0 * exp(-float(current_time - prec_time)/12);
     }
     return cost ;
 }

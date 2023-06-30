@@ -417,7 +417,8 @@ int main(int argc, char** argv)
             // fichier << " &  " << SCIPgetDualboundRoot(scip) ;
             fichier << " &  " << SCIPgetDualbound(scip) ;
             fichier << " &  " << SCIPgetPrimalbound(scip) ;
-            //fichier << " & " << checker.getLRValue() ; // RL
+            fichier << " & " << checker.getLRValue() ; // RL
+            fichier << " & " << checker.cpuTime ; // RL 
             fichier << " & " << checker.getLRCplex() ; // RL CPLEX
             fichier << " & " << checker.cpuTime ; // RL CPLEX/
             //SCIPprintSol(scip, SCIPgetBestSol(scip), NULL, FALSE);
