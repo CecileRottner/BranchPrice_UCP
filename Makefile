@@ -73,6 +73,7 @@ MAINOBJ		=	main.o \
 			IntervalUpSet.o \
 			IUPHandler.o \
 			Checker.o \
+			CompactSCIP.o \
 
 MAINSRC		=	$(addprefix $(SRCDIR)/,$(MAINOBJ:.o=.cpp))
 MAINDEP		=	$(SRCDIR)/depend.cppmain.$(OPT)

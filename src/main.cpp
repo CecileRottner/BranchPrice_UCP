@@ -23,6 +23,7 @@
 #include "CplexPricingAlgo.h"
 #include "Checker.h"
 #include "IUPHandler.h"
+#include "CompactSCIP.h"
 
 /* namespace usage */
 using namespace std;
@@ -457,11 +458,92 @@ int main(int argc, char** argv)
                 fichier << " &  " << SCIPgetDualbound(scip) ;
                 fichier << " &  " << SCIPgetPrimalbound(scip) ;
 
-                checker.getIntegerObjValue();
-                fichier << " & " << checker.DualBound ;
-                fichier << " & " << checker.nbNodes ;
-                fichier << " & " << checker.cpuTime ;
-                fichier << " & " << checker.gap ;
+                // checker.getIntegerObjValue();
+                // fichier << " & " << checker.DualBound ;
+                // fichier << " & " << checker.nbNodes ;
+                // fichier << " & " << checker.cpuTime ;
+                // fichier << " & " << checker.gap ;
+
+
+
+                //////  COMPACT SCIP MODEL   /////
+
+                Compact_Model* Compact_ptr  = new Compact_Model(param, inst) ;
+                
+
+                // problem initialization
+                SCIP *scip_compact=NULL;
+                SCIPcreate(&scip_compact);
+
+                // include various SCIP features
+                SCIPincludeConshdlrLinear(scip_compact);
+                SCIPincludeNodeselBfs(scip_compact);
+                SCIPincludeConshdlrIntegral(scip_compact);
+                SCIPincludeDispDefault(scip_compact);
+                //SCIPincludeDialogDefault(scip);
+                SCIPincludeHeurActconsdiving(scip_compact);
+                SCIPincludeHeurClique(scip_compact);
+                SCIPincludeHeurCoefdiving(scip_compact);
+                SCIPincludeHeurCrossover(scip_compact);
+                SCIPincludeHeurDins(scip_compact);
+                SCIPincludeHeurFeaspump(scip_compact);
+                SCIPincludeHeurFixandinfer(scip_compact);
+                SCIPincludeHeurFracdiving(scip_compact);
+                SCIPincludeHeurGuideddiving(scip_compact);
+                SCIPincludeHeurIntdiving(scip_compact);
+                SCIPincludeHeurIntshifting(scip_compact);
+                SCIPincludeHeurLinesearchdiving(scip_compact);
+                SCIPincludeHeurLocalbranching(scip_compact);
+                SCIPincludeHeurMutation(scip_compact);
+                SCIPincludeHeurObjpscostdiving(scip_compact);
+                SCIPincludeHeurOctane(scip_compact);
+                SCIPincludeHeurOneopt(scip_compact);
+                SCIPincludeHeurPscostdiving(scip_compact);
+                SCIPincludeHeurRens(scip_compact);
+                SCIPincludeHeurRins(scip_compact);
+                SCIPincludeHeurShiftandpropagate(scip_compact);
+                SCIPincludeHeurShifting(scip_compact);
+                SCIPincludeHeurSimplerounding(scip_compact);
+                SCIPincludeHeurSubNlp(scip_compact);
+                SCIPincludeHeurTrivial(scip_compact);
+                SCIPincludeHeurTrySol(scip_compact);
+                SCIPincludeHeurTwoopt(scip_compact);
+                SCIPincludeHeurUndercover(scip_compact);
+                SCIPincludeHeurVbounds(scip_compact);
+                SCIPincludeHeurVeclendiving(scip_compact);
+                SCIPincludeHeurZirounding(scip_compact);
+                SCIPincludeHeurRootsoldiving(scip_compact);
+                SCIPincludeHeurRounding(scip_compact);
+
+                // resolution parameters (time and node limits)
+                SCIPsetLongintParam(scip_compact, "limits/nodes", param.nodeLimit);
+                SCIPsetRealParam(scip_compact, "limits/time", 3600);
+
+                // Changements pour rendre le code compatible avec scip-8.0.0
+                SCIPincludeDialogDefaultBasic(scip_compact) ;
+                SCIPincludeDialogDefaultSet(scip_compact) ;
+                SCIPincludeDialogDefaultFix(scip_compact) ;
+
+                /* set verbosity parameter */
+                SCIPsetIntParam(scip_compact, "display/verblevel", 5);
+                //SCIPsetBoolParam(scip, "display/lpinfo", TRUE);
+
+                /* create empty problem */
+                SCIPcreateProb(scip_compact, "UCP_compact", 0, 0, 0, 0, 0, 0, 0);
+
+
+                Compact_ptr->InitScipCompactModel(scip_compact, inst) ;
+
+                cout << "resolution..." << endl ;
+                SCIPsolve(scip_compact);
+                cout << "fin resolution" << endl ;
+
+
+                fichier << " &  " << SCIPgetDualbound(scip_compact) ;
+                fichier << " &  " << SCIPgetPrimalbound(scip_compact) ;
+                fichier << " &  " << SCIPgetNNodes(scip_compact) ;
+                double timeScipCompact =  SCIPgetSolvingTime(scip_compact) ;
+                fichier << " &  " << timeScipCompact;
             }
         }
 

@@ -26,7 +26,6 @@ class CplexChecker {
   IloBoolVarArray x;
   IloBoolVarArray u;
   IloNumVarArray pp ;
-  IloBoolVarArray d;
   IloBoolVarArray u_temps;
 
   double PrimalBound;

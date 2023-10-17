@@ -21,7 +21,6 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
     cost = IloExpr(env) ;
 
     // Variables spécifiques aux coûts de démarrage non linéaires
-    d = IloBoolVarArray(env, n*T) ;
     u_temps = IloBoolVarArray(env, n*T*T) ;
 
     // Objective Function: Minimize Cost
@@ -72,18 +71,9 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
     }
 
     //Relation entre u et x
-    if (!Param.nonLinearStartUpCost){
-        for (int i=0; i<n; i++) {
-            for (int t=1 ; t < T ; t++) {
-                model.add(x[i*T + t] - x[i*T + t-1] <= u[i*T + t]);
-            }
-        }
-    }
-    else{
-        for (int i=0; i<n; i++) {
-            for (int t=1 ; t < T ; t++) {
-                model.add(x[i*T + t] - x[i*T + t-1] == u[i*T + t] - d[i*T + t]);
-            }
+    for (int i=0; i<n; i++) {
+        for (int t=1 ; t < T ; t++) {
+            model.add(x[i*T + t] - x[i*T + t-1] <= u[i*T + t]);
         }
     }
 
@@ -124,7 +114,6 @@ CplexChecker::CplexChecker(InstanceUCP* instance, const Parameters & param) : Pa
             for (int t=1 ; t < T ; t++) {
                 IloExpr sum(env) ;
                 for (int downtime = 1; downtime < t + 1; downtime++){
-                    //model.add(u_temps[i*T*T + t*T + downtime] <= d[i*T + t - downtime]);
                     sum += u_temps[i*T*T + t*T + downtime];
                     if (t - downtime > 0){
                         model.add(x[i*T + t - downtime - 1] >= u_temps[i*T*T + t*T + downtime]);
@@ -317,7 +306,6 @@ double CplexChecker::getLRValue() {
     LRModel.add(IloConversion(env, x, IloNumVar::Float) ) ;
     LRModel.add(IloConversion(env, u, IloNumVar::Float) ) ;
     LRModel.add(IloConversion(env, u_temps, IloNumVar::Float) ) ;
-    LRModel.add(IloConversion(env, d, IloNumVar::Float) ) ;
 
     //Résolution
     IloCplex LRVal = IloCplex(LRModel) ;

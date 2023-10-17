@@ -16,7 +16,7 @@ dossier=data/small_UCP_data/
 printf $dossier " \n" >> result.txt
 
 
-printf " & n & T & id & Nodes & CPU & CPU(Master) & Dual b. & Primal b. & CPLEX & Nodes & CPU & gap \\\\\\ \n " >> result.txt
+printf " & n & T & id & Nodes & CPU & CPU(Master) & Dual b. & Primal b. & SCIP & SCIP & Nodes & CPU \\\\\\ \n " >> result.txt
 
 
 
@@ -24,10 +24,10 @@ UseIntraCons=0
 
 demand_type=3
 
-for n in 20 ; do
-  for T in 24 ; do
-    for id in {1..11}; do
-      for met in 31060 ; do
+for n in 10 ; do
+  for T in 10 ; do
+    for id in {1..3}; do
+      for met in 3106 ; do
         rm logs/$met.txt
         rm colonnes.csv
         rm convergence/${n}_${T}_$id.csv

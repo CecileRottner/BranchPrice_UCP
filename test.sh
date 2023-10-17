@@ -27,9 +27,9 @@ UseIntraCons=0
 demand_type=3
 
 for n in 20 ; do
-  for T in 48 ; do
-    for id in {2..20} ; do
-      for met in 10000 30000 30010 30020 30030 30040 30060 ; do
+  for T in 24 ; do
+    for id in {6..20} ; do
+      for met in 31030 31040 31060 ; do
         rm logs/$met.txt
         rm colonnes.csv
         rm convergence/${n}_${T}_$id.csv

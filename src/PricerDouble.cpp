@@ -440,7 +440,7 @@ void ObjPricerDouble::pricingUCP( SCIP*              scip  , bool Farkas        
     int T = inst->getT() ;
     int n = inst->getn() ;
 
-    int print = 0;
+    int print = 1;
     iteration++;
 
     siteVarsToAdd.clear() ;
